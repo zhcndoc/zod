@@ -72,8 +72,8 @@ export async function generateMetadata(props: {
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
-  const rootTitle = page.data.title ?? "Home";
-  const title = rootTitle + " | Zod";
+  const rootTitle = page.data.title ?? "首页";
+  const title = rootTitle + " - Zod 中文文档";
   const description = page.data.description;
   return {
     title,
@@ -82,11 +82,11 @@ export async function generateMetadata(props: {
       type: "website",
       title,
       description,
-      siteName: "Zod",
-      url: `https://zod.dev/${page.slugs.join("/")}`,
+      siteName: "Zod 中文文档",
+      url: `https://zod.zhcndoc.com/${page.slugs.join("/")}`,
       images: [
         {
-          url: `/og.png?title=${encodeURIComponent(rootTitle)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`${["zod.dev", ...page.slugs].join("/")}`)}`,
+          url: `/og.png?title=${encodeURIComponent(rootTitle)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`${["zod.zhcndoc.com", ...page.slugs].join("/")}`)}`,
           width: 1200,
           height: 630,
           alt: title,
