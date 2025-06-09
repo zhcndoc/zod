@@ -1,13 +1,13 @@
 ---
-title: Formatting errors
+title: 格式化错误
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-Zod emphasizes _completeness_ and _correctness_ in its error reporting. In many cases, it's helpful to convert the `$ZodError` to a more useful format. Zod provides some utilities for this.
+Zod 强调错误报告中的 _完整性_ 和 _正确性_。在许多情况下，将 `$ZodError` 转换为更有用的格式是很有帮助的。Zod 提供了一些实用工具来实现这一点。
 
-Consider this simple object schema.
+考虑这个简单的对象模式。
 
 ```ts
 import { z } from "zod/v4";
@@ -18,7 +18,7 @@ const schema = z.strictObject({
 });
 ```
 
-Attempting to parse this invalid data results in an error containing two issues.
+尝试解析此无效数据会产生一个包含两个问题的错误。
 
 ```ts
 const result = schema.safeParse({
@@ -53,7 +53,7 @@ result.error!.issues;
 
 ## `z.treeifyError()`
 
-To convert ("treeify") this error into a nested object, use `z.treeifyError()`.
+要将此错误转换（“树形化”）为嵌套对象，请使用 `z.treeifyError()`。
 
 
 ```ts
@@ -77,7 +77,7 @@ const tree = z.treeifyError(result.error);
 }
 ```
 
-The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path. The `errors` field contains the error messages at a given path, and the special properties `properties` and `items` let you traverse deeper into the tree.
+结果是一个与模式本身对应的嵌套结构。你可以轻松访问发生在特定路径处的错误。`errors` 字段包含给定路径的错误消息，特殊属性 `properties` 和 `items` 允许你深入遍历该树。
 
 ```ts
 tree.properties?.username?.errors;
@@ -87,17 +87,17 @@ tree.properties?.favoriteNumbers?.items?.[1]?.errors;
 // => ["Invalid input: expected number, received string"];
 ```
 
-> Be sure to use optional chaining (`?.`) to avoid errors when accessing nested properties.
+> 访问嵌套属性时，请务必使用可选链操作符（`?.`）以避免错误。
 
 ## `z.prettifyError()`
 
-The `z.prettifyError()` provides a human-readable string representation of the error.
+`z.prettifyError()` 提供了错误的人类可读字符串表示。
 
 ```ts
 const pretty = z.prettifyError(result.error);
 ```
 
-This returns the following string:
+它返回以下字符串：
 
 ```
 ✖ Unrecognized key: "extraKey"
@@ -111,18 +111,18 @@ This returns the following string:
 ## `z.formatError()`
 
 <Callout type="warn">
-  This has been deprecated in favor of `z.treeifyError()`.
+  该方法已被弃用，建议使用 `z.treeifyError()` 替代。
 </Callout>
 
 <Accordions>
-  <Accordion title="Show docs">
+  <Accordion title="显示文档">
 
-    To convert the error into a nested object:
+    将错误转换为嵌套对象：
 
      ```ts
     const formatted = z.formatError(result.error);
 
-    // returns:
+    // 返回：
     {
       _errors: [ 'Unrecognized key: "extraKey"' ],
       username: { _errors: [ 'Invalid input: expected string, received number' ] },
@@ -133,7 +133,7 @@ This returns the following string:
     }
     ```
 
-    The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path.
+    结果是一个与模式本身对应的嵌套结构。你可以轻松访问发生在特定路径处的错误。
 
     ```ts
     formatted?.username?._errors;
@@ -143,14 +143,14 @@ This returns the following string:
     // => ["Invalid input: expected number, received string"]
     ```
 
-    > Be sure to use optional chaining (`?.`) to avoid errors when accessing nested properties.
+    > 访问嵌套属性时，请务必使用可选链操作符（`?.`）以避免错误。
 
   </Accordion>
   </Accordions>
 
 ## `z.flattenError()`
 
-While `z.treeifyError()` is useful for traversing a potentially complex nested structure, the majority of schemas are *flat*—just one level deep. In this case, use `z.flattenError()` to retrieve a clean, shallow error object.
+虽然 `z.treeifyError()` 对于遍历可能复杂的嵌套结构很有用，但绝大多数模式是*扁平的*——仅有一级深度。在这种情况下，使用 `z.flattenError()` 获取一个干净的、浅层的错误对象。
 
 ```ts
 const flattened = z.flattenError(result.error);
@@ -165,11 +165,11 @@ const flattened = z.flattenError(result.error);
 }
 ```
 
-The `formErrors` array contains any top-level errors (where `path` is `[]`). The `fieldErrors` object provides an array of errors for each field in the schema.
+`formErrors` 数组包含任何顶层错误（即 `path` 为空数组）。`fieldErrors` 对象为模式中的每个字段提供错误数组。
 
 ```ts
 flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
 flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
 ```
 
-> **Note** — If you have issues with a `path` longer than one level, this function throws away some error information. 
+> **注意** — 如果你遇到路径长度超过一级的错误，此函数会丢弃一些错误信息。

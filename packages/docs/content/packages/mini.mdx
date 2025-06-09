@@ -4,13 +4,13 @@ title: Zod Mini
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-The `zod/v4-mini` variant was introduced with the release of Zod 4. To try it:
+`zod/v4-mini` 版本是在 Zod 4 发布时引入的。要试用它：
 
 ```sh
 npm install zod@^3.25.0
 ```
 
-It implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
+它实现了与 `zod` 完全相同的功能，但使用了一个*函数式*、*支持 tree-shaking*的 API。如果你之前使用的是 `zod`，这意味着你通常会用*函数*代替方法。
 
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
@@ -29,16 +29,15 @@ const mySchema = z.string().optional().nullable();
 </Tab>
 </Tabs>
 
-> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `zod/v4-mini` uses more functions than methods.
+> **Tree-shaking（摇树优化）** — 在 `zod` 中，模式（schemas）提供了一系列便捷方法来执行一些常见操作（例如字符串模式上的 `.min()`）。打包工具很难从你的包中移除（即“摇树”）没有使用的方法实现。而移除未使用的顶层函数要容易得多，这就是为什么 `zod/v4-mini` 的 API 使用更多函数而非方法的原因。
 
 ## `ZodMiniType`
 
-All `zod/v4-mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`zod/v4/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
-
+所有 `zod/v4-mini` 模式都扩展自 `z.ZodMiniType` 基类，而它又继承自 [`zod/v4/core`](/packages/core) 中的 `z.core.$ZodType`。虽然这个类实现的方法远少于 `zod` 中的 `ZodType`，但仍保留了一些特别有用的方法。
 
 ### `.parse`
 
-This is an obvious one. All `zod/v4-mini` schemas implement the same parsing methods as `zod`.
+这是最显而易见的。所有 `zod/v4-mini` 模式实现了与 `zod` 相同的解析方法。
 
 ```ts
 import { z } from "zod/v4-mini"
@@ -53,7 +52,7 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-In `zod/v4` there are dedicated methods on schema subclasses for performing common checks:
+在 `zod/v4` 中，模式子类中有专门的方法用于执行常见检查：
 
 ```ts
 import { z } from "zod/v4";
@@ -65,7 +64,7 @@ z.string()
   .trim()
 ```
 
-In `zod/v4-mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
+但在 `zod/v4-mini` 中并没有实现此类方法。相反，你通过向模式传入 `.check()` 方法来执行这些检查：
 
 ```ts
 import { z } from "zod/v4-mini"
@@ -78,13 +77,13 @@ z.string().check(
 );
 ```
 
-The following checks are implemented. Some of these checks only apply to schemas of certain types (e.g. strings or numbers). The APIs are all type-safe; TypeScript won't let you add an unsupported check to your schema.
+实现了以下检查。部分检查仅适用于某些类型的模式（比如字符串或数字）。所有 API 都是类型安全的；TypeScript 不允许你为模式添加不支持的检查。
 
 ```ts
 z.lt(value);
-z.lte(value); // alias: z.maximum()
+z.lte(value); // 别名：z.maximum()
 z.gt(value);
-z.gte(value); // alias: z.minimum()
+z.gte(value); // 别名：z.minimum()
 z.positive();
 z.negative();
 z.nonpositive();
@@ -105,11 +104,11 @@ z.endsWith(value);
 z.property(key, schema);
 z.mime(value);
 
-// custom checks
+// 自定义检查
 z.refine()
-z.check()   // replaces .superRefine()
+z.check()   // 取代 .superRefine()
 
-// mutations (these do not change the inferred types)
+// 变换（它们不会改变推断的类型）
 z.overwrite(value => newValue);
 z.normalize();
 z.trim();
@@ -119,17 +118,17 @@ z.toUpperCase();
 
 ### `.register()`
 
-For registering a schema in a [registry](/metadata#registries).
+用于在 [注册表](/metadata#registries) 中注册一个模式。
 
 ```ts
 const myReg = z.registry<{title: string}>();
 
-z.string().register(myReg, { title: "My cool string schema" });
+z.string().register(myReg, { title: "我的酷炫字符串模式" });
 ```
 
 ### `.brand()`
 
-For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
+用于*品牌化*一个模式。详见 [品牌类型](/api#branded-types) 文档了解更多信息。
 
 ```ts
 import { z } from "zod/v4-mini"
@@ -137,10 +136,9 @@ import { z } from "zod/v4-mini"
 const USD = z.string().brand("USD");
 ```
 
-
 ### `.clone(def)`
 
-Returns an identical clone of the current schema using the provided `def`.
+使用提供的 `def` 返回当前模式的一个完全相同的克隆。
 
 ```ts
 const mySchema = z.string()
@@ -148,11 +146,11 @@ const mySchema = z.string()
 mySchema.clone(mySchema._zod.def);
 ```
 
-## No default locale
+## 无默认语言环境
 
-While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+虽然 `zod/v4` 默认自动加载英语 (`en`) 语言环境，但 `zod/v4-mini` 不会。这减少了在不需要错误信息、本地化为非英语语言或其他自定义情况下的包体积。
 
-This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
+这意味着默认情况下，所有问题的 `message` 属性都将简单显示为 `"Invalid input"`。要加载英语语言环境：
 
 ```ts
 import { z } from "zod/v4-mini"
@@ -160,4 +158,4 @@ import { z } from "zod/v4-mini"
 z.config(z.locales.en());
 ```
 
-Refer to the [Locales](/error-customization#internationalization) docs for more on localization.
+有关本地化的更多信息，请参考 [语言环境](/error-customization#internationalization) 文档。

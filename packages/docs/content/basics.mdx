@@ -1,16 +1,16 @@
 ---
-title: Basic usage
+title: 基本用法
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
+本页将引导你了解创建 schema、解析数据和使用推断类型的基础知识。有关 Zod schema API 的完整文档，请参阅 [定义 schema](/api)。
 
-## Defining a schema
+## 定义 schema
 
-Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
+在做其他操作之前，你需要先定义一个 schema。为了本指南的目的，我们将使用一个简单的对象 schema。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -36,34 +36,34 @@ const Player = z.object({
 </Tabs>
 
 <Accordions>
-<Accordion title='Why the "/v4" suffix?'>
-  To allow time for the ecosystem the migrate, there will be a transitionary period in which Zod 4 will be published alongside Zod 3 and consumable as a subpath import:
+<Accordion title='为什么带上 "/v4" 后缀？'>
+  为了给生态系统迁移留出时间，将会有一个过渡期，在此期间 Zod 4 会与 Zod 3 一起发布，并通过子路径导入的方式提供使用：
 
   ```ts
   import { z } from "zod/v4"
   ```
 
-  During this transition window:
+  在过渡期内：
 
-  1. Zod 4 is considered stable and production-ready
-  2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25` release.
-  3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
+  1. Zod 4 被视为稳定且可用于生产环境
+  2. `"zod"` 包仍将在 npm 上发布 `3.x.x` 版本范围。`/v4` 子路径会在 `zod@3.25` 中添加。
+  3. Zod 3 会继续从包根目录（`"zod"`）以及新的子路径（`"zod/v3"`）导出，并继续接收错误修复和稳定性提升。
 
-  For a complete breakdown of the subpath versioning strategy, see the [associated writeup](https://github.com/colinhacks/zod/issues/4371).
+  有关子路径版本策略的完整说明，请参见 [相关说明](https://github.com/colinhacks/zod/issues/4371)。
 </Accordion>
 </Accordions>
 
-## Parsing data
+## 解析数据
 
-Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
+对于任何 Zod schema，使用 `.parse` 方法验证输入。如果输入有效，Zod 会返回输入的强类型*深拷贝*。
 
 ```ts
 Player.parse({ username: "billie", xp: 100 }); 
-// => returns { username: "billie", xp: 100 }
+// => 返回 { username: "billie", xp: 100 }
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+**注意** — 如果你的 schema 使用了某些异步 API，例如 `async` [细化](#refine) 或 [转换](#transform)，你需要使用 `.parseAsync()` 方法。
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -73,9 +73,9 @@ await schema.parseAsync("hello");
 ```
 </Callout>
 
-## Handling errors
+## 处理错误
 
-When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
+当验证失败时，`.parse()` 方法会抛出一个 `ZodError` 实例，其中包含关于验证问题的详细信息。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -130,19 +130,19 @@ try {
 </Tab>
 </Tabs>
 
-To avoid a `try/catch` block, you can use the `.safeParse()` method to get back a plain result object containing either the successfully parsed data or a `ZodError`. The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions), so you can handle both cases conveniently.
+为了避免使用 `try/catch`，你可以使用 `.safeParse()` 方法获取一个普通的结果对象，该对象包含成功解析的数据或一个 `ZodError`。该结果类型是一个[区分联合类型](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions)，因此你可以方便地处理两种情况。
 
 ```ts
 const result = Player.safeParse({ username: 42, xp: "100" });
 if (!result.success) {
-  result.error;   // ZodError instance
+  result.error;   // ZodError 实例
 } else {
   result.data;    // { username: string; xp: number }
 }
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**注意** — 如果你的 schema 使用了某些异步 API，例如 `async` [细化](#refine) 或 [转换](#transform)，你需要使用 `.safeParseAsync()` 方法。
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -152,9 +152,9 @@ await schema.safeParseAsync("hello");
 ```
 </Callout>
 
-## Inferring types
+## 推断类型
 
-Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
+Zod 会从你的 schema 定义中推断出静态类型。你可以使用 `z.infer<>` 工具提取该类型，并按需使用。
 
 ```ts
 const Player = z.object({ 
@@ -162,14 +162,14 @@ const Player = z.object({
   xp: z.number()
 });
 
-// extract the inferred type
+// 提取推断类型
 type Player = z.infer<typeof Player>;
 
-// use it in your code
+// 在代码中使用该类型
 const player: Player = { username: "billie", xp: 100 };
 ```
 
-In some cases, the input & output types of a schema can diverge. For instance, the `.transform()` API can convert the input from one type to another. In these cases, you can extract the input and output types independently:
+在某些情况下，schema 的输入和输出类型可能不一致。例如，`.transform()` API 可以将输入类型转换为另一种类型。在这种情况下，你可以独立提取输入和输出类型：
 
 ```ts
 const mySchema = z.string().transform((val) => val.length);
@@ -177,10 +177,10 @@ const mySchema = z.string().transform((val) => val.length);
 type MySchemaIn = z.input<typeof mySchema>;
 // => string
 
-type MySchemaOut = z.output<typeof mySchema>; // equivalent to z.infer<typeof mySchema>
+type MySchemaOut = z.output<typeof mySchema>; // 等同于 z.infer<typeof mySchema>
 // number
 ```
 
 ---
 
-Now that we have the basics covered, let's jump into the Schema API.
+既然已经掌握了基础内容，接下来让我们深入 Schema API。

@@ -1,27 +1,26 @@
 ---
-title: For library authors
+title: 给库作者的指南
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
 
-This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
+此页面主要面向构建基于 Zod 的工具的*库作者*。
 
+> 如果您是库作者，并且认为本页面应包含一些额外的指导，请提交 issue！
 
-> If you are a library author and think this page should include some additional guidance, please open an issue!
+## 我需要依赖 Zod 吗？
 
-## Do I need to depend on Zod?
+首先，确保您确实需要依赖 Zod。
 
-First things first, make sure you need to depend on Zod at all. 
+如果您正在构建一个接受用户自定义 schema 进行黑盒验证的库，可能不需要专门集成 Zod。可以考虑使用 [Standard Schema](https://standardschema.dev/)。它是 TypeScript 生态中大多数流行验证库实现的共享接口（见[完整列表](https://standardschema.dev/#what-schema-libraries-implement-the-spec)），其中包括 Zod。
 
-If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with Zod specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
+此规范非常适合接受用户定义的 schema 并将其视为“黑盒”验证器。对于任何符合规范的库，您都能推断输入/输出类型、验证输入并获得标准化错误。
 
-This spec works great if you accept user-defined schemas and treat them like "black box" validators. Given any compliant library, you can extract inferred input/output types, validate inputs, and get back a standardized error.
+如果您需要 Zod 特有的功能，请继续阅读。
 
-If you need Zod specific functionality, read on.
+## 如何配置 peer 依赖？
 
-## How to configure peer dependencies?
-
-Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. This lets your users "bring their own Zod".
+任何基于 Zod 构建的库应在 `"peerDependencies"` 中包含 `"zod"` ，让用户“自带 Zod”。
 
 ```json
 // package.json
@@ -33,7 +32,7 @@ Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. 
 }
 ```
 
-During development, you need to meet your own peer dependency requirement, to do so, add `"zod"` to your `"devDependencies"` as well.
+开发时，您需要满足自身的 peer 依赖要求，因此也需将 `"zod"` 添加至 `"devDependencies"`。
 
 ```ts
 // package.json
@@ -47,9 +46,9 @@ During development, you need to meet your own peer dependency requirement, to do
 }
 ```
 
-## How to support Zod 4?
+## 如何支持 Zod 4？
 
-To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0`. 
+要支持 Zod 4，请将 `"zod"` 的最小版本更新为 `^3.25.0`。
 
 ```json
 // package.json
@@ -61,31 +60,31 @@ To support Zod 4, update the minimum version for your `"zod"` peer dependency to
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at a `/v4/core` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+从 `v3.25.0` 起，Zod 4 核心包可通过 `/v4/core` 子路径访问。完整版本控制方案详情请参见[Zod 4 的版本控制](https://github.com/colinhacks/zod/issues/4371)。
 
 ```ts
 import * as z4 from "zod/v4/core";
 ```
 
-Import from these subpaths only. Think of them like "permalinks" to their respective Zod versions. These will remain available forever.
+仅从这些子路径导入，可将其视作对应 Zod 版本的“永久链接”，将永远可用。
 
-- `"zod/v3"` for Zod 3 ✅ 
-- `"zod/v4/core"` for the Zod 4 Core package ✅
+- `"zod/v3"` 用于 Zod 3 ✅ 
+- `"zod/v4/core"` 用于 Zod 4 核心包 ✅
 
-Do not import from these subpaths:
+切勿从以下子路径导入：
 
-- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In a [future 4.x release](https://github.com/colinhacks/zod/issues/4371), this will export Zod 4. Use the permalinks instead. 
-- `"zod/v4"`— ❌ This subpath is the home of Zod 4 "Classic". If you reference classes from the standard module, your library will not work with Zod Mini. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+- `"zod"` — ❌ 在 3.x 版本中导出 Zod 3，未来 4.x 版本中会导出 Zod 4。请使用永久链接代替。 
+- `"zod/v4"` — ❌ 此子路径指向 Zod 4 “Classic” 版本。如果引用标准模块中的类，您的库将无法与 Zod Mini 一起使用，极不推荐。请使用 `"zod/v4/core"`，它导出以 `$` 前缀命名的子类，此类被 Zod Classic 和 Zod Mini 扩展。Classic 和 Mini 子类的内部实现相同，只是在实现的辅助方法不同。
 
-## Do I need to publish a new major version?
+## 是否需要发布新主版本？
 
-No, you should not need to publish a new major version of your library to support Zod 4 (unless you are dropping support for Zod 3, which isn't recommended). 
+不必。支持 Zod 4 不需要发布新主版本（除非您决定放弃支持 Zod 3，这不推荐）。
 
-You will need to bump your peer dependency to `^3.25.0`, thus your users will need to `npm upgrade zod`. But there were no breaking changes made to Zod 3 between `zod@3.24` and `zod@3.25`; in fact, there were no code changes whatsoever. As code changes will be required on the part of your users, I do not believe this constitutes a breaking change. I recommend against publishing a new major version.
+您需将 peer 依赖提升至 `^3.25.0`，用户需执行 `npm upgrade zod`。但从 `zod@3.24` 到 `zod@3.25` 阶段 Zod 3 无任何破坏性变更，实际上没有任何代码更改。由于用户需要做代码调整，我不认为这构成破坏性变更，不建议发布新主版本。
 
-## How to support Zod 3 and Zod 4 simultaneously?
+## 如何同时支持 Zod 3 和 Zod 4？
 
-Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
+自 `v3.25.0` 起，包内包含 Zod 3 和 Zod 4 分别的副本，放在各自子路径，方便同时支持。
 
 ```ts
 import * as z3 from "zod/v3";
@@ -98,13 +97,13 @@ function acceptUserSchema(schema: z3.ZodTypeAny | z4.$ZodType) {
 }
 ```
 
-To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zod"` property. This property is only defined on Zod 4 schemas.
+要在运行时区分 Zod 3 和 Zod 4 schema，检查 `"_zod"` 属性。该属性仅存在于 Zod 4 schema。
 
 ```ts
 import type * as z3 from "zod/v3";
 import type * as z4 from "zod/v4/core";
 
-declare const schema: z3.ZodTypeAny | v4.$ZodType;
+declare const schema: z3.ZodTypeAny | z4.$ZodType;
 
 if ("_zod" in schema) {
   schema._zod.def; // Zod 4 schema
@@ -113,26 +112,26 @@ if ("_zod" in schema) {
 }
 ```
 
-## How to support Zod and Zod Mini simultaneously?
+## 如何同时支持 Zod 和 Zod Mini？
 
-Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+库代码应仅从 `"zod/v4/core"` 导入。该子包定义了 `zod/v4` 和 `zod/v4-mini` 共享的接口、类和工具。
 
 ```ts
-// library code
+// 库代码
 import * as z4 from "zod/v4/core";
 
 export function acceptObjectSchema<T extends z4.$ZodObject>(schema: T){
-  // parse data
-  z4.parse(schema, { /* somedata */});
-  // inspect internals
+  // 解析数据
+  z4.parse(schema, { /* 某些数据 */});
+  // 检查内部结构
   schema._zod.def.shape;
 }
 ```
 
-By building against the shared base interfaces, you can reliably support both sub-packages simultaneously. This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
+基于共享基础接口构建能可靠地同时支持两个子包。此函数能接受 `zod/v4` 和 `zod/v4-mini` schema。
 
 ```ts
-// user code
+// 用户代码
 import { acceptObjectSchema } from "your-library";
 
 // Zod 4
@@ -144,13 +143,13 @@ import * as zm from "zod/v4-mini";
 acceptObjectSchema(zm.object({ name: zm.string() }))
 ```
 
-Refer to the [Zod Core](/packages/core) page for more information on the contents of the core sub-library.
+更多关于核心子库内容请查看 [Zod Core](/packages/core) 页面。
 
-{/* ### Future proofing
+{/* ### 面向未来的保障
 
-To future-proof your library, your code should always allow for new schema and check classes to be added in the future. The addition of a new schema type is *not* considered a breaking change. 
+为增强库的未来兼容性，代码中应始终允许未来添加新的 schema 和校验类。新增 schema 类型*不*视为破坏性变更。
 
-One common pattern when introspecting Zod schemas is to write a switch statement over the set of first-party schema types:
+一种常见模式是在检查 Zod schema 时编写 switch 语句针对第一方 schema 类型集合：
 
 ```ts
 const schema = {} as z.$ZodTypes;
@@ -163,20 +162,20 @@ switch (def.type) {
     // ...
     break;
   default:
-    console.warn(`Unknown schema type: ${def.type}`);
-    // reasonable fallback behavior
+    console.warn(`未知的 schema 类型: ${def.type}`);
+    // 合理的回退行为
 }
 ```
 
-To future-proof this code, your `default` case should probably not throw an error. Instead, it should print an informative error and fall back to some reasonable behavior. If instead you `throw` an error in the default case, your library will be unusable if/when new schemas types are added in the future. Best to print a warning and treat it as a "no-op" (or some other reasonable fallback behavior). The same applies to unrecognized check types, string formats, etc.
+为确保未来兼容，`default` 分支不应抛出错误，而应打印提示并采取合理回退。如果抛错，未来若新增 schema 类型时，库将无法使用。最佳做法是打印警告并将其视为“无操作”或其它合理回退。同理适用于无法识别的校验类型、字符串格式等。
 
  */}
 
-## How to accept user-defined schemas?
+## 如何接受用户定义的 schema？
 
-Accepting user-defined schemas is the a fundamental operation for any library built on Zod. This section outlines the best practices for doing so.
+接受用户定义的 schema 是基于 Zod 构建任何库的基本操作，以下是最佳实践。
 
-When starting out, it may be tempting to write a function that accepts a Zod schema like this:
+初学时，可能想写一个函数接收 Zod schema，类似这样：
 
 ```ts
 import * as z4 from "zod/v4/core";
@@ -186,14 +185,14 @@ function inferSchema<T>(schema: z4.$ZodType<T>) {
 }
 ```
 
-This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `$ZodType`. 
+该方法不正确，会限制 TypeScript 正确推断参数类型。无论传入什么，`schema` 类型都是 `$ZodType` 的实例。
 
 ```ts
 inferSchema(z.string());
 // => $ZodType<string>
 ```
 
-This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`. Instead, your generic parameter should extend the core Zod schema interface:
+此法丧失了类型信息，特别是*具体子类*（如 `ZodString`）。意味着无法调用 `.min()` 这类字符串专属方法。应让泛型参数继承核心 Zod schema 接口：
 
 ```ts
 function inferSchema<T extends z4.$ZodType>(schema: T) {
@@ -204,25 +203,23 @@ inferSchema(z.string());
 // => ZodString ✅
 ```
 
-To constrain the input schema to a specific subclass:
+要约束输入 schema 为特定子类：
 
 ```ts
-
 import * as z4 from "zod/v4/core";
 
-// only accepts object schemas
+// 只接受对象 schema
 function inferSchema<T>(schema: z4.$ZodObject) {
   return schema;
 }
 ```
 
-To constrain the inferred output type of the input schema:
+约束输入 schema 的推断输出类型：
 
 ```ts
-
 import * as z4 from "zod/v4/core";
 
-// only accepts string schemas
+// 只接受字符串 schema
 function inferSchema<T extends z4.$ZodType<string>>(schema: T) {
   return schema;
 }
@@ -230,11 +227,11 @@ function inferSchema<T extends z4.$ZodType<string>>(schema: T) {
 inferSchema(z.string()); // ✅ 
 
 inferSchema(z.number()); 
-// ❌ The types of '_zod.output' are incompatible between these types. 
-// // Type 'number' is not assignable to type 'string'
+// ❌ 不兼容：
+// // 类型 '_zod.output' 不匹配，number 不能赋值给 string
 ```
 
-To parse data with the schema, use the top-level `z4.parse`/`z4.safeParse`/`z4.parseAsync`/`z4.safeParseAsync` functions. The `z4.$ZodType` subclass has no methods on it. The usual parsing methods are implemented by Zod and Zod Mini, but are not available in Zod Core.
+要用 schema 解析数据，使用顶层的 `z4.parse`/`z4.safeParse`/`z4.parseAsync`/`z4.safeParseAsync` 函数。`z4.$ZodType` 子类自身无解析方法。通常解析方法由 Zod 和 Zod Mini 提供，Zod Core 中没有。
 
 ```ts
 function parseData<T extends z4.$ZodType>(data: unknown, schema: T): z4.output<T> {

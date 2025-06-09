@@ -1,52 +1,52 @@
 ---
-title: Zod Core
+title: Zod 核心
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
+该子包导出被 `zod/v4` 和 `zod/v4-mini` 使用的核心类和工具。它不打算被直接使用；相反，它设计为供其他包进行扩展。它实现了：
 
 ```ts
 import { z } from "zod/v4/core";
 
-// the base class for all Zod schemas
+// 所有 Zod schema 的基类
 z.$ZodType;
 
-// subclasses of $ZodType that implement common parsers
+// 实现常用解析器的 $ZodType 子类
 z.$ZodString
 z.$ZodObject
 z.$ZodArray
 // ...
 
-// the base class for all Zod checks
+// 所有 Zod 校验的基类
 z.$ZodCheck;
 
-// subclasses of $ZodCheck that implement common checks
+// 实现常用校验的 $ZodCheck 子类
 z.$ZodCheckMinLength
 z.$ZodCheckMaxLength
 
-// the base class for all Zod errors
+// 所有 Zod 错误的基类
 z.$ZodError;
 
-// issue formats (types only)
+// Issue 格式（仅类型）
 {} as z.$ZodIssue;
 
-// utils
+// 工具函数
 z.util.isValidJWT(...);
 ```
 
-## Schemas
+## Schemas（模式）
 
-The base class for all Zod schemas is `$ZodType`. It accepts two generic parameters: `Output` and `Input`.
+所有 Zod schema 的基类是 `$ZodType`，它接受两个泛型参数：`Output` 和 `Input`。
 
 ```ts
 export class $ZodType<Output = unknown, Input = unknown> {
-  _zod: { /* internals */}
+  _zod: { /* 内部实现 */}
 }
 ```
 
-`zod/v4/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
+`zod/v4/core` 导出了一些实现常用解析器的子类。所有官方子类的联合类型导出为 `z.$ZodTypes`。
 
 ```ts
 export type $ZodTypes =
@@ -90,8 +90,8 @@ export type $ZodTypes =
 ```
 
 <Accordions>
-<Accordion title="Inheritance diagram">
-  Here is a complete inheritance diagram for the core schema classes:
+<Accordion title="继承图">
+  下面是核心 schema 类的完整继承图：
   ```txt
   - $ZodType
       - $ZodString
@@ -162,20 +162,20 @@ export type $ZodTypes =
 </Accordion>
 </Accordions>
 
-## Internals
+## Internals（内部实现）
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
+所有 `zod/v4/core` 子类仅包含一个属性：`_zod`。该属性是包含 schema *内部信息*的对象。其目标是让 `zod/v4/core` 尽可能具有可扩展性和无特定立场。其他库可以基于这些类“构建自己的 Zod”，而不会让 `zod/v4/core` 混乱接口。关于如何扩展这些类，请参考 `zod/v4` 和 `zod/v4-mini` 的实现。
 
-The `_zod` internals property contains some notable properties:
+`_zod` 内部属性包含一些重要属性：
 
-- `.def` — The schema's *definition*: this is the object you pass into the class's constructor to create an instance. It completely describes the schema, and it's JSON-serializable.
-  - `.def.type` — A string representing the schema's type, e.g. `"string"`, `"object"`, `"array"`, etc.
-  - `.def.checks` — An array of *checks* that are executed by the schema after parsing.
-- `.input` — A virtual property that "stores" the schema's *inferred input type*.
-- `.output` — A virtual property that "stores" the schema's *inferred output type*.
-- `.run()` — The schema's internal parser implementation.
+- `.def` — schema 的*定义*：你传入类构造器以创建实例的对象。它完整描述了 schema，且支持 JSON 序列化。
+  - `.def.type` — 表示 schema 类型的字符串，比如 `"string"`、`"object"`、`"array"` 等。
+  - `.def.checks` — schema 在解析后执行的 *checks* 数组。
+- `.input` — 虚拟属性，代表 schema *推断的输入类型*。
+- `.output` — 虚拟属性，代表 schema *推断的输出类型*。
+- `.run()` — schema 的内部解析实现。
 
-If you are implementing a tool (say, a code generator) that must traverse Zod schemas, you can cast any schema to `$ZodTypes` and use the `def` property to discriminate between these classes.
+如果你在实现一个需要遍历 Zod schemas 的工具（例如代码生成器），你可以将任意 schema 转换为 `$ZodTypes` 并使用 `def` 属性来区分这些类。
 
 ```ts
 export function walk(_schema: z.$ZodType) {
@@ -194,7 +194,7 @@ export function walk(_schema: z.$ZodType) {
 }
 ```
 
-There are a number of subclasses of `$ZodString` that implement various *string formats*. These are exported as `z.$ZodStringFormatTypes`.
+有许多 `$ZodString` 的子类实现了各种*字符串格式*。它们被导出为 `z.$ZodStringFormatTypes`。
 
 ```ts
 export type $ZodStringFormatTypes =
@@ -224,9 +224,9 @@ export type $ZodStringFormatTypes =
 ```
 
 
-## Parsing 
+## Parsing（解析）
 
-As the Zod Core schema classes have no methods, there are top-level functions for parsing data.
+因为 Zod Core schema 类没有方法，解析数据用的是顶层函数。
 
 ```ts
 import * as z from "zod/v4/core";
@@ -239,9 +239,9 @@ await z.safeParseAsync(schema, "hello");
 ```
 
 
-## Checks
+## Checks（校验）
 
-Every Zod schema contains an array of *checks*. These perform post-parsing refinements (and occasionally mutations) that *do not affect* the inferred type.
+每个 Zod schema 包含一个 *checks* 数组。这些用于在解析后执行细化（有时是变异），*不影响*推断类型。
 
 ```ts
 const schema = z.string().check(z.email()).check(z.min(5));
@@ -251,21 +251,21 @@ schema._zod.def.checks;
 // => [$ZodCheckEmail, $ZodCheckMinLength]
 ```
 
-The base class for all Zod checks is `$ZodCheck`. It accepts a single generic parameter `T`.
+所有 Zod 校验的基类是 `$ZodCheck`，接受一个泛型参数 `T`。
 
 ```ts
 export class $ZodCheck<in T = unknown> {
-  _zod: { /* internals */}
+  _zod: { /* 内部实现 */}
 }
 ```
 
-The `_zod` internals property contains some notable properties:
+`_zod` 内部包含重要属性：
 
-- `.def` — The check's *definition*: this is the object you pass into the class's constructor to create the check. It completely describes the check, and it's JSON-serializable.
-  - `.def.check` — A string representing the check's type, e.g. `"min_lenth"`, `"less_than"`, `"string_format"`, etc.
-- `.check()` — Contains the check's validation logic.
+- `.def` — 校验的*定义*：你传给类构造器创建该校验的对象。它完整描述校验，且支持 JSON 序列化。
+  - `.def.check` — 表示校验类型的字符串，如 `"min_length"`、`"less_than"`、`"string_format"` 等。
+- `.check()` — 包含校验逻辑。
 
-`zod/v4/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
+`zod/v4/core` 导出了一些实现常用细化的子类。所有官方子类联合导出为 `z.$ZodChecks`。
 
 ```ts
 export type $ZodChecks =
@@ -287,7 +287,7 @@ export type $ZodChecks =
 ```
 
 
-You can use the `._zod.def.check` property to discriminate between these classes.
+你可以使用 `._zod.def.check` 属性区分这些类。
 
 ```ts
 const check = {} as z.$ZodChecks;
@@ -302,7 +302,7 @@ switch (def.check) {
 ```
 
 
-As with schema types, there are a number of subclasses of `$ZodCheckStringFormat` that implement various *string formats*. 
+跟模式类型类似，`$ZodCheckStringFormat` 有许多子类实现各种*字符串格式*。
 
 ```ts
 export type $ZodStringFormatChecks =
@@ -338,7 +338,7 @@ export type $ZodStringFormatChecks =
 ```
 
 
-Use a nested `switch` to discriminate between the different string format checks.
+使用嵌套 `switch` 来区分不同字符串格式的校验。
 
 ```ts
 const check = {} as z.$ZodChecks;
@@ -356,31 +356,31 @@ switch (def.check) {
       switch (formatCheckDef.format) {
         case "email":
         case "url":
-          // do stuff
+          // 执行相关操作
       }
     }
     break;
 }
 ```
 
-You'll notice some of these string format *checks* overlap with the string format *types* above. That's because these classes implement both the `$ZodCheck` and `$ZodType` interfaces. That is, they can be used as either a check or a type. In these cases, both `._zod.parse` (the schema parser) and `._zod.check` (the check validation) are executed during parsing. In effect, the instance is prepended to its own `checks` array (though it won't actually exist in `._zod.def.checks`).
+你会注意到，有些字符串格式*校验*和上面字符串格式*类型*是重叠的。这是因为这些类同时实现了 `$ZodCheck` 和 `$ZodType` 接口。也就是说，它们可以作为校验或类型使用。在这些情况下，解析时会执行 `._zod.parse`（schema解析器）和 `._zod.check`（校验验证）。实际上，该实例会被添加到自身的 `checks` 数组前端（但它不会真正存在于 `._zod.def.checks` 中）。
 
 ```ts
-// as a type
+// 作为类型
 z.email().parse("user@example.com");
 
-// as a check
+// 作为校验
 z.string().check(z.email()).parse("user@example.com")
 ```
 
-## Errors
+## Errors（错误）
 
-The base class for all errors in Zod is `$ZodError`.
+所有 Zod 错误的基类是 `$ZodError`。
 
-> For performance reasons, `$ZodError` *does not* extend the built-in `Error` class! So using `instanceof Error` will return `false`.
+> 出于性能考虑，`$ZodError` *不*继承内置的 `Error` 类！因此使用 `instanceof Error` 会返回 `false`。
 
-- The `zod/v4` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
-- The `zod/v4-mini` sub-package directly uses `$ZodError`
+- `zod/v4` 包实现了 `$ZodError` 的子类 `ZodError`，带有一些额外的便捷方法。
+- `zod/v4-mini` 子包直接使用 `$ZodError`
 
 ```ts
 export class $ZodError<T = unknown> implements Error {
@@ -388,9 +388,9 @@ export class $ZodError<T = unknown> implements Error {
 }
 ```
 
-## Issues
+## Issues（问题）
 
-The `issues` property corresponds to an array of `$ZodIssue` objects. All issues extend the `z.$ZodIssueBase` interface.
+`issues` 属性对应 `$ZodIssue` 对象数组。所有 issues 都扩展了 `z.$ZodIssueBase` 接口。
 
 ```ts
 export interface $ZodIssueBase {
@@ -401,7 +401,7 @@ export interface $ZodIssueBase {
 }
 ```
 
-Zod defines the following issue subtypes:
+Zod 定义了以下 issue 子类型：
 
 ```ts
 export type $ZodIssue =
@@ -418,21 +418,20 @@ export type $ZodIssue =
   | $ZodIssueCustom;
   ```
 
-For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
+关于各类型详情，请参考[实现代码](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts)。
 
 
 {/* ## Best practices
 
-If you're reading this page, you're likely trying to build some kind of tool or library on top of Zod. This section breaks down some best practices for doing so.
+如果你正在阅读此页面，可能是在尝试基于 Zod 构建某种工具或库。本节介绍一些最佳实践。
 
-1. If you're just accept user-defined schemas, use Standard Schema instead
+1. 如果你只是接受用户定义的 schema，建议使用标准 Schema
 
-Zod implements the [Standard Schema](https://standardschema.dev/) specification, a standard interface for schema libraries to expose their validation logic and inferred types to third-party tools. If your goal is to accept user-defined schemas, extracting their inferred types, and using them to parse data, then Standard Schema is all you need. Refer to the Standard Schema website/docs for more information.
+Zod 实现了 [Standard Schema](https://standardschema.dev/) 规范，它为 schema 库提供了一个标准接口，以向第三方工具暴露其验证逻辑和推断类型。如果你的目标是接受用户定义的 schema，提取推断类型并解析数据，那么 Standard Schema 就足够了。详情见 Standard Schema 网站/文档。
 
-2. Set up `peerDependencies` properly!
+2. 正确设置 `peerDependencies`！
 
-If your tool accepts Zod schemas from a consumer/user, you should add `"zod/v4/core"` to `peerDependencies`. This lets your users "bring their own Zod". Be as flexible as possible with the version range. For example, if your tool is compatible with `zod/v4/core`, you can use the following. This allows your users to bring any version of `zod/v4/core`, avoiding accidental duplicate installs.
-
+如果你的工具需要接收用户提供的 Zod schema，应将 `"zod/v4/core"` 添加到 `peerDependencies`。这允许用户“自带 Zod”。版本范围尽量宽松。例如，如果你的工具兼容 `zod/v4/core`，可以如下配置。用户可以安装任何版本的 `zod/v4/core`，避免重复安装。
 
 ```json
 {
@@ -442,7 +441,7 @@ If your tool accepts Zod schemas from a consumer/user, you should add `"zod/v4/c
 }
 ```
 
-Since package managers generally won't install your own `peerDependencies`, you'll need to add `zod/v4/core` to your `devDependencies` as well. As new versions of `zod/v4/core` are released, you can update your `devDependencies` to match the latest version. This is important for testing and development purposes.
+由于包管理器通常不会安装你的 `peerDependencies`，你还需要将 `zod/v4/core` 添加到 `devDependencies` 中。随着 `zod/v4/core` 发布新版本，你可以更新 `devDependencies` 以匹配最新版本。这对测试和开发非常重要。
 
 ```json
 {
@@ -454,4 +453,3 @@ Since package managers generally won't install your own `peerDependencies`, you'
   }
 }
 ``` */}
-

@@ -1,52 +1,52 @@
 ---
-title: Introducing Zod 4
+title: 介绍 Zod 4
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-After a year of active development: Zod 4 is now stable! It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features. 
+经过一年的积极开发：Zod 4 现已稳定发布！它更快、更轻、更符合 `tsc` 的优化，并且实现了一些长期请求的功能。
 
 <Callout icon="❤️"> 
-Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on Zod 4 through their extremely generous [OSS Fellowship](https://clerk.com/blog/zod-fellowship). They were an amazing partner throughout the (much longer than anticipated!) development process.
+特别感谢 [Clerk](https://go.clerk.com/zod-clerk)，通过他们极其慷慨的 [开源基金会](https://clerk.com/blog/zod-fellowship) 支持了我对 Zod 4 的开发工作。在比预期更长的开发过程中，他们一直是很棒的合作伙伴。
 </Callout>
 
-## Versioning 
+## 版本管理 
 
-To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it is considered stable and ready for production use.
+为了简化用户和 Zod 关联库生态系统的迁移过程，Zod 4 将初期与 Zod 3 一起作为 `zod@3.25` 版本发布。尽管版本号为 3.x，但它被认为是稳定且已准备好用于生产环境。
 
-To upgrade: 
+升级命令： 
 
 ```
 npm upgrade zod@^3.25.0
 ```
 
-Then import Zod 4 from the `"/v4"` subpath:
+然后从子路径 `"/v4"` 导入 Zod 4：
 
 ```ts
 import { z } from "zod/v4";
 ```
 
-Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371). 
+未来当对 Zod 4 的支持广泛后，我们将发布 npm 版本 `zod@4.0.0`。届时，Zod 4 将从包根路径（`"zod"`）导出，`"zod/v4"` 子路径仍将保留。关于此版本方案的详细说明，请参考 [此 issue](https://github.com/colinhacks/zod/issues/4371)。
 
-For a complete list of breaking changes, refer to the [Migration guide](/v4/changelog). This post focuses on new features & enhancements.
+关于所有重大变更的完整列表，请参阅 [迁移指南](/v4/changelog)。本文重点介绍新增功能和改进。
 
-{/* A number of popular ecosystem packages have Zod 4 support ready or nearly ready. Track the following pull requests for updates:
+{/* 许多流行生态包已经准备好或接近支持 Zod 4。关注以下 PR 获取更新：
 - [`drizzle-zod#4478`](https://github.com/drizzle-team/drizzle-orm/pull/4478)
 - [`@hono/zod-validator#1173`](https://github.com/honojs/middleware/pull/1173) */}
 
-## Why a new major version?
+## 为什么发布新的主版本？
 
-Zod v3.0 was released in May 2021 (!). Back then Zod had 2700 stars on GitHub and 600k weekly downloads. Today it has 37.8k stars and 31M weekly downloads (up from 23M when the beta came out 6 weeks ago!). After 24 minor versions, the Zod 3 codebase had hit a ceiling; the most commonly requested features and improvements require breaking changes.
+Zod v3.0 发布于 2021 年 5 月（！）。当时 Zod 在 GitHub 上只有 2700 颗星，并且每周下载量为 60 万。现在拥有 3.78 万星和 3100 万每周下载量（6 周前 beta 发布时是 2300 万！）。经过 24 个小版本之后，Zod 3 的代码库已经达到瓶颈；最常请求的功能和改进需要破坏兼容性的重大更改。
 
-Zod 4 fixes a number of long-standing design limitations of Zod 3 in one fell swoop, paving the way for several long-requested features and a huge leap in performance. It closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve as the new foundation for many more years to come.
+Zod 4 一举解决了 Zod 3 长期存在的设计限制，为多个长期开发的功能和性能飞跃铺平了道路。它关闭了 Zod 的 [10 个最高票未解决 issue 中的 9 个](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc)。希望它能成为未来多年的新基础。
 
-For a scannable breakdown of what's new, see the table of contents. Click on any item to jump to that section.
+想快速浏览新增内容，请参阅目录，点击任意项目跳转相应章节。
 
-## Benchmarks
+## 性能基准测试
 
-You can run these benchmarks yourself in the Zod repo:
+你可以在 Zod 仓库中自行运行以下基准测试：
 
 ```sh 
 $ git clone git@github.com:colinhacks/zod.git
@@ -55,13 +55,13 @@ $ git switch v4
 $ pnpm install
 ```
 
-Then to run a particular benchmark:
+然后运行指定基准：
 
 ```sh
 $ pnpm bench <name>
 ```
 
-### 14x faster string parsing
+### 字符串解析快 14 倍
 
 ```sh
 $ pnpm bench string
@@ -79,7 +79,7 @@ summary for z.string().parse
    14.71x faster than zod3
 ```
 
-### 7x faster array parsing
+### 数组解析快 7 倍
 
 ```sh
 $ pnpm bench array
@@ -97,9 +97,9 @@ summary for z.array() parsing
    7.43x faster than zod3
 ```
 
-### 6.5x faster object parsing
+### 对象解析快 6.5 倍
 
-This runs the [Moltar validation library benchmark](https://moltar.github.io/typescript-runtime-type-benchmarks/). 
+此测试运行的是 [Moltar 验证库基准](https://moltar.github.io/typescript-runtime-type-benchmarks/)。
 
 ```sh
 $ pnpm bench object-moltar
@@ -115,9 +115,9 @@ summary for z.object() safeParse
    6.5x faster than zod3
 ```
 
-## 100x reduction in `tsc` instantiations
+## `tsc` 实例数量降低 100 倍
 
-Consider the following simple file:
+考虑以下简单文件：
 
 ```ts
 import { z } from "zod/v4";
@@ -137,11 +137,11 @@ export const B = A.extend({
 });
 ```
 
-Compiling this file with `tsc --extendedDiagnostics` using `"zod/v3"` results in >25000 type instantiations. With `"zod/v4"` it only results in ~175. 
+用 `"zod/v3"` 以及 `tsc --extendedDiagnostics` 编译该文件会产生超过 25000 次类型实例化。用 `"zod/v4"` 仅约 175 次。
 
 <Callout>
 
-The Zod repo contains a `tsc` benchmarking playground. Try this for yourself using the compiler benchmarks in `packages/tsc`. The exact numbers may change as the implementation evolves. 
+Zod 仓库内有一个 `tsc` 基准测试游乐场。可以在 `packages/tsc` 使用编译器基准测试验证此效果。实现演变时具体数字可能变化。
 
 ```sh
 $ cd packages/tsc
@@ -149,7 +149,7 @@ $ pnpm bench object-with-extend
 ```
 </Callout>
 
-More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicious "instantiation explosions". For instance, chaining `.extend()` and `.omit()` repeatedly—something that previously caused compiler issues:
+更重要的是，Zod 4 重新设计简化了 `ZodObject` 及其它 schema 类的泛型，避免了某些棘手的“实例爆炸”问题。例如，重复链式调用 `.extend()` 和 `.omit()` —— 以前会导致编译器问题：
 
 ```ts
 import { z } from "zod/v4";
@@ -257,13 +257,13 @@ export const q = p.extend({
 });
 ```
 
-In Zod 3, this took `4000ms` to compile; and adding additional calls to `.extend()` would trigger a "Possibly infinite" error. In Zod 4, this compiles in `400ms`, `10x` faster.
+Zod 3 编译此代码耗时约 4000ms；继续添加 `.extend()` 会触发“可能无限”错误。Zod 4 编译耗时仅 400ms，提升了 10 倍。
 
-> Coupled with the upcoming [`tsgo`](https://github.com/microsoft/typescript-go) compiler, Zod 4's editor performance will scale to vastly larger schemas and codebases.
+> 搭配即将推出的 [`tsgo`](https://github.com/microsoft/typescript-go) 编译器，Zod 4 的编辑器性能将在更大规模的 schema 和代码库中表现更佳。
 
-## 2x reduction in core bundle size
+## 核心包体积减半
 
-Consider the following simple script.
+考虑以下极简脚本：
 
 ```ts
 import { z } from "zod/v4";
@@ -273,24 +273,24 @@ const schema = z.boolean();
 schema.parse(true);
 ```
 
-It's about as simple as it gets when it comes to validation. That's intentional; it's a good way to measure the *core bundle size*—the code that will end up in the bundle even in simple cases. We'll bundle this with `rollup` using both Zod 3 and Zod 4 and compare the final bundles. 
+这是验证中尽可能简单的例子，有助于衡量*核心包体积* —— 即即使在简单用例中仍包含的代码。我们用 `rollup` 对比 Zod 3 和 Zod 4 打包结果。
 
-| Package | Bundle (gzip) |
-|---------|--------------|
-| `zod/v3`   | `12.47kb`      |
-| `zod/v4`   | `5.36kb`       |
+| 包名    | 打包体积（gzip） |
+|---------|------------------|
+| `zod/v3`   | `12.47kb`       |
+| `zod/v4`   | `5.36kb`        |
 
-The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lot better.
+Zod 4 中核心包约减少 57%（2.3 倍）。这很好，但还有更大的提升空间。
 
-## Introducing Zod Mini
+## 介绍 Zod Mini
 
-Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where `zod/v4-mini` comes in. 
+Zod 的方法繁重 API 本质上难以做树摇优化。即使是我们的简单 `z.boolean()` 脚本，也会带入许多未使用的实现，比如 `.optional()`、`.array()` 等。写更精简的实现只能到此为止。此时 `zod/v4-mini` 问世。
 
 ```sh
 npm install zod@^3.25.0
 ```
 
-It's a Zod variant with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `zod/v4-mini` generally uses wrapper functions:
+它是符合 `zod` 功能一对一映射的变体，API 更函数式且支持树摇优化。Zod 采用链式方法，`zod/v4-mini` 通常用包装函数替代：
 
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
@@ -317,7 +317,7 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-Not all methods are gone! The parsing methods are identical in `zod/v4` and `zod/v4-mini`.
+并非所有方法都消失了！解析方法在 `zod/v4` 和 `zod/v4-mini` 中完全相同。
 
 ```ts
 import { z } from "zod/v4-mini";
@@ -328,7 +328,7 @@ await z.string().parseAsync("asdf");
 await z.string().safeParseAsync("asdf");
 ```
 
-There's also a general-purpose `.check()` method used to add refinements.
+还有一个通用 `.check()` 方法用以添加细化规则。
 
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
@@ -354,19 +354,19 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The following top-level refinements are available in `zod/v4-mini`. It should be fairly self-explanatory which methods they correspond to.
+`zod/v4-mini` 中还包含以下顶级细化方法，名称自明，与方法式 API 对应。
 
 ```ts
 import { z } from "zod/v4-mini";
 
-// custom checks
+// 自定义检查
 z.refine();
 
-// first-class checks
+// 一等公民检查
 z.lt(value);
-z.lte(value); // alias: z.maximum()
+z.lte(value); // 别名: z.maximum()
 z.gt(value);
-z.gte(value); // alias: z.minimum()
+z.gte(value); // 别名: z.minimum()
 z.positive();
 z.negative();
 z.nonpositive();
@@ -384,10 +384,10 @@ z.uppercase();
 z.includes(value);
 z.startsWith(value);
 z.endsWith(value);
-z.property(key, schema); // for object schemas; check `input[key]` against `schema`
-z.mime(value); // for file schemas (see below)
+z.property(key, schema); // 对象 schema，检查 `input[key]` 是否符合 `schema`
+z.mime(value); // 文件 schema 相关 (见下文)
 
-// overwrites (these *do not* change the inferred type!)
+// 覆盖（*不会*改变推断类型！）
 z.overwrite(value => newValue);
 z.normalize();
 z.trim();
@@ -395,12 +395,11 @@ z.toLowerCase();
 z.toUpperCase();
 ```
 
+此更函数式 API 让打包工具更容易摇掉未使用 API。推荐绝大多数场景使用 `zod/v4`，但对包体积限制苛刻的项目应考虑 `zod/v4-mini`。
 
-This more functional API makes it easier for bundlers to tree-shake the APIs you don't use. While `zod/v4` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
+### 核心包体积减少 6.6 倍
 
-### 6.6x reduction in core bundle size
-
-Here's the script from above, updated to use `"zod/v4-mini"` instead of `"zod"`.
+继续上文示例，改用 `"zod/v4-mini"`：
 
 ```ts
 import { z } from "zod/v4-mini";
@@ -409,19 +408,19 @@ const schema = z.boolean();
 schema.parse(false);
 ```
 
-When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an 85% (6.6x) reduction in core bundle size compared to `zod@3`.
+用 rollup 打包后的 gzip 体积是 `1.88kb`，相比 `zod@3` 核心包体积减少 85%（约 6.6 倍）。
 
-| Package   | Bundle (gzip) |
-|-----------|--------------|
-| `zod/v3`     |  `12.47kb`      |
-| `zod/v4`     | `5.36kb`       |
-| `zod/v4-mini` | `1.88kb`       |
+| 包名         | 打包体积（gzip） |
+|--------------|------------------|
+| `zod/v3`       | `12.47kb`       |
+| `zod/v4`       | `5.36kb`        |
+| `zod/v4-mini`  | `1.88kb`        |
 
-Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `"Zod"` and `"Zod Mini"` wherever their APIs diverge.
+更多信息请见专门的 [`zod/v4-mini`](/packages/mini) 文档页。完整 API 细节混入现有文档，每当 API 有差异处代码块均含 `"Zod"` 和 `"Zod Mini"` 选项卡。
 
-## Metadata
+## 元数据
 
-Zod 4 introduces a new system for adding strongly-typed metadata to your schemas. Metadata isn't stored inside the schema itself; instead it's stored in a "schema registry" that associates a schema with some typed metadata. To create a registry with `z.registry()`:
+Zod 4 引入了一个为 schema 添加强类型元数据的新系统。元数据不存于 schema 内部，而存于一个“schema 注册表”，将 schema 与类型化元数据关联。通过 `z.registry()` 创建注册表：
 
 ```ts
 import { z } from "zod/v4";
@@ -429,7 +428,7 @@ import { z } from "zod/v4";
 const myRegistry = z.registry<{ title: string; description: string }>();
 ```
 
-To add schemas to your registry: 
+往注册表添加 schema：
 
 ```ts
 const emailSchema = z.string().email();
@@ -439,18 +438,18 @@ myRegistry.get(emailSchema);
 // => { title: "Email address", ... }
 ```
 
-Alternatively, you can use the `.register()` method on a schema for convenience:
+或用 schema 的 `.register()` 方法更方便：
 
-{/* > Unlike all other Zod methods, `.register()` is *not* immutable, it returns the original schema. */}
+{/* > 与其他 Zod 方法不同，`.register()` *不是*不可变的，会返回原 schema。 */}
 
 ```ts
 emailSchema.register(myRegistry, { title: "Email address", description: "..." })
-// => returns emailSchema
+// => 返回 emailSchema
 ```
 
-### The global registry
+### 全局注册表
 
-Zod also exports a global registry `z.globalRegistry` that accepts some common JSON Schema-compatible metadata:
+Zod 还导出一个全局注册表 `z.globalRegistry`，支持一些常见 JSON Schema 兼容的元数据：
 
 ```ts
 z.globalRegistry.add(z.string(), { 
@@ -458,15 +457,15 @@ z.globalRegistry.add(z.string(), {
   title: "Email address",
   description: "Provide your email",
   examples: ["naomie@example.com"],
-  extraKey: "Additional properties are also allowed"
+  extraKey: "也允许额外属性"
 });
 ```
 
-### `.meta()`
+### `.meta()` 方法
 
-To conveniently add a schema to `z.globalRegistry`, use the `.meta()` method.
+方便添加 schema 到 `z.globalRegistry`，可用 `.meta()` 方法。
 
-{/* > Unlike `.register()`, `.meta()` *is* immutable; it returns a new instance (a clone of the original schema). */}
+{/* > 不同于 `.register()`，`.meta()` *是*不可变的，返回新实例（原 schema 的克隆）。 */}
 
 ```ts
 z.string().meta({ 
@@ -479,19 +478,19 @@ z.string().meta({
 ```
 
 <Callout>
-For compatibility with Zod 3, `.describe()` is still available, but `.meta()` is preferred.
+为兼容 Zod 3，`.describe()` 依然可用，但推荐使用 `.meta()`：
 
 ```ts
 z.string().describe("An email address");
 
-// equivalent to
+// 等效于
 z.string().meta({ description: "An email address" });
 ```
 </Callout>
 
-## JSON Schema conversion
+## JSON Schema 转换
 
-Zod 4 introduces first-party JSON Schema conversion via `z.toJSONSchema()`.
+Zod 4 原生支持通过 `z.toJSONSchema()` 转换为 JSON Schema。
 
 ```ts
 import { z } from "zod/v4";
@@ -509,7 +508,7 @@ z.toJSONSchema(mySchema);
 // }
 ```
 
-Any metadata in `z.globalRegistry` is automatically included in the JSON Schema output.
+`z.globalRegistry` 中的任何元数据都会自动包含在 JSON Schema 输出中。
 
 ```ts
 const mySchema = z.object({
@@ -528,14 +527,13 @@ z.toJSONSchema(mySchema);
 //   },
 //   required: [ 'firstName', 'lastName', 'age' ]
 // }
-
 ```
 
-Refer to the [JSON Schema docs](/json-schema) for information on customizing the generated JSON Schema.
+详见 [JSON Schema 文档](/json-schema) 了解如何定制生成的 JSON Schema。
 
-## Recursive objects
+## 递归对象
 
-This was an unexpected one. After years of trying to crack this problem, I finally [found a way](https://x.com/colinhacks/status/1919286275133378670) to properly infer recursive object types in Zod. To define a recursive type:
+这是一个意外收获。经过多年尝试解决这个问题，我终于[找到了方法](https://x.com/colinhacks/status/1919286275133378670)让 Zod 正确推断递归对象类型。定义递归类型：
 
 ```ts
 const Category = z.object({
@@ -549,7 +547,7 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
-You can also represent *mutually recursive types*:
+还能表示*互相递归类型*：
 
 ```ts
 const User = z.object({
@@ -567,7 +565,7 @@ const Post = z.object({
 });
 ```
 
-Unlike the Zod 3 pattern for recursive types, there's no type casting required. The resulting schemas are plain `ZodObject` instances and have the full set of methods available. 
+与 Zod 3 递归类型写法不同，无需类型断言。生成的 schema 是普通的 `ZodObject` 实例，支持完整方法集：
 
 ```ts
 Post.pick({ title: true })
@@ -575,36 +573,36 @@ Post.partial();
 Post.extend({ publishDate: z.date() });
 ```
 
-## File schemas
+## 文件类型模式
 
-To validate `File` instances:
+验证 `File` 实例：
 
 ```ts
 const fileSchema = z.file();
 
-fileSchema.min(10_000); // minimum .size (bytes)
-fileSchema.max(1_000_000); // maximum .size (bytes)
-fileSchema.mime(["image/png"]); // MIME type
+fileSchema.min(10_000); // 最小 .size（字节）
+fileSchema.max(1_000_000); // 最大 .size（字节）
+fileSchema.mime(["image/png"]); // MIME 类型
 ```
 
-## Internationalization
+## 国际化
 
-Zod 4 introduces a new `locales` API for globally translating error messages into different languages. 
+Zod 4 引入全局翻译错误消息的 `locales` API。
 
 ```ts
 import { z } from "zod/v4";
 
-// configure English locale (default)
+// 配置英文（默认）
 z.config(z.locales.en());
 ```
 
-At the time of this writing only the English locale is available; There will be a call for pull request from the community shortly; this section will be updated with a list of supported languages as they become available.
+本文撰写时仅有英文，社区即将发起贡献呼吁，将在此更新支持的语言列表。
 
-## Error pretty-printing
+## 错误美化打印
 
-The popularity of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significant demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
+[`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) 的流行表明用户对官方美化错误的 API 需求很大。如果你已经用它，可继续使用。
 
-Zod now implements a top-level `z.prettifyError` function for converting a `ZodError` to a user-friendly formatted string.
+Zod 新增了顶级函数 `z.prettifyError` 将 `ZodError` 转为用户友好的格式化字符串。
 
 ```ts
 const myError = new z.ZodError([
@@ -633,7 +631,7 @@ const myError = new z.ZodError([
 z.prettifyError(myError);
 ```
 
-This returns the following pretty-printable multi-line string:
+其输出如下多行格式化字符串：
 
 ```ts
 ✖ Unrecognized key: "extraField"
@@ -643,11 +641,11 @@ This returns the following pretty-printable multi-line string:
   → at favoriteNumbers[1]
 ```
 
-Currently the formatting isn't configurable; this may change in the future.
+当前格式不可配置，未来可能调整。
 
-## Top-level string formats
+## 顶级字符串格式
 
-All "string formats" (email, etc.) have been promoted to top-level functions on the `z` module. This is both more concise and more tree-shakable. The method equivalents (`z.string().email()`, etc.) are still available but have been deprecated. They'll be removed in the next major version.
+所有“字符串格式”（邮箱等）均升级为 `z` 模块的顶级函数，更简洁且支持树摇。对应的方法式 API（如 `z.string().email()`）虽仍可用，但已弃用，将在下个主版本移除。
 
 ```ts
 z.email();
@@ -672,75 +670,75 @@ z.iso.duration();
 z.iso.time();
 ```
 
-### Custom email regex
+### 自定义邮箱正则
 
-The `z.email()` API now supports a custom regular expression. There is no one canonical email regex; different applications may choose to be more or less strict. For convenience Zod exports some common ones.
+`z.email()` 支持自定义正则表达式。邮箱没有单一标准正则，不同应用可选择不同严格程度。为方便，Zod 导出常用正则：
 
 ```ts
-// Zod's default email regex (Gmail rules)
-// see colinhacks.com/essays/reasonable-email-regex
+// Zod 默认邮箱正则（Gmail 规则）
+// 详见 colinhacks.com/essays/reasonable-email-regex
 z.email(); // z.regexes.email
 
-// the regex used by browsers to validate input[type=email] fields
+// 浏览器用于 input[type=email] 校验的正则
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
 z.email({ pattern: z.regexes.html5Email });
 
-// the classic emailregex.com regex (RFC 5322)
+// 经典邮箱正则（RFC 5322）
+// 来源 emailregex.com
 z.email({ pattern: z.regexes.rfc5322Email });
 
-// a loose regex that allows Unicode (good for intl emails)
+// 允许 Unicode 的宽松正则（适合国际邮箱）
 z.email({ pattern: z.regexes.unicodeEmail });
 ```
 
-## Template literal types
+## 模板字面量类型
 
-Zod 4 implements `z.templateLiteral()`. Template literal types are perhaps the biggest feature of TypeScript's type system that wasn't previously representable.
-
+Zod 4 实现了 `z.templateLiteral()`。模板字面量类型是 TypeScript 类型系统里一个大的新功能，以前无法表示。
 
 ```ts
 const hello = z.templateLiteral(["hello, ", z.string()]);
-// `hello, ${string}`
+// 对应字符串模板类型：`hello, ${string}`
 
 const cssUnits = z.enum(["px", "em", "rem", "%"]);
 const css = z.templateLiteral([z.number(), cssUnits]);
-// `${number}px` | `${number}em` | `${number}rem` | `${number}%`
+// 对应 `${number}px` | `${number}em` | `${number}rem` | `${number}%`
 
 const email = z.templateLiteral([
   z.string().min(1),
   "@",
   z.string().max(64),
 ]);
-// `${string}@${string}` (the min/max refinements are enforced!)
+// 对应 `${string}@${string}` （同时支持最小/最大长度细化！）
 ```
 
-Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex, so things like string formats (`z.email()`) are properly enforced (but custom refinements are not!).
+所有可转字符串的 Zod schema 类型（字符串、字符串格式如 `z.email()`、数字、布尔、大整数、枚举、字面量、undefined/optional、null/nullable 和其它模板字面量）都存有内部正则表达式。`z.templateLiteral` 将它们串联为超正则，可正确支持格式验证（自定义细化除外）。
 
-Read the [template literal docs](/api#template-literals) for more info.
+详见 [模板字面量文档](/api#template-literals)。
 
-## Number formats
+## 数字格式
 
-New numeric "formats" have been added for representing fixed-width integer and float types. These return a `ZodNumber` instance with proper minimum/maximum constraints already added.
+新增表示固定宽度整数和浮点数类型的数字“格式”。返回带有合适最小/最大约束的 `ZodNumber` 实例。
 
 ```ts
-z.int();      // [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
-z.float32();  // [-3.4028234663852886e38, 3.4028234663852886e38]
-z.float64();  // [-1.7976931348623157e308, 1.7976931348623157e308]
-z.int32();    // [-2147483648, 2147483647]
-z.uint32();   // [0, 4294967295]
+z.int();      // 介于 Number.MIN_SAFE_INTEGER 和 Number.MAX_SAFE_INTEGER 之间
+z.float32();  // 32 位浮点数范围 [-3.4028234663852886e38, 3.4028234663852886e38]
+z.float64();  // 64 位浮点数范围 [-1.7976931348623157e308, 1.7976931348623157e308]
+z.int32();    // 32 位有符号整数范围 [-2147483648, 2147483647]
+z.uint32();   // 32 位无符号整数范围 [0, 4294967295]
 ```
 
-Similarly the following `bigint` numeric formats have also been added. These integer types exceed what can be safely represented by a `number` in JavaScript, so these return a `ZodBigInt` instance with the proper minimum/maximum constraints already added.
+同样新增了以下 `bigint` 数字格式，JavaScript 中 `number` 无法安全表示这些范围，因此返回带有适当限制的 `ZodBigInt` 实例。
 
 ```ts
-z.int64();    // [-9223372036854775808n, 9223372036854775807n]
-z.uint64();   // [0n, 18446744073709551615n]
+z.int64();    // Int64，范围 [-9223372036854775808n, 9223372036854775807n]
+z.uint64();   // UInt64，范围 [0n, 18446744073709551615n]
 ```
 
-## Stringbool
+## 字符串布尔（StringBool）
 
-The existing `z.coerce.boolean()` API is very simple: falsy values (`false`, `undefined`, `null`, `0`, `""`, `NaN` etc) become `false`, truthy values become `true`.
+已有的 `z.coerce.boolean()` 非常简单：假值（`false`、`undefined`、`null`、`0`、`""`、`NaN` 等）转换为 `false`，真值转换为 `true`。
 
-This is still a good API, and its behavior aligns with the other `z.coerce` APIs. But some users requested a more sophisticated "env-style" boolean coercion. To support this, Zod 4 introduces `z.stringbool()`:
+这仍是一个好用且与其它 `z.coerce` 接口一致的 API。但部分用户请求更复杂的“环境变量风格”布尔值转换。为此，Zod 4 引入了 `z.stringbool()`：
 
 ```ts
 const strbool = z.stringbool();
@@ -759,10 +757,10 @@ strbool.parse("off");         // => false
 strbool.parse("n");           // => false
 strbool.parse("disabled");    // => false
 
-strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
+strbool.parse(/* 其他任何值 */); // 抛出 ZodError<[{ code: "invalid_value" }]>
 ```
 
-To customize the truthy and falsy values:
+可自定义真值和假值：
 
 ```ts
 z.stringbool({
@@ -771,22 +769,22 @@ z.stringbool({
 })
 ```
 
-Refer to the [`z.stringbool()` docs](/api#stringbools) for more information.
+详见 [`z.stringbool()` 文档](/api#stringbools)。
 
-## Simplified error customization
+## 简化的错误自定义
 
-The majority of breaking changes in Zod 4 involve the *error customization* APIs. They were a bit of a mess in Zod 3; Zod 4 makes things significantly more elegant, to the point where I think it's worth highlighting here. 
+大多数破坏性更改涉及 *错误自定义* API。Zod 3 时代它们比较混乱，Zod 4 使设计更优雅，值得着重说明。
 
-Long story short, there is now a single, unified `error` parameter for customizing errors, replacing the following APIs:
+简言之，现在统一使用单个 `error` 参数替代以下 API：
 
-Replace `message` with `error`. (The `message` parameter is still supported but deprecated.)
+将 `message` 替换为 `error`。（`message` 依然支持但已弃用）
 
 ```diff
 - z.string().min(5, { message: "Too short." });
 + z.string().min(5, { error: "Too short." });
 ```
 
-Replace `invalid_type_error` and `required_error` with `error` (function syntax):
+将 `invalid_type_error` 和 `required_error` 替换为函数形式的 `error`：
 
 ```diff
 // Zod 3
@@ -802,7 +800,7 @@ Replace `invalid_type_error` and `required_error` with `error` (function syntax)
 + });
 ```
 
-Replace `errorMap` with `error` (function syntax):
+将 `errorMap` 替换为函数形式的 `error`：
 
 ```diff
 // Zod 3 
@@ -825,22 +823,22 @@ Replace `errorMap` with `error` (function syntax):
 + });
 ```
 
-## Upgraded `z.discriminatedUnion()`
+## 升级的 `z.discriminatedUnion()`
 
-Discriminated unions now support a number of schema types not previously supported, including unions and pipes:
+判别联合现在支持了先前不支持的多种 schema 类型，包括联合和管道（pipe）：
 
 ```ts
 const MyResult = z.discriminatedUnion("status", [
-  // simple literal
+  // 简单字面量
   z.object({ status: z.literal("aaa"), data: z.string() }),
-  // union discriminator
+  // 判别属性使用联合类型
   z.object({ status: z.union([z.literal("bbb"), z.literal("ccc")]) }),
-  // pipe discriminator
+  // 判别属性使用管道转换
   z.object({ status: z.literal("fail").transform(val => val.toUpperCase()) }),
 ]);
 ```
 
-Perhaps most importantly, discriminated unions now *compose*—you can use one discriminated union as a member of another.
+更重要的是，判别联合现在支持*复合* — 可以在一个判别联合成员里再使用判别联合。
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
@@ -855,14 +853,17 @@ const MyResult = z.discriminatedUnion("status", [
 ]);
 ```
 
-## Multiple values in `z.literal()`
+## `z.literal()` 支持传入多个值
 
-The `z.literal()` API now optionally supports multiple values. 
+`z.literal()` 现在可选接受多个值。
 
 ```ts
 const httpCodes = z.literal([ 200, 201, 202, 204, 206, 207, 208, 226 ]);
+```
 
-// previously in Zod 3:
+Zod 3 版本写法：
+
+```ts
 const httpCodes = z.union([
   z.literal(200),
   z.literal(201),
@@ -875,9 +876,9 @@ const httpCodes = z.union([
 ]);
 ```
 
-## Refinements live inside schemas
+## 细化仍存于 schemas 内部
 
-In Zod 3, they were stored in a `ZodEffects` class that wrapped the original schema. This was inconvenient, as it meant you couldn't interleave `.refine()` with other schema methods like `.min()`.
+Zod 3 时，细化存于一个包裹原有 schema 的 `ZodEffects` 类里，造成不能同时链式调用 `.refine()` 与 `.min()` 等方法：
 
 ```ts
 z.string()
@@ -886,7 +887,7 @@ z.string()
 // ^ ❌ Property 'min' does not exist on type ZodEffects<ZodString, string, string>
 ```
 
-In Zod 4, refinements are stored inside the schemas themselves, so the code above works as expected.
+Zod 4 时，细化内嵌于 schema 本身，上面代码可正常工作：
 
 ```ts
 z.string()
@@ -896,40 +897,39 @@ z.string()
 
 ### `.overwrite()`
 
-The `.transform()` method is extremely useful, but it has one major downside: the output type is no longer *introspectable* at runtime. The transform function is a black box that can return anything. This means (among other things) there's no sound way to convert the schema to JSON Schema.
+`.transform()` 极其有用，但有个缺点：输出类型无法在运行时“可 introspect”，转换函数是黑盒，可返回任意值。这意味着很多功能（例如 JSON Schema 转换）无法正确支持。
 
 ```ts
 const Squared = z.number().transform(val => val ** 2);
 // => ZodPipe<ZodNumber, ZodTransform>
 ```
 
-Zod 4 introduces a new `.overwrite()` method for representing transforms that *don't change the inferred type*. Unlike `.transform()`, this method returns an instance of the original class. The overwrite function is stored as a refinement, so it doesn't (and can't) modify the inferred type.
+Zod 4 新增 `.overwrite()` 表示“不会修改推断类型的转换”，返回原始类实例。覆盖函数存作细化，不改变推断类型。
 
 ```ts
 z.number().overwrite(val => val ** 2).max(100);
 // => ZodNumber
 ```
 
-> The existing `.trim()`, `.toLowerCase()` and `.toUpperCase()` methods have been reimplemented using `.overwrite()`.
+> 现有 `.trim()`、`.toLowerCase()` 和 `.toUpperCase()` 方法已改用 `.overwrite()` 实现。
 
-## An extensible foundation: `zod/v4/core`
+## 可扩展基础：`zod/v4/core`
 
-While this will not be relevant to the majority of Zod users, it's worth highlighting. The addition of `zod/v4-mini` necessitated the creation of a shared sub-package `zod/v4/core` which contains the core functionality shared between `zod/v4` and `zod/v4-mini`. 
+此功能对大多数用户无关，但值得强调。`zod/v4-mini` 的添加催生了共享子包 `zod/v4/core`，包含 `zod/v4` 和 `zod/v4-mini` 共享的核心功能。
 
-I was resistant to this at first, but now I see it as one of Zod 4's most important features. It lets Zod level up from a simple library to a fast validation "substrate" that can be sprinkled into other libraries.
+起初我抗拒设立这个，但如今认为这是 Zod 4 最重要特性之一，使 Zod 从简单库变成可供其它库灵活集成的高性能验证“底座”。
 
-If you're building a schema library, refer to the implementations of `zod/v4` and `zod/v4-mini` to see how to build on top of the foundation `zod/v4/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
+如果你在构建 Schema 库，请参考 `zod/v4` 和 `zod/v4-mini` 的实现，了解如何基于 `zod/v4/core` 构建。欢迎通过 GitHub 讨论或 [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) 联系我以获取帮助或反馈。
 
+## 总结
 
-## Wrapping up
+我计划发布多篇解释诸如 `zod/v4-mini` 之类重大功能设计思想的系列文章，届时会更新本节。
 
-I'm planning to write up a series of additional posts explaining the design process behind some major features like `zod/v4-mini`. I'll update this section as those get posted. 
-
-For library authors, there is now a dedicated [For library authors](/library-authors) guide that describes the best practices for building on top of Zod. It answers common questions about how to support Zod 3 & Zod 4 (including Mini) simultaneously.
+对于库作者，现在有专门的 [库作者指南](/library-authors)，介绍基于 Zod 构建的最佳实践，以及如何同时支持 Zod 3 和 Zod 4（含 Mini）的问题解答。
 
 ```sh
 pnpm upgrade zod@^3.25.0
 ```
 
-Happy parsing!<br/>
+祝你解析愉快！<br/>
 — Colin McDonnell [@colinhacks](https://x.com/colinhacks)

@@ -1,16 +1,16 @@
 ---
-title: Customizing errors
+title: 定制错误
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 {/* ## `$ZodError` */}
 
-In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` class.
+在 Zod 中，验证错误以 `z.core.$ZodError` 类的实例形式呈现。
 
-> The `zod/v4` package uses a subclass of this called `z.ZodError` that implements some additional convenience methods.
+> `zod/v4` 包使用了该类的子类，称为 `z.ZodError`，它实现了一些额外的便捷方法。
 
-Instances of `$ZodError` contain an `.issues` array. Each issue contains a human-readable `message` and additional structured metadata about the issue.
+`$ZodError` 的实例包含 `.issues` 数组。每个 issue 包含一个人类可读的 `message` 和关于该问题的其他结构化元数据。
 
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -49,230 +49,230 @@ result.error.issues;
 </Tab>
 </Tabs>
 
-{/* ## Customization */}
+{/* ## 定制化 */}
 
-Every issue contains a `message` property with a human-readable error message. Error messages can be customized in a number of ways.
+每个 issue 都包含一个带有人类可读错误信息的 `message` 属性。错误信息可以通过多种方式自定义。
 
 
-## The `error` param
+## `error` 参数
 
-Virtually every Zod API accepts an optional error message.
+几乎所有 Zod API 都接受一个可选的错误消息。
 
 ```ts
-z.string("Not a string!");
+z.string("不是字符串！");
 ```
 
-This custom error will show up as the `message` property of any validation issues that originate from this schema.
+这个自定义错误会作为任何来自该模式的验证问题的 `message` 属性显示。
 
 ```ts
-z.string("Not a string!").parse(12);
-// ❌ throws ZodError {
+z.string("不是字符串！").parse(12);
+// ❌ 抛出 ZodError {
 //   issues: [
 //     {
 //       expected: 'string',
 //       code: 'invalid_type',
 //       path: [],
-//       message: 'Not a string!'   <-- 👀 custom error message
+//       message: '不是字符串！'   <-- 👀 自定义错误信息
 //     }
 //   ]
 // }
 ```
 
-All `z` functions and schema methods accept custom errors.
+所有 `z` 函数和模式方法均接受自定义错误。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-z.string("Bad!");
-z.string().min(5, "Too short!");
-z.uuid("Bad UUID!");
-z.iso.date("Bad date!");
-z.array(z.string(), "Not an array!");
-z.array(z.string()).min(5, "Too few items!");
-z.set(z.string(), "Bad set!");
+z.string("错误！");
+z.string().min(5, "太短了！");
+z.uuid("错误的 UUID！");
+z.iso.date("无效日期！");
+z.array(z.string(), "不是数组！");
+z.array(z.string()).min(5, "元素太少！");
+z.set(z.string(), "无效集合！");
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.string("Bad!");
-z.string().check(z.minLength(5, "Too short!"));
-z.uuid("Bad UUID!");
-z.iso.date("Bad date!");
-z.array(z.string(), "Bad array!");
-z.array(z.string()).check(z.minLength(5, "Too few items!"));
-z.set(z.string(), "Bad set!");
+z.string("错误！");
+z.string().check(z.minLength(5, "太短了！"));
+z.uuid("错误的 UUID！");
+z.iso.date("无效日期！");
+z.array(z.string(), "错误的数组！");
+z.array(z.string()).check(z.minLength(5, "元素太少！"));
+z.set(z.string(), "无效集合！");
 ```
 </Tab>
 </Tabs>
 
-If you prefer, you can pass a params object with an `error` parameter instead.
+如果愿意，也可以传入一个包含 `error` 参数的对象。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-z.string({ error: "Bad!" });
-z.string().min(5, { error: "Too short!" });
-z.uuid({ error: "Bad UUID!" });
-z.iso.date({ error: "Bad date!" });
-z.array(z.string(), { error: "Bad array!" });
-z.array(z.string()).min(5, { error: "Too few items!" });
-z.set(z.string(), { error: "Bad set!" });
+z.string({ error: "错误！" });
+z.string().min(5, { error: "太短了！" });
+z.uuid({ error: "错误的 UUID！" });
+z.iso.date({ error: "无效日期！" });
+z.array(z.string(), { error: "错误的数组！" });
+z.array(z.string()).min(5, { error: "元素太少！" });
+z.set(z.string(), { error: "无效集合！" });
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.string({ error: "Bad!" });
-z.string().check(z.minLength(5, { error: "Too short!" }));
-z.uuid({ error: "Bad UUID!" });
-z.iso.date({ error: "Bad date!" });
-z.array(z.string(), { error: "Bad array!" });
-z.array(z.string()).check(z.minLength(5, { error: "Too few items!" }));
-z.set(z.string(), { error: "Bad set!" });
+z.string({ error: "错误！" });
+z.string().check(z.minLength(5, { error: "太短了！" }));
+z.uuid({ error: "错误的 UUID！" });
+z.iso.date({ error: "无效日期！" });
+z.array(z.string(), { error: "错误的数组！" });
+z.array(z.string()).check(z.minLength(5, { error: "元素太少！" }));
+z.set(z.string(), { error: "无效集合！" });
 ```
 
 </Tab>
 </Tabs>
 
 
-The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will run at parse time if a validation error occurs.
+`error` 参数也可以接受一个函数。错误定制函数在 Zod 中称为 **错误映射（error map）**。如果发生验证错误，错误映射会在解析时运行。
 
 ```ts
-z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
+z.string({ error: () => `[${Date.now()}]: 验证失败。` });
 ```
 
 <Callout>
-**Note** — In Zod v3, there were separate params for `message` (a string) and `errorMap` (a function). These have been unified in Zod 4 as `error`.
+**注意** — 在 Zod v3 中，`message`（字符串）和 `errorMap`（函数）是分开的参数。它们在 Zod 4 中统一为 `error`。
 </Callout>
 
-The error map receives a context object you can use to customize the error message based on the validation issue.
+错误映射函数接收一个上下文对象，你可以根据验证问题自定义错误信息。
 
 ```ts
 z.string({
-  error: (iss) => iss.input === undefined ? "Field is required." : "Invalid input."
+  error: (iss) => iss.input === undefined ? "该字段为必填项。" : "无效输入。"
 });
 ```
 
-For advanced cases, the `iss` object provides additional information you can use to customize the error.
+对于高级场景，`iss` 对象提供了更多信息供你定制错误。
 
 ```ts
 z.string({
   error: (iss) => {
-    iss.code; // the issue code
-    iss.input; // the input data
-    iss.inst; // the schema/check that originated this issue
-    iss.path; // the path of the error
+    iss.code; // 问题代码
+    iss.input; // 输入数据
+    iss.inst; // 产生该问题的模式/检查
+    iss.path; // 错误路径
   },
 });
 ```
 
-Depending on the API you are using, there may be additional properties available. Use TypeScript's autocomplete to explore the available properties.
+根据你使用的 API，可能会有其他可用属性。可以使用 TypeScript 的自动补全探索这些属性。
 
 ```ts
 z.string().min(5, {
   error: (iss) => {
-    // ...the same as above
-    iss.minimum; // the minimum value
-    iss.inclusive; // whether the minimum is inclusive
-    return `Password must have ${iss.minimum} characters or more`;
+    // ...同上
+    iss.minimum; // 最小值
+    iss.inclusive; // 是否包含最小值
+    return `密码必须有至少 ${iss.minimum} 个字符`;
   },
 });
 ```
 
-Return `undefined` to avoid setting an error message. This is useful for customizing certain error messages but not others. Zod will yield control to the next error map in the [precedence chain](#error-precedence).
+返回 `undefined` 可避免设置错误消息。这对于只定制特定错误消息而忽略其他情况很有用。Zod 会在[优先级链](#错误优先级)中交出控制权给下一个错误映射。
 
 ```ts
 z.int64({
   error: (issue) => {
-    // override too_big error message
+    // 覆盖 too_big 错误消息
     if (issue.code === "too_big") {
-      return { message: `Value must be <${issue.maximum}` };
+      return { message: `值必须小于 <${issue.maximum}` };
     }
 
-    //  defer to default
+    // 使用默认错误
     return undefined;
   },
 });
 ```
 
-## Per-parse error customization
+## 针对单次解析的错误定制
 
-To customize errors on a *per-parse* basis, pass an error map into the parse method:
+要针对每次解析定制错误，可以向解析方法 `parse` 传入错误映射：
 
 ```ts
 const schema = z.string();
 
 schema.parse(12, {
-  error: iss => "per-parse custom error"
+  error: iss => "单次解析的自定义错误"
 });
 ```
 
-This has *lower precedence* than any schema-level custom messages.
+这比模式级别的自定义消息优先级*低*。
 
 ```ts
-const schema = z.string({ error: "highest priority" });
+const schema = z.string({ error: "最高优先级" });
 const result = schema.safeParse(12, {
-  error: (iss) => "lower priority",
+  error: (iss) => "较低优先级",
 });
 
 result.error.issues;
-// [{ message: "highest priority", ... }]
+// [{ message: "最高优先级", ... }]
 ```
 
-The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
+`iss` 对象是所有可能的 issue 类型的[区分联合类型](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions)。使用 `code` 属性区分它们。
 
-> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
+> 详见所有 Zod issue 代码的拆解，参考 [`zod/v4/core`](/packages/core#issue-types) 文档。
 
 ```ts
 const result = schema.safeParse(12, {
   error: (iss) => {
     if (iss.code === "invalid_type") {
-      return `invalid type, expected ${iss.expected}`;
+      return `无效类型，期望 ${iss.expected}`;
     }
     if (iss.code === "too_small") {
-      return `minimum is ${iss.minimum}`;
+      return `最小值为 ${iss.minimum}`;
     }
     // ...
   }
 });
 ```
 
-## Global error customization
+## 全局错误定制
 
-To specify a global error map, use `z.config()` to set Zod's `customError` configuration setting:
+要指定全局错误映射，可使用 `z.config()` 设置 Zod 的 `customError` 配置：
 
 ```ts
 z.config({
   customError: (iss) => {
-    return "globally modified error";
+    return "全局修改后的错误";
   },
 });
 ```
 
-Global error messages have *lower precedence* than schema-level or per-parse error messages.
+全局错误消息比模式级别或单次解析错误消息的优先级*低*。
 
-The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
+`iss` 对象是所有可能的 issue 类型的[区分联合类型](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions)。使用 `code` 属性区分它们。
 
-> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
+> 详见所有 Zod issue 代码的拆解，参考 [`zod/v4/core`](/packages/core#issue-types) 文档。
 
 ```ts
 const result = schema.safeParse(12, {
   error: (iss) => {
     if (iss.code === "invalid_type") {
-      return `invalid type, expected ${iss.expected}`;
+      return `无效类型，期望 ${iss.expected}`;
     }
     if (iss.code === "too_small") {
-      return `minimum is ${iss.minimum}`;
+      return `最小值为 ${iss.minimum}`;
     }
     // ...
   }
 })
 ```
 
-## Internationalization
+## 国际化
 
-To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
+为支持错误信息的国际化，Zod 提供了多个内置**语言包（locales）**。它们从 `zod/v4/core` 包导出。
 
-> **Note** — The `zod/v4` library automatically loads the `en` locale automatically. The `zod/v4-mini` sub-package does not load any locale; instead all error messages default to `Invalid input`.
+> **注意** — `zod/v4` 库自动加载 `en` 语言包。`zod/v4-mini` 子包不加载任何语言包，所有错误信息默认都是 `Invalid input`。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -293,7 +293,7 @@ z.config(en());
 </Tab>
 </Tabs>
 
-To lazily load a locale, consider dynamic imports:
+若想懒加载语言包，可以考虑动态导入：
 
 ```ts
 import { z } from "zod/v4";
@@ -306,7 +306,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `zod/v4`. In some bundlers, this may not be tree-shakable.
+为了方便，所有语言包作为 `z.locales` 从 `zod/v4` 导出。在某些打包器中，这可能无法进行摇树优化。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -325,76 +325,77 @@ z.config(z.locales.en());
 </Tab>
 </Tabs>
 
-### Locales
+### 语言包列表
 
-The following locales are available:
+可用语言包如下：
 
-- `ar` — Arabic
-- `az` — Azerbaijani
-- `be` — Belarusian
-- `ca` — Catalan
-- `cs` — Czech
-- `de` — German
-- `en` — English
-- `es` — Spanish
-- `fa` — Farsi
-- `fi` — Finnish
-- `fr` — French
-- `frCA` — Canadian French
-- `he` — Hebrew
-- `hu` — Hungarian
-- `id` — Indonesian
-- `it` — Italian
-- `ja` — Japanese
-- `kh` — Khmer
-- `ko` — Korean
-- `mk` — Macedonian
-- `ms` — Malay
-- `nl` — Dutch
-- `no` — Norwegian
-- `ota` — Türkî
-- `pl` — Polish
-- `pt` — Portuguese
-- `ru` — Russian
-- `sl` — Slovenian
-- `sv` — Swedish
-- `ta` — Tamil
-- `th` — Thai
-- `tr` — Türkçe
-- `ua` — Ukrainian
-- `ur` — Urdu
-- `vi` — Tiếng Việt
-- `zhCN` — Simplified Chinese
-- `zhTW` — Traditional Chinese
+- `ar` — 阿拉伯语
+- `az` — 阿塞拜疆语
+- `be` — 白俄罗斯语
+- `ca` — 加泰罗尼亚语
+- `cs` — 捷克语
+- `de` — 德语
+- `en` — 英语
+- `es` — 西班牙语
+- `fa` — 波斯语
+- `fi` — 芬兰语
+- `fr` — 法语
+- `frCA` — 加拿大法语
+- `he` — 希伯来语
+- `hu` — 匈牙利语
+- `id` — 印度尼西亚语
+- `it` — 意大利语
+- `ja` — 日语
+- `kh` — 高棉语
+- `ko` — 韩语
+- `mk` — 马其顿语
+- `ms` — 马来语
+- `nl` — 荷兰语
+- `no` — 挪威语
+- `ota` — 土耳其语（旧土耳其语）
+- `pl` — 波兰语
+- `pt` — 葡萄牙语
+- `ru` — 俄语
+- `sl` — 斯洛文尼亚语
+- `sv` — 瑞典语
+- `ta` — 泰米尔语
+- `th` — 泰语
+- `tr` — 土耳其语
+- `ua` — 乌克兰语
+- `ur` — 乌尔都语
+- `vi` — 越南语
+- `zhCN` — 简体中文
+- `zhTW` — 繁体中文
 
 
-## Error precedence
+## 错误优先级
 
-Below is a quick reference for determining error precedence: if multiple error customizations have been defined, which one takes priority? From *highest to lowest* priority:
+下面是确定错误优先级的快速参考：如果定义了多个错误定制，哪个优先？按*从高到底*优先级排序：
 
-1. **Schema-level error** — Any error message "hard coded" into a schema definition.
+1. **模式级错误** — 任何“硬编码”到模式定义中的错误消息。
 
   ```ts
-  z.string("Not a string!");
+  z.string("不是字符串！");
   ```
 
-2. **Per-parse error** — A custom error map passed into the `.parse()` method.
+2. **单次解析错误** — 传入 `.parse()` 方法的自定义错误映射。
 
   ```ts
   z.string().parse(12, {
-    error: (iss) => "My custom error"
+    error: (iss) => "我的自定义错误"
   });
   ```
 
-3. **Global error map** — A custom error map passed into `z.config()`.
+3. **全局错误映射** — 传给 `z.config()` 的自定义错误映射。
 
   ```ts
   z.config({
-    customError: (iss) => "My custom error"
+    customError: (iss) => "我的自定义错误"
   });
   ```
 
-4. **Locale error map** — A custom error map passed into `z.config()`.
+4. **语言包错误映射** — 传给 `z.config()` 的语言包自定义错误映射。
 
   ```ts
   z.config(z.locales.en());
+```

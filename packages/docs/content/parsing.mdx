@@ -1,40 +1,40 @@
 ---
-title: Parsing data
+title: 解析数据
 ---
 
-Given a Zod schema, there are a number of ways to parse data with it. 
+给定一个 Zod schema，有多种方法可以用它来解析数据。
 
 ## `.parse`
 
-Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+对于任何 Zod schema，你都可以调用它的 `.parse` 方法来检查 `data` 是否有效。如果有效，会返回带有完整类型信息的值！否则，会抛出错误。
 
-> IMPORTANT: The value returned by `.parse` is a _deep clone_ of the variable you passed in.
+> 重要提示：`.parse` 返回的值是你传入变量的_深拷贝_。
 
 ```ts
 const stringSchema = z.string();
 
-stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws error
+stringSchema.parse("fish"); // => 返回 "fish"
+stringSchema.parse(12); // 抛出错误
 ```
 
 ## `.parseAsync`
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`.
+如果你使用异步的[细化](#refine)或[转换](#transform)（稍后会详细介绍），你需要使用 `.parseAsync`。
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length <= 8);
 
-await stringSchema.parseAsync("hello"); // => returns "hello"
-await stringSchema.parseAsync("hello world"); // => throws error
+await stringSchema.parseAsync("hello"); // => 返回 "hello"
+await stringSchema.parseAsync("hello world"); // => 抛出错误
 ```
 
 ## `.safeParse`
 
 `.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-If you don't want Zod to throw errors when validation fails, use `.safeParse`. This method returns an object containing either the successfully parsed data or a ZodError instance containing detailed information about the validation problems.
+如果你不希望 Zod 在验证失败时抛出错误，可以使用 `.safeParse`。该方法返回一个对象，包含成功解析的数据或包含详细验证问题信息的 ZodError 实例。
 
 ```ts
 stringSchema.safeParse(12);
@@ -44,30 +44,30 @@ stringSchema.safeParse("billie");
 // => { success: true; data: 'billie' }
 ```
 
-The result is a _discriminated union_, so you can handle errors very conveniently:
+结果是一个_区分联合_，因此你可以非常方便地处理错误：
 
 ```ts
 const result = stringSchema.safeParse("billie");
 if (!result.success) {
-  // handle error then return
+  // 处理错误然后返回
   result.error;
 } else {
-  // do something
+  // 执行其他操作
   result.data;
 }
 ```
 
 ## `.safeParseAsync`
 
-> Alias: `.spa`
+> 别名：`.spa`
 
-An asynchronous version of `safeParse`.
+`safeParse` 的异步版本。
 
 ```ts
 await stringSchema.safeParseAsync("billie");
 ```
 
-For convenience, this has been aliased to `.spa`:
+为了方便，它被别名为 `.spa`：
 
 ```ts
 await stringSchema.spa("billie");

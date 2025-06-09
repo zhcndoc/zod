@@ -1,5 +1,5 @@
 ---
-title: "Intro"
+title: "简介"
 mode: "center"
 ---
 
@@ -19,27 +19,27 @@ import { Bronze } from '../components/bronze';
     <img  className="hidden dark:block mx-auto my-0! h-full" alt="zod logo" src="/logo/logo-glow.png"  />
   </div>
   <h1 className="text-3xl font-bold">Zod</h1>
-  <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference<br/>by <a href="https://x.com/colinhacks">@colinhacks</a> </p>
+  <p className="mt-2 mb-1">TypeScript 优先的模式验证与静态类型推断<br/>作者 <a href="https://x.com/colinhacks">@colinhacks</a> </p>
   <br/>
   <div  className="flex flex-row flex-wrap justify-center gap-1 py-2">
     <a className="border-none" href="https://github.com/colinhacks/zod/actions?query=branch%3Amain">
-      <img className="h-[20px] m-0!" src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" />
+      <img className="h-[20px] m-0!" src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI 状态" />
     </a>
     <a className="border-none" href="https://twitter.com/colinhacks" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell" />
+      <img  className="h-[20px] m-0!" src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="由 Colin McDonnell 创建" />
     </a>
     <a className="border-none" href="https://opensource.org/licenses/MIT" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/license/colinhacks/zod" alt="License" />
+      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/license/colinhacks/zod" alt="许可证" />
     </a>
     <a className="border-none" href="https://www.npmjs.com/package/zod" rel="nofollow">
       <img  className="h-[20px] m-0!" src="https://img.shields.io/npm/dw/zod.svg" alt="npm" />
     </a>
     <a className="border-none" href="https://github.com/colinhacks/zod" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars" />
+      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/stars/colinhacks/zod" alt="Star 数" />
     </a>
   </div>
   <div className="flex flex-row justify-center gap-1">
-    <a href="https://zod.dev">Website</a>
+    <a href="https://zod.dev">官网</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
     <a href="https://discord.gg/RcG33DQJdf">Discord</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -53,20 +53,20 @@ import { Bronze } from '../components/bronze';
 <br/>
 
 {/* <ParamField path="param" type="string">
-  An example of a parameter field
+  参数字段示例
 </ParamField>
 
 <ParamField query="filter" type="string" default="none" required>
-  The filtering command used to sort through the users
+  用于筛选用户的过滤命令
 </ParamField>
 
 <ParamField body="user_age" type="integer" default="0" required>
-  The age of the user. Cannot be less than 0
+  用户年龄，不能小于 0
 </ParamField> */}
 
 <div className="mt-5 font-gray-100 mx-auto text-center pt-12">
   <span className="">
-    Zod 4 is now stable! Read the <a rel="noopener noreferrer" href="/v4" alt="zod 4 release notes">release notes here</a>.
+    Zod 4 已稳定发布！阅读<a rel="noopener noreferrer" href="/v4" alt="zod 4 发行说明">发行说明</a>。
   </span>
 </div>
 
@@ -81,9 +81,9 @@ import { Bronze } from '../components/bronze';
 }} />
 
 
-## Introduction
+## 介绍
 
-Zod is a TypeScript-first validation library. Using Zod, you can define *schemas* you can use to validate data, from a simple `string` to a complex nested object.
+Zod 是一个 TypeScript 优先的验证库。使用 Zod，你可以定义*模式*来验证数据，从简单的 `string` 到复杂的嵌套对象。
 
 ```ts
 import { z } from "zod/v4";
@@ -92,29 +92,29 @@ const User = z.object({
   name: z.string(),
 });
 
-// some untrusted data...
-const input = { /* stuff */ };
+// 一些不可信的数据...
+const input = { /* 内容 */ };
 
-// the parsed result is validated and type safe!
+// 解析结果是验证过且类型安全的！
 const data = User.parse(input);
 
-// so you can use it with confidence :)
+// 因此你可以放心使用 :)
 console.log(data.name);
 ```
 
-## Features
+## 特性
 
-- Zero external dependencies
-- Works in Node.js and all modern browsers
-- Tiny: 2kb core bundle (gzipped)
-- Immutable API: methods return a new instance
-- Concise interface
-- Works with TypeScript and plain JS
-- Built-in JSON Schema conversion
-- Extensive ecosystem
+- 零外部依赖
+- 支持 Node.js 和所有现代浏览器
+- 极简：核心包大小 2kb（压缩后）
+- 不可变 API：方法返回新实例
+- 简洁接口
+- 支持 TypeScript 和普通 JS
+- 内置 JSON Schema 转换
+- 丰富的生态系统
 
 
-## Installation
+## 安装
 
 {/* ### `npm` */}
 
@@ -126,7 +126,7 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-Zod also publishes a canary version on every commit. To install the canary:
+Zod 每次提交都会发布一个 canary 版本。安装 canary 版本：
 
 ```sh
 npm install zod@canary       # npm
@@ -136,15 +136,15 @@ bun add zod@canary           # bun
 pnpm add zod@canary          # pnpm
 ```
 
-{/* > The rest of this README assumes you are using npm and importing directly from the `"zod"` package. */}
+{/* > 本 README 的其余部分假设你使用 npm 并直接从 `"zod"` 包导入。 */}
 
-## Requirements
+## 要求
 
-Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.
+Zod 在 *TypeScript v5.5* 及更高版本中测试通过。较旧版本可能可用，但不正式支持。
 
 ### `"strict"`
 
-You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+你必须在 `tsconfig.json` 中启用 `strict` 模式。这是所有 TypeScript 项目的最佳实践。
   
 ```ts
 // tsconfig.json
@@ -159,38 +159,38 @@ You must enable `strict` mode in your `tsconfig.json`. This is a best practice f
 
 ### `"moduleResolution"`
 
-Your `"moduleResolution"` should be set to one of the following. The legacy `"node"` and `"classic"` modes are not supported, as they do not support subpath imports.
+你的 `"moduleResolution"` 应设置为以下之一。旧的 `"node"` 和 `"classic"` 模式不支持，因为它们不支持子路径导入。
 
-- `"node16"` (default if `"module"` is set to `"node16"`/`"node18"`)
-- `"nodenext"` (default if `"module"` is set to `"nodenext"`)
+- `"node16"`（如果 `"module"` 设置为 `"node16"`/`"node18"`，默认使用）
+- `"nodenext"`（如果 `"module"` 设置为 `"nodenext"`，默认使用）
 - `"bundler"`
 
 
 <br/>
 
-## Sponsors
+## 赞助商
 
-Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
+欢迎并鼓励任何层级的赞助。如果你使用 Zod 构建了付费产品，考虑一下[企业级赞助](https://github.com/sponsors/colinhacks)。
 
 
-### Platinum
+### 白金赞助
 
 <Platinum />
 
 <br/>
 
-### Gold
+### 黄金赞助
 
 <Gold />
 
 <br/>
 
-### Silver
+### 白银赞助
 
 <Silver />
 
 <br/>
 
-### Bronze
+### 铜牌赞助
 
 <Bronze />
