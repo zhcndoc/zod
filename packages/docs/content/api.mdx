@@ -355,10 +355,11 @@ schema.parse("http://example.com"); // ❌
 ```ts
 const datetime = z.iso.datetime();
 
-datetime.parse("2020-01-01T00:00:00Z"); // ✅
-datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
-datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅（任意精度）
-datetime.parse("2020-01-01T00:00:00+02:00"); // ❌（不允许偏移）
+datetime.parse("2020-01-01T06:15:00Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123456Z"); // ✅ (arbitrary precision)
+datetime.parse("2020-01-01T06:15:00+02:00"); // ❌ (offsets not allowed)
+datetime.parse("2020-01-01T06:15:00"); // ❌ (local not allowed)
 ```
 
 允许时区偏移：
@@ -366,28 +367,47 @@ datetime.parse("2020-01-01T00:00:00+02:00"); // ❌（不允许偏移）
 ```ts
 const datetime = z.iso.datetime({ offset: true });
 
-datetime.parse("2020-01-01T00:00:00+02:00"); // ✅
-datetime.parse("2020-01-01T00:00:00.123+02:00"); // ✅（毫秒可选）
-datetime.parse("2020-01-01T00:00:00.123+0200"); // ✅（毫秒可选）
-datetime.parse("2020-01-01T00:00:00.123+02"); // ✅（仅偏移小时）
-datetime.parse("2020-01-01T00:00:00Z"); // ✅（Z 仍支持）
+// allows timezone offsets
+datetime.parse("2020-01-01T06:15:00+02:00"); // ✅
+
+// basic offsets not allowed
+datetime.parse("2020-01-01T06:15:00+02");    // ❌
+datetime.parse("2020-01-01T06:15:00+0200");  // ❌
+
+// Z is still supported
+datetime.parse("2020-01-01T06:15:00Z"); // ✅ 
 ```
 
 允许无时区（本地）日期时间：
 
 ```ts
 const schema = z.iso.datetime({ local: true });
-schema.parse("2020-01-01T00:00:00"); // ✅
+schema.parse("2020-01-01T06:15:01"); // ✅
+schema.parse("2020-01-01T06:15"); // ✅ seconds optional
 ```
 
-限制允许的 `precision`（默认允许任意子秒精度）：
+限制允许的时间 `precision`。默认情况下，秒数为可选且允许任意亚秒级精度。
 
 ```ts
-const datetime = z.iso.datetime({ precision: 3 });
+const a = z.iso.datetime();
+a.parse("2020-01-01T06:15Z"); // ✅
+a.parse("2020-01-01T06:15:00Z"); // ✅
+a.parse("2020-01-01T06:15:00.123Z"); // ✅
 
-datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
-datetime.parse("2020-01-01T00:00:00Z"); // ❌
-datetime.parse("2020-01-01T00:00:00.123456Z"); // ❌
+const b = z.iso.datetime({ precision: -1 }); // minute precision (no seconds)
+b.parse("2020-01-01T06:15Z"); // ✅
+b.parse("2020-01-01T06:15:00Z"); // ❌
+b.parse("2020-01-01T06:15:00.123Z"); // ❌
+
+const c = z.iso.datetime({ precision: 0 }); // second precision only
+c.parse("2020-01-01T06:15Z"); // ❌
+c.parse("2020-01-01T06:15:00Z"); // ✅
+c.parse("2020-01-01T06:15:00.123Z"); // ❌
+
+const d = z.iso.datetime({ precision: 3 }); // millisecond precision only
+d.parse("2020-01-01T06:15Z"); // ❌
+d.parse("2020-01-01T06:15:00Z"); // ❌
+d.parse("2020-01-01T06:15:00.123Z"); // ✅
 ```
 
 ### ISO 日期
@@ -404,29 +424,31 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO 时间
 
-> Zod 3.23 新增
-
-`z.iso.time()` 方法验证格式为 `HH:MM:SS[.s+]` 的字符串。秒数允许任意小数精度。不允许任何时区偏移。
+`z.iso.time()` 方法验证格式为 `HH:MM[:SS[.s+]]` 的字符串。默认情况下，秒是可选的，亚秒的小数部分也是可选的。
 
 ```ts
 const time = z.iso.time();
 
-time.parse("00:00:00"); // ✅
-time.parse("09:52:31"); // ✅
-time.parse("23:59:59.9999999"); // ✅（任意精度）
-
-time.parse("00:00:00.123Z"); // ❌（不允许 `Z`）
-time.parse("00:00:00.123+02:00"); // ❌（不允许偏移）
+time.parse("03:15"); // ✅
+time.parse("03:15:00"); // ✅
+time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
 ```
 
-可以通过 `precision` 参数限制允许的小数位数。
+不允许任何形式的抵消。
 
 ```ts
-const time = z.iso.time({ precision: 3 });
+time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
+time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
+```
 
-time.parse("00:00:00.123"); // ✅
-time.parse("00:00:00.123456"); // ❌
-time.parse("00:00:00"); // ❌
+使用 `precision` 参数来限制允许的小数精度。
+
+```ts
+z.iso.time({ precision: -1 }); // HH:MM (minute precision)
+z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP 地址
@@ -595,7 +617,7 @@ z.boolean().parse(false); // => false
 
 ```ts
 z.date().safeParse(new Date()); // success: true
-z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
+z.date().safeParse("2022-01-12T06:15:00.000Z"); // success: false
 ```
 
 自定义错误消息：
@@ -1575,7 +1597,7 @@ const Person = z.record(Keys, z.string());
   const myRecord: MyRecord = { a: "foo" }; // ❌ 缺少必需键 `b`
   ```
 
-  Zod 3 中未检查详尽。若想复现 Zod 3 表现，可用 `z.partialRecord()`。
+  在 Zod 3 中，没有检查穷尽性。要复制旧的行为，请使用 `z.partialRecord()`。
 
 </Callout>
 
@@ -2348,7 +2370,7 @@ type Cat = { name: string };
 type Dog = { name: string };
 
 const pluto: Dog = { name: "pluto" };
-const simba: Cat = fido; // 可以
+const simba: Cat = pluto; // works fine
 ```
 
 某些情况中，想在 TypeScript 内模拟[标称类型](https://en.wikipedia.org/wiki/Nominal_type_system)，可用*品牌类型*（又称“不透明类型”）。

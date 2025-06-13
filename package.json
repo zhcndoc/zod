@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.8.0",
+  "packageManager": "pnpm@10.12.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
@@ -27,11 +27,12 @@
     "console-table-printer": "^2.12.1",
     "execa": "^9.5.2",
     "globby": "^14.1.0",
-    "husky": "^7.0.4",
+    "husky": "^9.1.7",
     "jsr": "^0.12.4",
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
+    "recheck": "^4.5.0",
     "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
@@ -71,7 +72,7 @@
     "dev:play": "pnpm dev play.ts",
     "bench": "tsx --conditions @zod/source packages/bench/index.ts",
     "moltar": "pnpm bench object-moltar",
-    "prepare": "husky install",
+    "prepare": "husky",
     "postbuild": "biome format --write .",
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",

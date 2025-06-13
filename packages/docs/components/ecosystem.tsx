@@ -37,6 +37,13 @@ const apiLibraries: ZodResource[] = [
     slug: "RobinTail/express-zod-api",
     v4: true,
   },
+  {
+    name: "Zod Sockets",
+    url: "https://github.com/RobinTail/zod-sockets",
+    description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
+    slug: "RobinTail/zod-sockets",
+    v4: true,
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
@@ -60,6 +67,12 @@ const formIntegrations: ZodResource[] = [
     description:
       "A type-safe form validation library utilizing web fundamentals to progressively enhance HTML Forms with full support for server frameworks like Remix and Next.js.",
     slug: "edmundhung/conform",
+  },
+  {
+    name: "Superforms",
+    url: "https://superforms.rocks",
+    description: "Making SvelteKit forms a pleasure to use!",
+    slug: "ciscoheat/sveltekit-superforms",
   },
 ];
 
