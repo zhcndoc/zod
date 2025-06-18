@@ -319,6 +319,15 @@ z.string().email(); // ❌ 废弃
 z.email(); // ✅ 
 ```
 
+### 更严格的 `.uuid()`
+
+`z.uuid()` 现在根据 RFC 4122 规范更严格地验证 UUID；具体来说，变体位必须是 `10`。对于更宽松的“类似 UUID”验证器，请使用 `z.guid()`。
+
+```ts
+z.uuid(); // RFC 4122 compliant UUID
+z.guid(); // any 8-4-4-4-12 hex pattern
+```
+
 ### `.base64url()` 不支持填充字符
 
 `z.base64url()`（原 `z.string().base64url()`）不再允许填充字符。通常 base64url 字符串应无填充且 URL 安全。

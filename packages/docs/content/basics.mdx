@@ -66,10 +66,7 @@ Player.parse({ username: "billie", xp: 100 });
 **注意** — 如果你的 schema 使用了某些异步 API，例如 `async` [细化](#refine) 或 [转换](#transform)，你需要使用 `.parseAsync()` 方法。
 
 ```ts
-const schema = z.string().refine(async (val) => val.length <= 8);
-
-await schema.parseAsync("hello");
-// => "hello"
+await Player.parseAsync({ username: "billie", xp: 100 }); 
 ```
 </Callout>
 
@@ -145,10 +142,7 @@ if (!result.success) {
 **注意** — 如果你的 schema 使用了某些异步 API，例如 `async` [细化](#refine) 或 [转换](#transform)，你需要使用 `.safeParseAsync()` 方法。
 
 ```ts
-const schema = z.string().refine(async (val) => val.length <= 8);
-
 await schema.safeParseAsync("hello");
-// => { success: true; data: "hello" }
 ```
 </Callout>
 

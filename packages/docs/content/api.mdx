@@ -480,7 +480,7 @@ cidrv6.parse("2001:db8::/32"); // ✅
 定义模板字面量模式：
 
 ```ts
-const schema = z.templateLiteral("hello, ", z.string(), "!");
+const schema = z.templateLiteral([ "hello, ", z.string(), "!" ]);
 // `hello, ${string}!`
 ```
 
@@ -981,6 +981,10 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 定义*catchall*模式，验证所有未识别的键：
 
+
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts z.object
 const DogWithStrings = z.object({
   name: z.string(),
@@ -990,6 +994,23 @@ const DogWithStrings = z.object({
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
 ```
+</Tab>
+<Tab value="Zod Mini">
+```ts z.object
+const DogWithStrings = z.catchall(
+  z.object({
+    name: z.string(),
+    age: z.number().optional(),
+  }),
+  z.string()
+);
+
+DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
+DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
+```
+</Tab>
+</Tabs>
+
 
 ### `.shape`
 

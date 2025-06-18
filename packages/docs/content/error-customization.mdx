@@ -25,7 +25,7 @@ result.error.issues;
 //     expected: 'string',
 //     code: 'invalid_type',
 //     path: [],
-//     message: 'Invalid input: expected string, received number'
+//     message: '无效输入：预期字符串，收到数字'
 //   }
 // ]
 ```
@@ -41,7 +41,7 @@ result.error.issues;
 //     expected: 'string',
 //     code: 'invalid_type',
 //     path: [],
-//     message: 'Invalid input'
+//     message: '无效输入'
 //   }
 // ]
 ```
@@ -236,9 +236,29 @@ const result = schema.safeParse(12, {
 });
 ```
 
+### 在 issue 中包含输入值
+
+默认情况下，Zod 不会在 issues 中包含输入数据。这是为了防止无意中记录可能敏感的输入数据。要在每个 issue 中包含输入数据，请使用 `reportInput` 标志：
+
+```ts
+z.string().parse(12, {
+  reportInput: true
+})
+
+// ZodError: [
+//   {
+//     "expected": "string",
+//     "code": "invalid_type",
+//     "input": 12, // 👀
+//     "path": [],
+//     "message": "无效输入：预期字符串，收到数字"
+//   }
+// ]
+```
+
 ## 全局错误定制
 
-要指定全局错误映射，可使用 `z.config()` 设置 Zod 的 `customError` 配置：
+要指定全局错误映射，使用 `z.config()` 设置 Zod 的 `customError` 配置选项：
 
 ```ts
 z.config({
@@ -248,7 +268,7 @@ z.config({
 });
 ```
 
-全局错误消息比模式级别或单次解析错误消息的优先级*低*。
+全局错误消息的优先级*低于*模式级别或单次解析的错误消息。
 
 `iss` 对象是所有可能的 issue 类型的[区分联合类型](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions)。使用 `code` 属性区分它们。
 
