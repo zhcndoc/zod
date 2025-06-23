@@ -3,6 +3,11 @@ title: Zod Mini
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="info">
+  **注意** — Zod Mini 的文档通过带有标签页的代码块与常规 Zod 文档穿插展示。本页旨在讲解 Zod Mini 存在的原因，何时使用它，以及它与常规 Zod 的一些关键区别。
+</Callout>
 
 `zod/v4-mini` 版本是在 Zod 4 发布时引入的。要试用它：
 
@@ -10,37 +15,107 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 npm install zod@^3.25.0
 ```
 
-它实现了与 `zod` 完全相同的功能，但使用了一个*函数式*、*支持 tree-shaking*的 API。如果你之前使用的是 `zod`，这意味着你通常会用*函数*代替方法。
+导入方法：
 
-<Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
-<Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini";
+```
 
+Zod Mini 实现了与 `zod` 完全相同的功能，但采用了*函数式*、*支持 tree-shaking* 的 API。如果你熟悉 `zod`，这意味着你通常会使用*函数*代替方法。
+
+```ts
+// 常规 Zod
+const mySchema = z.string().optional().nullable();
+
+// Zod Mini
 const mySchema = z.nullable(z.optional(z.string()));
 ```
-</Tab>
-<Tab value="Zod">
+
+## Tree-shaking
+
+Tree-shaking 是现代打包工具用来从最终代码包中移除未使用代码的技术。它也称为*死代码消除*。
+
+在常规 Zod 中，模式提供了多种方便的方法来执行常见操作（如字符串模式上的 `.min()`）。打包工具通常无法从你的包中移除（“tree-shake”）未使用的方法实现，但能移除未使用的顶层函数。因此，`zod/v4-mini` 的 API 更倾向于使用函数而非方法。
+
 ```ts
-import { z } from "zod/v4";
+// 常规 Zod
+z.string().min(5).max(10).trim()
 
-const mySchema = z.string().optional().nullable();
+// Zod Mini
+z.string().check(z.minLength(5), z.maxLength(10), z.trim());
 ```
-</Tab>
-</Tabs>
 
-> **Tree-shaking（摇树优化）** — 在 `zod` 中，模式（schemas）提供了一系列便捷方法来执行一些常见操作（例如字符串模式上的 `.min()`）。打包工具很难从你的包中移除（即“摇树”）没有使用的方法实现。而移除未使用的顶层函数要容易得多，这就是为什么 `zod/v4-mini` 的 API 使用更多函数而非方法的原因。
+大致了解包体积减少情况，考虑这个简单脚本：
+
+```ts
+z.boolean().parse(true)
+```
+
+打包时，使用 Zod 和 Zod Mini 得到的包大小如下。Zod Mini 减少了 64% 的体积。
+
+| 包   | 包大小（gzip）  |
+|---------|-------------|
+| Zod Mini | `2.12kb` |
+| Zod | `5.91kb` |
+
+使用稍复杂一点涉及对象类型的模式：
+
+```ts
+const schema = z.object({ a: z.string(), b: z.number(), c: z.boolean() });
+
+schema.parse({
+  a: "asdf",
+  b: 123,
+  c: true,
+});
+```
+
+| 包   | 包大小（gzip）  |
+|---------|-------------|
+| Zod Mini | `4.0kb` |
+| Zod | `13.1kb` |
+
+这能让你感受到相关的包大小。请仔细查看这些数据并自行测试，以判断使用 Zod Mini 是否适合你的场景。
+
+## 何时（不）使用 Zod Mini
+
+一般来说，除非你对包体积有异常严格的限制，否则建议使用常规 Zod。许多开发者过度高估了包体积对应用性能的重要性。实际上，Zod 规模的包体积（通常 `5-10kb`）只有在针对偏远或发展中地区存在慢速移动网络连接的用户群体时，才会成为优化前端包的显著考量。
+
+接下来讲几个考虑点：
+
+### 开发体验（DX）
+
+Zod Mini 的 API 更啰嗦且不易发现。Zod 的方法 API 在 Intellisense 中更易发现和自动补全。无法快速用链式调用构建模式。（作为 Zod 的作者，我用了很多时间设计 Zod Mini API 以提升易用性，但我仍更喜欢常规 Zod API。）
+
+### 后端开发
+
+如果在后端使用 Zod，Zod 体积大小影响不大。即使在资源受限的环境如 Lambda 也如此。[这篇文章](https://medium.com/@adtanasa/size-is-almost-all-that-matters-for-optimizing-aws-lambda-cold-starts-cad54f65cbb) 测试了不同大小包对冷启动时间的影响。以下是部分结果：
+
+| 包大小   | Lambda 冷启动时间  |
+|-------------|----------------|
+| `1kb` | `171ms` |
+| `17kb`（非 Mini Zod 的 gzip 大小） | `171.6ms`（插值估算） |
+| `128kb` | `176ms` |
+| `256kb` | `182ms` |
+| `512kb` | `279ms` |
+| `1mb` | `557ms` |
+
+最小包的冷启动时间为 `171ms`。接下来测试的 `128kb` 包只增加了 `5ms`。常规 Zod gzip 大小约为 `17kb`，对应冷启动时间增加大约 `0.6ms`。
+
+### 网络速度
+
+通常，往返服务器的时间（`100-200ms`）远大于多下载 `10kb` 的时间。只有在慢速 3G 连接（低于 `1Mbps`）时，额外 `10kb` 的下载才会显得重要。如果你不专门针对偏远或发展中地区用户优化，更应该把时间花在其他性能优化上。
 
 ## `ZodMiniType`
 
-所有 `zod/v4-mini` 模式都扩展自 `z.ZodMiniType` 基类，而它又继承自 [`zod/v4/core`](/packages/core) 中的 `z.core.$ZodType`。虽然这个类实现的方法远少于 `zod` 中的 `ZodType`，但仍保留了一些特别有用的方法。
+所有 `zod/v4-mini` 的模式都继承自 `z.ZodMiniType` 基类，而该类又继承自 [`zod/v4/core`](/packages/core) 中的 `z.core.$ZodType`。虽然它实现的方法比 `zod` 中的 `ZodType` 少很多，但依然保留了一些非常实用的方法。
 
 ### `.parse`
 
-这是最显而易见的。所有 `zod/v4-mini` 模式实现了与 `zod` 相同的解析方法。
+这是最显而易见的。所有 `zod/v4-mini` 模式都实现了与 `zod` 相同的解析方法。
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 const mySchema = z.string();
 
@@ -52,10 +127,10 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-在 `zod/v4` 中，模式子类中有专门的方法用于执行常见检查：
+在 `zod/v4` 中，模式子类有专门的方法用来执行常见验证：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z.string()
   .min(5)
@@ -64,10 +139,10 @@ z.string()
   .trim()
 ```
 
-但在 `zod/v4-mini` 中并没有实现此类方法。相反，你通过向模式传入 `.check()` 方法来执行这些检查：
+但在 `zod/v4-mini` 中没有实现此类方法。取而代之的是通过向模式调用 `.check()` 传入检查规则：
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 z.string().check(
   z.minLength(5), 
@@ -77,7 +152,7 @@ z.string().check(
 );
 ```
 
-实现了以下检查。部分检查仅适用于某些类型的模式（比如字符串或数字）。所有 API 都是类型安全的；TypeScript 不允许你为模式添加不支持的检查。
+以下是可用的检查。部分检查只适用于特定类型（例如字符串或数字）。所有 API 是类型安全的；TypeScript 不允许向模式添加不支持的检查。
 
 ```ts
 z.lt(value);
@@ -106,7 +181,7 @@ z.mime(value);
 
 // 自定义检查
 z.refine()
-z.check()   // 取代 .superRefine()
+z.check()   // 替代 .superRefine()
 
 // 变换（它们不会改变推断的类型）
 z.overwrite(value => newValue);
@@ -128,17 +203,17 @@ z.string().register(myReg, { title: "我的酷炫字符串模式" });
 
 ### `.brand()`
 
-用于*品牌化*一个模式。详见 [品牌类型](/api#branded-types) 文档了解更多信息。
+用于*品牌化*一个模式。详情参见 [品牌类型](/api#branded-types) 文档。
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 const USD = z.string().brand("USD");
 ```
 
 ### `.clone(def)`
 
-使用提供的 `def` 返回当前模式的一个完全相同的克隆。
+用提供的 `def` 返回当前模式的完全克隆。
 
 ```ts
 const mySchema = z.string()
@@ -148,12 +223,12 @@ mySchema.clone(mySchema._zod.def);
 
 ## 无默认语言环境
 
-虽然 `zod/v4` 默认自动加载英语 (`en`) 语言环境，但 `zod/v4-mini` 不会。这减少了在不需要错误信息、本地化为非英语语言或其他自定义情况下的包体积。
+虽然 `zod/v4` 默认自动加载英语 (`en`) 语言环境，但 `zod/v4-mini` 不会加载。这样减少了在不需要错误信息、本地化成非英语语言或其他定制情况下的包体积。
 
-这意味着默认情况下，所有问题的 `message` 属性都将简单显示为 `"Invalid input"`。要加载英语语言环境：
+这意味着默认情况下，所有错误的 `message` 属性都会简单显示为 `"Invalid input"`。要加载英语语言环境：
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```

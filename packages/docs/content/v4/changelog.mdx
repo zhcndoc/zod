@@ -16,7 +16,7 @@ npm upgrade zod@^3.25.0
 Zod 4 可通过 `"/v4"` 子路径获取：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 ```
 
 <Callout>
@@ -171,7 +171,7 @@ Vitest 通过特殊处理 `Error` 子类，忽略可枚举属性。 */}
 issue 格式经过显著简化。
 
 ```ts
-import { z } from "zod/v4"; // v4
+import * as z from "zod/v4"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -190,7 +190,7 @@ type IssueFormats =
 下面是 Zod 3 issue 类型和它们在 Zod 4 中对应类型的列表：
 
 ```ts
-import { z } from "zod/v4"; // v3
+import * as z from "zod/v4"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ 重命名为 z.core.$ZodIssueInvalidType
@@ -694,7 +694,7 @@ inferSchema(z.string()); // z.ZodString
 众多工具函数和类型已迁至新的 `zod/v4/core` 子包，以便在 `zod/v4` 和 `zod/v4-mini` 共享代码。
 
 ```ts
-import { z } from "zod/v4/core";
+import * as z from "zod/v4/core";
 
 function handleError(iss: z.$ZodError) {
   // 处理错误
@@ -704,7 +704,7 @@ function handleError(iss: z.$ZodError) {
 为方便起见，`zod/v4/core` 内容也从 `zod/v4` 和 `zod/v4-mini` 重新导出，作为 `z.core` 命名空间。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 function handleError(iss: z.core.$ZodError) {
   // 处理错误
@@ -726,7 +726,7 @@ function handleError(iss: z.core.$ZodError) {
 这在 `zod/v4-mini` API 中尤为明显，它大量使用 `.check()` 方法组合多种校验：
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 z.string().check(
   z.minLength(10),
@@ -741,7 +741,7 @@ z.string().check(
 同时，转换移入专门的 `ZodTransform` 类。此模式表示输入转换；实际上，你可以定义独立转换：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.transform(input => String(input));
 

@@ -25,7 +25,7 @@ npm upgrade zod@^3.25.0
 然后从子路径 `"/v4"` 导入 Zod 4：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 ```
 
 未来当对 Zod 4 的支持广泛后，我们将发布 npm 版本 `zod@4.0.0`。届时，Zod 4 将从包根路径（`"zod"`）导出，`"zod/v4"` 子路径仍将保留。关于此版本方案的详细说明，请参考 [此 issue](https://github.com/colinhacks/zod/issues/4371)。
@@ -120,7 +120,7 @@ summary for z.object() safeParse
 考虑以下简单文件：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 export const A = z.object({
   a: z.string(),
@@ -152,7 +152,7 @@ $ pnpm bench object-with-extend
 更重要的是，Zod 4 重新设计简化了 `ZodObject` 及其它 schema 类的泛型，避免了某些棘手的“实例爆炸”问题。例如，重复链式调用 `.extend()` 和 `.omit()` —— 以前会导致编译器问题：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 export const a = z.object({
   a: z.string(),
@@ -266,7 +266,7 @@ Zod 3 编译此代码耗时约 4000ms；继续添加 `.extend()` 会触发“可
 考虑以下极简脚本：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.boolean();
 
@@ -295,7 +295,7 @@ npm install zod@^3.25.0
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 z.optional(z.string());
 
@@ -306,7 +306,7 @@ z.extend(z.object({ /* ... */ }), { age: z.number() });
 </Tab>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z.string().optional();
 
@@ -320,7 +320,7 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 并非所有方法都消失了！解析方法在 `zod/v4` 和 `zod/v4-mini` 中完全相同。
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 z.string().parse("asdf");
 z.string().safeParse("asdf");
@@ -333,7 +333,7 @@ await z.string().safeParseAsync("asdf");
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 z.array(z.number()).check(
   z.minLength(5), 
@@ -344,7 +344,7 @@ z.array(z.number()).check(
 </Tab>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z.array(z.number())
   .min(5)
@@ -357,7 +357,7 @@ z.array(z.number())
 `zod/v4-mini` 中还包含以下顶级细化方法，名称自明，与方法式 API 对应。
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 // 自定义检查
 z.refine();
@@ -402,7 +402,7 @@ z.toUpperCase();
 继续上文示例，改用 `"zod/v4-mini"`：
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 const schema = z.boolean();
 schema.parse(false);
@@ -423,7 +423,7 @@ schema.parse(false);
 Zod 4 引入了一个为 schema 添加强类型元数据的新系统。元数据不存于 schema 内部，而存于一个“schema 注册表”，将 schema 与类型化元数据关联。通过 `z.registry()` 创建注册表：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const myRegistry = z.registry<{ title: string; description: string }>();
 ```
@@ -493,7 +493,7 @@ z.string().meta({ description: "An email address" });
 Zod 4 原生支持通过 `z.toJSONSchema()` 转换为 JSON Schema。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const mySchema = z.object({name: z.string(), points: z.number()});
 
@@ -590,7 +590,7 @@ fileSchema.mime(["image/png"]); // MIME 类型
 Zod 4 引入全局翻译错误消息的 `locales` API。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 // 配置英文（默认）
 z.config(z.locales.en());

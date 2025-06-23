@@ -14,7 +14,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 要将 Zod schema 转换为 JSON Schema，请使用 `z.toJSONSchema()` 函数。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.object({
   name: z.string(),
@@ -103,7 +103,7 @@ z.int32(); // => { type: "integer", exclusiveMinimum: ..., exclusiveMaximum: ...
 默认情况下，`z.object()` schema 包含 `additionalProperties: false`。这准确表示了 Zod 的默认行为，因为普通的 `z.object()` schema 会剥离额外属性。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.object({
   name: z.string(),
@@ -122,7 +122,7 @@ z.toJSONSchema(schema)
 在以 `"input"` 模式转换为 JSON Schema 时，`additionalProperties` 不会被设置。更多内容参考 [`io` 文档](#io)。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.object({
   name: z.string(),
@@ -261,7 +261,7 @@ z.toJSONSchema(schema, { target: "draft-2020-12" });
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 // `.meta()` 是在 `z.globalRegistry` 中注册 schema 的便捷方法
 const emailSchema = z.string().meta({ 
@@ -275,7 +275,7 @@ z.toJSONSchema(emailSchema);
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 // `.meta()` 是在 `z.globalRegistry` 中注册 schema 的便捷方法
 const emailSchema = z.string().register(z.globalRegistry, { 
@@ -453,7 +453,7 @@ const jsonSchema = z.toJSONSchema(mySchema, { io: "input" });
 在其他情况下，你可能有一组相互关联的 Zod schemas，想用多个相互引用的 JSON Schema 表示，或写入 `.json` 文件并用做 Web 服务。这时你可以传入一个[注册表](/metadata#registries)给 `z.toJSONSchema()`。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const User = z.object({
   name: z.string(),

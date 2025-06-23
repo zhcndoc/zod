@@ -9,7 +9,7 @@ title: Zod
 Zod 致力于提供一个与 TypeScript 类型系统一一对应的 Schema API。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.object({
   name: z.string(),
@@ -30,7 +30,7 @@ z.string()
 所有 Schema 都继承自 `z.ZodType` 基类，该类又继承自 [`zod/v4/core`](/packages/core) 中的 `z.$ZodType`。所有 `ZodType` 实例实现以下方法：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const mySchema = z.string();
 

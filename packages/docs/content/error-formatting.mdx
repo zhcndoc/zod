@@ -10,7 +10,7 @@ Zod 强调错误报告中的 _完整性_ 和 _正确性_。在许多情况下，
 考虑这个简单的对象模式。
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const schema = z.strictObject({
   username: z.string(),

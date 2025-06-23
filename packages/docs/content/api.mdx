@@ -11,7 +11,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 ## 原始类型
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 // 原始类型
 z.string();
@@ -1345,7 +1345,7 @@ const Activity = z.object({
     有疑问时，通常在 getter 上加类型注解即可规避问题。TypeScript 限制尤其在 Zod Mini 中明显。
 
     ```ts
-    import { z } from "zod/v4";
+    import * as z from "zod/v4";
 
     const Activity = z.object({
       name: z.string(),

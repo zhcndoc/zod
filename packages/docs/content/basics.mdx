@@ -15,7 +15,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4"; 
+import * as z from "zod/v4"; 
 
 const Player = z.object({ 
   username: z.string(),
@@ -25,7 +25,7 @@ const Player = z.object({
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 const Player = z.object({ 
   username: z.string(),
@@ -40,7 +40,7 @@ const Player = z.object({
   为了给生态系统迁移留出时间，将会有一个过渡期，在此期间 Zod 4 会与 Zod 3 一起发布，并通过子路径导入的方式提供使用：
 
   ```ts
-  import { z } from "zod/v4"
+  import * as z from "zod/v4"
   ```
 
   在过渡期内：

@@ -16,7 +16,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
@@ -32,7 +32,7 @@ result.error.issues;
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 const result = z.string().safeParse(12); // { success: false, error: z.core.$ZodError }
 result.error.issues;
@@ -297,7 +297,7 @@ const result = schema.safeParse(12, {
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 import en from "zod/v4/locales/en.js"
 
 z.config(en());
@@ -305,7 +305,7 @@ z.config(en());
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 import en from "zod/v4/locales/en.js"
 
 z.config(en());
@@ -316,7 +316,7 @@ z.config(en());
 若想懒加载语言包，可以考虑动态导入：
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 async function loadLocale(locale: string) {
   const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
@@ -331,14 +331,14 @@ await loadLocale("fr");
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z.config(z.locales.en());
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```

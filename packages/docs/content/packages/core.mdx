@@ -8,7 +8,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 该子包导出被 `zod/v4` 和 `zod/v4-mini` 使用的核心类和工具。它不打算被直接使用；相反，它设计为供其他包进行扩展。它实现了：
 
 ```ts
-import { z } from "zod/v4/core";
+import * as z from "zod/v4/core";
 
 // 所有 Zod schema 的基类
 z.$ZodType;
