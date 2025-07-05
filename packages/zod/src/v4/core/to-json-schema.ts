@@ -17,9 +17,13 @@ interface JSONSchemaGeneratorParams {
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override?: (ctx: {
+    zodSchema: schemas.$ZodTypes;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
   /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
-   * - `"output" — Default. Convert the output schema.
+   * - `"output"` — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
   io?: "input" | "output";
 }
@@ -61,13 +65,19 @@ interface Seen {
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
   ref?: schemas.$ZodType | undefined | null;
+  /** JSON Schema property path for this schema */
+  path?: (string | number)[] | undefined;
 }
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
-  override: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override: (ctx: {
+    zodSchema: schemas.$ZodTypes;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
   io: "input" | "output";
 
   counter = 0;
@@ -110,7 +120,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, count: 1, cycle: undefined };
+    const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
     this.seen.set(schema, result);
 
     // custom method overrides default behavior
@@ -149,7 +159,7 @@ export class JSONSchemaGenerator {
             if (contentEncoding) json.contentEncoding = contentEncoding;
             if (patterns && patterns.size > 0) {
               const regexes = [...patterns];
-              if (regexes.length === 1) json.pattern = regexes[0].source;
+              if (regexes.length === 1) json.pattern = regexes[0]!.source;
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
@@ -207,11 +217,6 @@ export class JSONSchemaGenerator {
             }
             break;
           }
-          case "undefined": {
-            const json = _json as JSONSchema.NullSchema;
-            json.type = "null";
-            break;
-          }
           case "null": {
             _json.type = "null";
             break;
@@ -222,6 +227,7 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
+          case "undefined":
           case "never": {
             _json.not = {};
             break;
@@ -255,7 +261,7 @@ export class JSONSchemaGenerator {
             const shape = def.shape; // params.shapeCache.get(schema)!;
 
             for (const key in shape) {
-              json.properties[key] = this.process(shape[key], {
+              json.properties[key] = this.process(shape[key]!, {
                 ...params,
                 path: [...params.path, "properties", key],
               });
@@ -266,7 +272,7 @@ export class JSONSchemaGenerator {
             // const optionalKeys = new Set(def.optional);
             const requiredKeys = new Set(
               [...allKeys].filter((key) => {
-                const v = def.shape[key]._zod;
+                const v = def.shape[key]!._zod;
                 if (this.io === "input") {
                   return v.optin === undefined;
                 } else {
@@ -419,7 +425,7 @@ export class JSONSchemaGenerator {
             if (vals.length === 0) {
               // do nothing (an undefined literal was stripped)
             } else if (vals.length === 1) {
-              const val = vals[0];
+              const val = vals[0]!;
               json.type = val === null ? ("null" as const) : (typeof val as any);
               json.const = val;
             } else {
@@ -445,7 +451,7 @@ export class JSONSchemaGenerator {
             if (maximum !== undefined) file.maxLength = maximum;
             if (mime) {
               if (mime.length === 1) {
-                file.contentMediaType = mime[0];
+                file.contentMediaType = mime[0]!;
                 Object.assign(json, file);
               } else {
                 json.anyOf = mime.map((m) => {
@@ -740,6 +746,7 @@ export class JSONSchemaGenerator {
         this.override({
           zodSchema: zodSchema as schemas.$ZodTypes,
           jsonSchema: schema,
+          path: seen.path ?? [],
         });
     };
 
@@ -876,7 +883,7 @@ function isTransforming(
     }
     case "object": {
       for (const key in def.shape) {
-        if (isTransforming(def.shape[key], ctx)) return true;
+        if (isTransforming(def.shape[key]!, ctx)) return true;
       }
       return false;
     }

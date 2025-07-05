@@ -1,5 +1,5 @@
-import * as core from "zod/v4/core";
-import { util } from "zod/v4/core";
+import * as core from "../core/index.js";
+import { util } from "../core/index.js";
 
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
@@ -365,6 +365,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.duration = (params) => inst.check(iso.duration(params as any));
 });
 
+export function string(params?: string | core.$ZodStringParams): ZodString;
+export function string<T extends string>(params?: string | core.$ZodStringParams): core.$ZodType<T, T>;
 export function string(params?: string | core.$ZodStringParams): ZodString {
   return core._string(ZodString, params) as any;
 }
@@ -1086,11 +1088,11 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
-  pick<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  pick<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
-  omit<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  omit<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
@@ -1100,11 +1102,16 @@ export interface ZodObject<
     },
     Config
   >;
-  partial<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  partial<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M ? ZodOptional<Shape[k]> : Shape[k];
+      [k in keyof Shape]: k extends keyof M
+        ? // Shape[k] extends OptionalInSchema
+          //   ? Shape[k]
+          //   :
+          ZodOptional<Shape[k]>
+        : Shape[k];
     },
     Config
   >;
@@ -1116,7 +1123,7 @@ export interface ZodObject<
     },
     Config
   >;
-  required<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  required<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<
     {
@@ -1352,11 +1359,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
-): ZodRecord<ZodUnion<[Key, ZodNever]>, Value> {
+): ZodRecord<Key & core.$partial, Value> {
   return new ZodRecord({
     type: "record",
     keyType: union([keyType, never()]),
-    valueType: valueType as any as core.$ZodType,
+    valueType: valueType as any,
     ...util.normalizeParams(params),
   }) as any;
 }

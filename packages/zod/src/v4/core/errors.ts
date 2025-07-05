@@ -28,6 +28,7 @@ export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   readonly maximum: number | bigint;
   readonly inclusive?: boolean;
+  readonly exact?: boolean;
   readonly input: Input;
 }
 
@@ -35,7 +36,10 @@ export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
   readonly code: "too_small";
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   readonly minimum: number | bigint;
+  /** True if the allowable range includes the minimum */
   readonly inclusive?: boolean;
+  /** True if the allowed value is fixed (e.g.` z.length(5)`), not a range (`z.minLength(5)`) */
+  readonly exact?: boolean;
   readonly input: Input;
 }
 
@@ -223,8 +227,8 @@ export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => is
   const formErrors: any[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-      fieldErrors[sub.path[0]].push(mapper(sub));
+      fieldErrors[sub.path[0]!] = fieldErrors[sub.path[0]!] || [];
+      fieldErrors[sub.path[0]!].push(mapper(sub));
     } else {
       formErrors.push(mapper(sub));
     }
@@ -267,7 +271,7 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = fieldErrors;
         let i = 0;
         while (i < issue.path.length) {
-          const el = issue.path[i];
+          const el = issue.path[i]!;
           const terminal = i === issue.path.length - 1;
 
           if (!terminal) {
@@ -323,7 +327,7 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = result;
         let i = 0;
         while (i < fullpath.length) {
-          const el = fullpath[i];
+          const el = fullpath[i]!;
 
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
