@@ -259,13 +259,13 @@ export class $ZodCheck<in T = unknown> {
 }
 ```
 
-`_zod` 内部包含重要属性：
+`_zod` 内部属性包含一些显著的属性：
 
-- `.def` — 校验的*定义*：你传给类构造器创建该校验的对象。它完整描述校验，且支持 JSON 序列化。
-  - `.def.check` — 表示校验类型的字符串，如 `"min_length"`、`"less_than"`、`"string_format"` 等。
-- `.check()` — 包含校验逻辑。
+- `.def` — 检查的 *定义*：这是您传递给类构造函数以创建检查的对象。它完全描述了检查，并且是可 JSON 序列化的。
+  - `.def.check` — 一个表示检查类型的字符串，例如 `"min_length"`、`"less_than"`、`"string_format"` 等。
+- `.check()` — 包含检查的验证逻辑。
 
-`zod/v4/core` 导出了一些实现常用细化的子类。所有官方子类联合导出为 `z.$ZodChecks`。
+`zod/v4/core` 导出了一些执行常见细化的子类。所有第一方子类都作为一个名为 `z.$ZodChecks` 的联合体导出。
 
 ```ts
 export type $ZodChecks =

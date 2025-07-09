@@ -450,7 +450,7 @@ const jsonSchema = z.toJSONSchema(mySchema, { io: "input" });
 
 将 schema 传给 `z.toJSONSchema()` 会返回一个*自包含*的 JSON Schema。
 
-在其他情况下，你可能有一组相互关联的 Zod schemas，想用多个相互引用的 JSON Schema 表示，或写入 `.json` 文件并用做 Web 服务。这时你可以传入一个[注册表](/metadata#registries)给 `z.toJSONSchema()`。
+在其他情况下，您可能有一组 Zod 模式，希望使用多个相互关联的 JSON 模式来表示，可能是为了写入 `.json` 文件并从 Web 服务器提供服务。
 
 ```ts
 import * as z from "zod/v4";
@@ -474,7 +474,9 @@ z.globalRegistry.add(User, {id: "User"});
 z.globalRegistry.add(Post, {id: "Post"});
 ```
 
-上面两个 schema 都在 `z.globalRegistry` 中注册了 `id` 属性。要将它们转换成 JSON Schema，将整个注册表传给 `z.toJSONSchema()`。
+要实现这一点，您可以将一个 [注册表](/metadata#registries) 传递给 `z.toJSONSchema()`。
+
+> **重要** — 所有模式都应该在注册表中注册 `id` 属性！任何没有 `id` 的模式将被忽略。
 
 ```ts
 z.toJSONSchema(z.globalRegistry);
@@ -505,9 +507,7 @@ z.toJSONSchema(z.globalRegistry);
 // }
 ```
 
-> 注册表中任何带 `id` 属性的 schema 都将被提取到 `schemas` 中。
-
-默认情况下，`$ref` URI 是相对路径，如 `"User"`。要将其改为绝对 URI，使用 `uri` 选项。该选项接收一个将 `id` 转换为完整 URI 的函数。
+默认情况下，`$ref` URI 是简单的相对路径，如 `"User"`。要将这些转换为绝对 URI，请使用 `uri` 选项。这需要一个将 `id` 转换为完全合格 URI 的函数。
 
 ```ts
 z.toJSONSchema(z.globalRegistry, {

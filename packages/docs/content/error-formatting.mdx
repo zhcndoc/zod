@@ -168,8 +168,6 @@ const flattened = z.flattenError(result.error);
 `formErrors` 数组包含任何顶层错误（即 `path` 为空数组）。`fieldErrors` 对象为模式中的每个字段提供错误数组。
 
 ```ts
-flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
-flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
+flattened.fieldErrors.username; // => [ 'Invalid input: expected string, received number' ]
+flattened.fieldErrors.favoriteNumbers; // => [ 'Invalid input: expected number, received string' ]
 ```
-
-> **注意** — 如果你遇到路径长度超过一级的错误，此函数会丢弃一些错误信息。

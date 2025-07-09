@@ -28,6 +28,7 @@ myRegistry.add(mySchema, { description: "一个很棒的架构！" });
 myRegistry.has(mySchema); // => true
 myRegistry.get(mySchema); // => { description: "一个很棒的架构！" }
 myRegistry.remove(mySchema);
+myRegistry.clear(); // wipe registry
 ```
 
 TypeScript 会强制确保每个架构的元数据类型与注册表的**元数据类型**相匹配。
@@ -37,7 +38,7 @@ myRegistry.add(mySchema, { description: "一个很棒的架构！" }); // ✅
 myRegistry.add(mySchema, { description: 123 }); // ❌
 ```
 
-> **重要** — 如果您在模式上注册元数据并包含 `id` 属性，如果多个模式共享相同的 `id` 值，Zod 将抛出错误。确保所有注册的 `id` 值在每个注册表中都是唯一的。这也适用于全局注册表。
+> **对 `id` 的特殊处理** — Zod 注册表对 `id` 属性进行特殊处理。如果注册了多个具有相同 `id` 值的模式，将会抛出 `Error`。这适用于所有注册表，包括全局注册表。
 
 
 ### `.register()`
