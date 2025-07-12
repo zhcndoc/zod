@@ -11,7 +11,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 ## 原始类型
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // 原始类型
 z.string();
@@ -136,7 +136,7 @@ z.string().startsWith("fourscore")
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.startsWith("fourscore"))
 ```
 </Tab>
@@ -151,7 +151,7 @@ z.string().startsWith("fourscore", {error: "Nice try, buddy"})
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
 ```
 </Tab></Tabs> */}
@@ -174,7 +174,7 @@ z.string().lowercase();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.maxLength(5));
 z.string().check(z.minLength(5));
 z.string().check(z.length(5));
@@ -199,10 +199,10 @@ z.string().toUpperCase(); // 转大写
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
-z.string().check(z.trim()); // 去除空白
-z.string().check(z.toLowerCase()); // 转小写
-z.string().check(z.toUpperCase()); // 转大写
+```ts
+z.string().check(z.trim()); // trim whitespace
+z.string().check(z.toLowerCase()); // toLowerCase
+z.string().check(z.toUpperCase()); // toUpperCase
 ```
 </Tab>
 </Tabs>
@@ -290,7 +290,7 @@ z.uuidv6();
 z.uuidv7();
 ```
 
-RFC 4122 UUID 规范要求字节 8 的前两位为 `10`，其他 UUID-like 标识符不强制该限制。验证任意 UUID-like 标识符：
+The RFC 9562/4122 UUID spec requires the first two bits of byte 8 to be `10`. Other UUID-like identifiers do not enforce this constraint. To validate any UUID-like identifier:
 
 ```ts
 z.guid();
@@ -532,7 +532,7 @@ z.number().multipleOf(5);              // 同 .step(5)
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // 同 .minimum(5)
 z.number().check(z.lt(5));
@@ -587,7 +587,7 @@ z.bigint().multipleOf(5n);             // 同 `.step(5n)`
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // 同 `.minimum(5n)`
 z.bigint().check(z.lt(5n));
@@ -638,7 +638,7 @@ z.date().max(new Date(), { error: "Too young!" });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
 z.date().check(z.maximum(new Date(), { error: "Too young!" }));
 ```
@@ -710,7 +710,7 @@ FishEnum.enum;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
 FishEnum.def.entries;
@@ -731,8 +731,8 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
-// 无对应功能
+```ts
+// no equivalent
  
 ```
 </Tab>
@@ -750,8 +750,8 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
-// 无对应功能
+```ts
+// no equivalent
  
 ```
 </Tab>
@@ -813,7 +813,7 @@ z.optional(z.literal("yoda")); // 或 z.literal("yoda").optional()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.optional(z.literal("yoda"));
 ```
 </Tab>
@@ -828,7 +828,7 @@ optionalYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -845,7 +845,7 @@ z.nullable(z.literal("yoda")); // 或 z.literal("yoda").nullable()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const nullableYoda = z.nullable(z.literal("yoda"));
 ```
 </Tab>
@@ -860,7 +860,7 @@ nullableYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 nullableYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -877,7 +877,7 @@ const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
@@ -1024,7 +1024,7 @@ Dog.shape.age; // => number schema
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 Dog.def.shape.name; // => string schema
 Dog.def.shape.age; // => number schema
 ```
@@ -1043,7 +1043,7 @@ const keySchema = Dog.keyof();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const keySchema = z.keyof(Dog);
 // => ZodEnum<["name", "age"]>
 ```
@@ -1063,7 +1063,7 @@ const DogWithBreed = Dog.extend({
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const DogWithBreed = z.extend(Dog, {
   breed: z.string(),
 });
@@ -1071,25 +1071,35 @@ const DogWithBreed = z.extend(Dog, {
 </Tab>
 </Tabs>
 
-<Callout>
-  此 API 可用于覆盖已存在字段！请慎用此功能！若两个模式共享键，B 会覆盖 A。
-</Callout>
+此 API 可用于覆盖现有字段！请小心使用此功能！如果两个模式共享键，B 将覆盖 A。
 
-虽然存在 `.extend` API，但推荐的扩展对象模式的方式是使用原模式的 `shape` 属性创建全新模式。
+<Callout>
+**替代方案：解构** — 你可以完全避免使用 `.extend()`，通过创建一个全新的对象模式。这使得结果模式的严格程度在视觉上变得明显。
 
 ```ts
-const DogWithBreed = z.object({
+const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
   ...Dog.shape,
   breed: z.string(),
 });
 ```
 
-这种方法干净且功能强大，具有多重优势：
+您还可以使用此功能一次合并多个对象。
 
-1. 使用语言级特性（[解构赋值语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)），非库特有 API
-2. 适用于 Zod 和 Zod Mini，无需方法支持
-3. 更加高效 —— `.extend()` 在大模式上计算量大，且因[TypeScript 限制](https://github.com/microsoft/TypeScript/pull/61505)，链式调用时复杂度平方级增长
-4. 可通过 `z.strictObject()` 或 `z.looseObject()` 调整所得模式的严格级别
+```ts
+const DogWithBreed = z.object({
+  ...Animal.shape,
+  ...Pet.shape,
+  breed: z.string(),
+});
+```
+
+这种方法有几个优点：
+
+1. 它使用语言级特性（[解构语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)），而不是特定于库的 API
+2. 相同的语法在 Zod 和 Zod Mini 中都适用
+3. 它在 `tsc` 上更高效 — `.extend()` 方法在大型模式上可能很昂贵，并且由于 [TypeScript 的限制](https://github.com/microsoft/TypeScript/pull/61505)，当调用链式调用时，它的成本会呈平方增长
+4. 如果需要，您可以通过使用 `z.strictObject()` 或 `z.looseObject()` 来更改结果模式的严格性级别
+</Callout>
 
 ### `.pick()`
 
@@ -1114,7 +1124,7 @@ const JustTheTitle = Recipe.pick({ title: true });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const JustTheTitle = z.pick(Recipe, { title: true });
 ```
 </Tab>
@@ -1132,7 +1142,7 @@ const RecipeNoId = Recipe.omit({ id: true });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeNoId = z.omit(Recipe, { id: true });
 ```
 </Tab>
@@ -1153,7 +1163,7 @@ const PartialRecipe = Recipe.partial();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const PartialRecipe = z.partial(Recipe);
 // { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
@@ -1172,7 +1182,7 @@ const RecipeOptionalIngredients = Recipe.partial({
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeOptionalIngredients = z.partial(Recipe, {
   ingredients: true,
 });
@@ -1195,7 +1205,7 @@ const RequiredRecipe = Recipe.required();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RequiredRecipe = z.required(Recipe);
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1212,7 +1222,7 @@ const RecipeRequiredDescription = Recipe.required({description: true});
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeRequiredDescription = z.required(Recipe, {description: true});
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1345,7 +1355,7 @@ const Activity = z.object({
     有疑问时，通常在 getter 上加类型注解即可规避问题。TypeScript 限制尤其在 Zod Mini 中明显。
 
     ```ts
-    import * as z from "zod/v4";
+    import * as z from "zod";
 
     const Activity = z.object({
       name: z.string(),
@@ -1369,7 +1379,7 @@ const stringArray = z.array(z.string()); // 或 z.string().array()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const stringArray = z.array(z.string());
 ```
 </Tab>
@@ -1384,7 +1394,7 @@ stringArray.unwrap(); // => string schema
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 stringArray.def.element; // => string schema
 ```
 </Tab>
@@ -1401,10 +1411,10 @@ z.array(z.string()).length(5); // 恰好包含 5 项
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
-z.array(z.string()).check(z.minLength(5)); // 至少包含 5 项
-z.array(z.string()).check(z.maxLength(5)); // 最多包含 5 项
-z.array(z.string()).check(z.length(5)); // 恰好包含 5 项
+```ts
+z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
+z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
+z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
 ```
 </Tab>
 </Tabs>
@@ -1454,7 +1464,7 @@ stringOrNumber.options; // [ZodString, ZodNumber]
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 stringOrNumber.def.options; // [ZodString, ZodNumber]
 ```
 </Tab>
@@ -1576,7 +1586,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 ```
 
 <Callout type="warn">
-  大多数场景下，使用 [`A.extend(B)`](#extend) 合并对象模式更佳。此方法返回新对象模式，而 `z.intersection(A, B)` 返回的 `ZodIntersection` 实例缺少常见对象方法如 `pick` 和 `omit`。
+  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will gve you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
 </Callout>
 
 ## Record 类型
@@ -1681,7 +1691,7 @@ z.set(z.string()).max(5); // 最多 5 个元素
 z.set(z.string()).size(5); // 恰好 5 个元素
 ```
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 z.set(z.string()).check(z.minSize(5)); // 至少 5 个元素
 z.set(z.string()).check(z.maxSize(5)); // 最多 5 个元素
@@ -1699,20 +1709,22 @@ z.set(z.string()).check(z.size(5)); // 恰好 5 个元素
 ```ts
 const fileSchema = z.file();
 
-fileSchema.min(10_000); // 最小 .size（字节）
-fileSchema.max(1_000_000); // 最大 .size（字节）
-fileSchema.mime(["image/png"]); // MIME 类型
+fileSchema.min(10_000); // minimum .size (bytes)
+fileSchema.max(1_000_000); // maximum .size (bytes)
+fileSchema.mime("image/png"); // MIME type
+fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 ```
 
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 const fileSchema = z.file();
 
 fileSchema.check(
-  z.minSize(10_000), // 最小 .size（字节）
-  z.maxSize(1_000_000), // 最大 .size（字节）
-  z.mime(["image/png"]); // MIME 类型
+  z.minSize(10_000), // minimum .size (bytes)
+  z.maxSize(1_000_000), // maximum .size (bytes)
+  z.mime("image/png"), // MIME type
+  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
 )
 ```
 </Tab>
@@ -1787,7 +1799,7 @@ const myString = z.string().refine((val) => val.length <= 255);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(z.refine((val) => val.length <= 255));
 ```
 </Tab>
@@ -1810,7 +1822,7 @@ const myString = z.string().refine((val) => val.length > 8, {
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" })
 );
@@ -1839,7 +1851,7 @@ result.error.issues;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" }),
   z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" })
@@ -1871,7 +1883,7 @@ result.error!.issues;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!", abort: true }),
   z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true })
@@ -2161,6 +2173,7 @@ schema.parse({
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
+    // full control of issue objects
     ctx.issues.push({
       code: "too_big",
       maximum: 3,
@@ -2171,6 +2184,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+  // create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2185,6 +2199,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 <Tab value="Zod Mini">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  // full control of issue objects
   if (ctx.value.length > 3) {
     ctx.issues.push({
       code: "too_big",
@@ -2196,6 +2211,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+// create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2248,7 +2264,7 @@ castToString.parse(true); // => "true"
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const castToString = z.transform((val) => String(val));
 
 z.parse(castToString, "asdf"); // => "asdf"
@@ -2269,7 +2285,7 @@ type CastToString = z.infer<typeof castToString>; // string
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const castToString = z.transform((val) => String(val));
 
 type CastToString = z.infer<typeof castToString>; // string

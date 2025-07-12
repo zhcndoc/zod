@@ -7,17 +7,17 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 > 本迁移指南旨在按照影响程度由高到低，列出 Zod 4 中的破坏性更改。要了解有关 Zod 4 性能提升和新功能的更多信息，请阅读 [介绍文章](/v4)。
 
-为了给生态系统留出迁移时间，Zod 4 将最初与 Zod v3.25 同时发布。要使用 Zod 4，请升级到 `zod@3.25.0` 或更高版本：
+{/* 为了给生态系统留出迁移时间，Zod 4 将最初与 Zod v3.25 同时发布。要使用 Zod 4，请升级到 `zod@3.25.0` 或更高版本： */}
 
 ```
-npm upgrade zod@^3.25.0
+npm upgrade zod@^4.0.0
 ```
 
-Zod 4 可通过 `"/v4"` 子路径获取：
+{/* Zod 4 可通过 `"/v4"` 子路径获取：
 
 ```ts
-import * as z from "zod/v4";
-```
+import * as z from "zod";
+``` */}
 
 <Callout>
 **注意** — Zod 3 导出了一些未记录的准内部工具类型和函数，这些不被视为公共 API 的一部分。它们的更改未在此处记录。
@@ -171,7 +171,7 @@ Vitest 通过特殊处理 `Error` 子类，忽略可枚举属性。 */}
 issue 格式经过显著简化。
 
 ```ts
-import * as z from "zod/v4"; // v4
+import * as z from "zod"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -190,7 +190,7 @@ type IssueFormats =
 下面是 Zod 3 issue 类型和它们在 Zod 4 中对应类型的列表：
 
 ```ts
-import * as z from "zod/v4"; // v3
+import * as z from "zod"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ 重命名为 z.core.$ZodIssueInvalidType
@@ -321,10 +321,10 @@ z.email(); // ✅
 
 ### 更严格的 `.uuid()`
 
-`z.uuid()` 现在根据 RFC 4122 规范更严格地验证 UUID；具体来说，变体位必须是 `10`。对于更宽松的“类似 UUID”验证器，请使用 `z.guid()`。
+`z.uuid()` 现在根据 RFC 9562/4122 规范更严格地验证 UUID；具体来说，变体位必须是 `10`。对于更宽松的“类似 UUID”验证器，请使用 `z.guid()`。
 
 ```ts
-z.uuid(); // RFC 4122 compliant UUID
+z.uuid(); // RFC 9562/4122 compliant UUID
 z.guid(); // any 8-4-4-4-12 hex pattern
 ```
 
@@ -442,9 +442,29 @@ const mySchema = z.object({
 // Zod 4: { a: any; b: unknown };
 ```
 
-## 废弃 `z.nativeEnum()`
+### 不推荐使用 `.merge()`
 
-推荐用 `z.enum()` 替代 `z.nativeEnum()`。`z.enum()` 现支持类似枚举的输入。
+`ZodObject` 上的 `.merge()` 方法已被不推荐使用，建议使用 `.extend()`。`.extend()` 方法提供相同的功能，避免了严格性继承的模糊性，并且在 TypeScript 中性能更好。
+
+```ts
+// .merge (deprecated)
+const ExtendedSchema = BaseSchema.merge(AdditionalSchema);
+
+// .extend (recommended)
+const ExtendedSchema = BaseSchema.extend(AdditionalSchema.shape);
+
+// or use destructuring (best tsc performance)
+const ExtendedSchema = z.object({
+  ...BaseSchema.shape,
+  ...AdditionalSchema.shape,
+});
+```
+
+> **注意**：为了获得更好的 TypeScript 性能，考虑使用对象解构而不是 `.extend()`。有关更多详细信息，请参见 [API 文档](/api?id=extend)。
+
+## `z.nativeEnum()` 已弃用
+
+`z.nativeEnum()` 函数现已弃用，建议使用 `z.enum()`。`z.enum()` API 已被重载以支持类似枚举的输入。
 
 ```ts
 enum Color {
@@ -576,9 +596,37 @@ const longString = z.string().refine(
 );
 ```
 
-## 移除 `z.ostring()` 等方法
+## `.superRefine()` 已弃用
 
-未记录的便捷方法 `z.ostring()`、`z.onumber()` 等被移除。这些是定义可选字符串的简写方法。
+`.superRefine()` 方法已被弃用，推荐使用 `.check()`。`.check()` 方法提供相同的功能，并且具有更简洁的 API。`.check()` 方法也适用于 Zod 和 Zod Mini 模式。
+
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value
+    });
+  }
+});
+```
+
+
+## `z.ostring()` 等已删除
+
+未记录的便利方法 `z.ostring()`、`z.onumber()` 等已被移除。这些是用于定义可选字符串模式的简写方法。
 
 ## `z.literal()`
 
@@ -623,6 +671,13 @@ Zod 4 中不再是部分类型。推断为预期类型，且 Zod 确保解析时
 ```ts
 const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 // { a: number; b: number; c: number; }
+```
+
+要使用可选键复制旧行为，请使用 `z.partialRecord()`：
+
+```ts
+const myRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.number());
+// { a?: number; b?: number; c?: number; }
 ```
 
 ## `z.intersection()`
@@ -689,9 +744,9 @@ inferSchema(z.string()); // z.ZodString
 
 不再需要 `z.ZodTypeAny`，使用 `z.ZodType` 即可。
 
-### 新增 `z.core`
+### 新增 `z.core` 模块
 
-众多工具函数和类型已迁至新的 `zod/v4/core` 子包，以便在 `zod/v4` 和 `zod/v4-mini` 共享代码。
+为便于 Zod 与 Zod Mini 之间的代码共享，诸多实用函数与类型已迁移至新的 `zod/v4/core` 子包中。
 
 ```ts
 import * as z from "zod/v4/core";
@@ -701,10 +756,10 @@ function handleError(iss: z.$ZodError) {
 }
 ```
 
-为方便起见，`zod/v4/core` 内容也从 `zod/v4` 和 `zod/v4-mini` 重新导出，作为 `z.core` 命名空间。
+For convenience, the contents of `zod/v4/core` are also re-exported from `zod` and `zod/mini` under the `z.core` namespace. 
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 function handleError(iss: z.core.$ZodError) {
   // 处理错误
@@ -721,12 +776,12 @@ function handleError(iss: z.core.$ZodError) {
 
 这不影响用户 API，但值得强调，是 Zod 如何处理 *refinements*（细化校验）的重大内部重构。
 
-过去，refinements 和 transforms 都包裹于 `ZodEffects` 类，也就是说为模式添加这类内容，都包裹一层 `ZodEffects` 实例。Zod 4 中 refinements 融入模式本身。具体表现为每个模式包含一组“检查”（check）；“检查”是 Zod 4 新概念，泛化了 refinement，包括可能带副作用的转换如 `z.toLowerCase()`。
+之前，修饰和转换都存在于一个名为 `ZodEffects` 的包装类中。这意味着将任一项添加到模式中会将原始模式包装在一个 `ZodEffects` 实例中。在 Zod 4 中，修饰现在直接存在于模式内部。更准确地说，每个模式包含一个“检查”的数组；“检查”的概念在 Zod 4 中是新的，并且将修饰的概念推广到包括可能有副作用的转换，例如 `z.toLowerCase()`。
 
-这在 `zod/v4-mini` API 中尤为明显，它大量使用 `.check()` 方法组合多种校验：
+这在 Zod Mini API 中尤为明显，该 API 强烈依赖于 `.check()` 方法来组合各种验证。
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.string().check(
   z.minLength(10),
@@ -741,7 +796,7 @@ z.string().check(
 同时，转换移入专门的 `ZodTransform` 类。此模式表示输入转换；实际上，你可以定义独立转换：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.transform(input => String(input));
 

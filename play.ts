@@ -1,19 +1,19 @@
-import * as z from "zod/v4";
+import { z } from "zod";
 
-// ID is branded. Brand under the hood is an obj structur {...}
-const Id = z.string().brand("Id");
-const Obj = z.object({
-  id: Id,
-  name: z.string(),
-});
+z;
 
-const result = Obj.safeParse({});
-if (result.error) {
-  const tree = z.treeifyError(result.error);
-  // Compare the two types
-  // name is looked up as primitive string
-  // id is looked up as object with its properties, ending up with the properties of string
-  // this is because of the brand obj intersection with string
-  type TreeId = NonNullable<(typeof tree)["properties"]>["id"];
-  type TreeName = NonNullable<(typeof tree)["properties"]>["name"];
-}
+const arg = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("play"),
+    id: z.string(),
+    name: z.string(),
+    duration: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal("pause"),
+    id: z.string(),
+    reason: z.string().optional(),
+  }),
+]);
+
+arg.def;

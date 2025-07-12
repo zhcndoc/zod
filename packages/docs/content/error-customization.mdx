@@ -8,7 +8,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 在 Zod 中，验证错误以 `z.core.$ZodError` 类的实例形式呈现。
 
-> `zod/v4` 包使用了该类的子类，称为 `z.ZodError`，它实现了一些额外的便捷方法。
+> `zod` 包中的 `ZodError` 类是一个子类，实现了一些额外的便利方法。
 
 `$ZodError` 的实例包含 `.issues` 数组。每个 issue 包含一个人类可读的 `message` 和关于该问题的其他结构化元数据。
 
@@ -16,7 +16,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
@@ -32,7 +32,7 @@ result.error.issues;
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const result = z.string().safeParse(12); // { success: false, error: z.core.$ZodError }
 result.error.issues;
@@ -178,7 +178,7 @@ z.string().min(5, {
 });
 ```
 
-返回 `undefined` 可避免设置错误消息。这对于只定制特定错误消息而忽略其他情况很有用。Zod 会在[优先级链](#错误优先级)中交出控制权给下一个错误映射。
+返回 `undefined` 以避免自定义错误消息，并回退到默认消息。（更具体地说，Zod 将控制权交给 [优先级链](#error-precedence) 中的下一个错误映射。）这对于选择性地自定义某些错误消息而不自定义其他消息非常有用。
 
 ```ts
 z.int64({
@@ -292,21 +292,21 @@ const result = schema.safeParse(12, {
 
 为支持错误信息的国际化，Zod 提供了多个内置**语言包（locales）**。它们从 `zod/v4/core` 包导出。
 
-> **注意** — `zod/v4` 库自动加载 `en` 语言包。`zod/v4-mini` 子包不加载任何语言包，所有错误信息默认都是 `Invalid input`。
+> **注意** — 常规的 `zod` 库会自动加载 `en` 语言环境。Zod Mini 默认不加载任何语言环境；相反，所有错误消息默认显示为 `无效输入`。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
-import en from "zod/v4/locales/en.js"
+import * as z from "zod";
+import { en } from "zod/locales"
 
 z.config(en());
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
-import en from "zod/v4/locales/en.js"
+import * as z from "zod/mini"
+import { en } from "zod/locales";
 
 z.config(en());
 ```
@@ -316,7 +316,7 @@ z.config(en());
 若想懒加载语言包，可以考虑动态导入：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 async function loadLocale(locale: string) {
   const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
@@ -326,19 +326,19 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-为了方便，所有语言包作为 `z.locales` 从 `zod/v4` 导出。在某些打包器中，这可能无法进行摇树优化。
+为了方便，所有语言包作为 `z.locales` 从 `"zod"` 导出。在某些打包器中，这可能无法进行摇树优化。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.config(z.locales.en());
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 z.config(z.locales.en());
 ```

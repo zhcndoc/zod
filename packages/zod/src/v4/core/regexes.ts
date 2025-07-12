@@ -16,7 +16,7 @@ export const extendedDuration: RegExp =
 /** A regex for any UUID-like identifier: 8-4-4-4-12 hex pattern */
 export const guid: RegExp = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
 
-/** Returns a regex for validating an RFC 4122 UUID.
+/** Returns a regex for validating an RFC 9562/4122 UUID.
  *
  * @param version Optionally specify a version 1-8. If no version is specified, all versions are supported. */
 export const uuid = (version?: number | undefined): RegExp => {
@@ -49,7 +49,7 @@ export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 
-export const _emoji = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+const _emoji: string = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
 export function emoji(): RegExp {
   return new RegExp(_emoji, "u");
 }

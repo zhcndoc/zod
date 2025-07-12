@@ -2039,7 +2039,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       const opts = def.options as $ZodTypeDiscriminable[];
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
-        const values = o._zod.propValues[def.discriminator];
+        const values = o._zod.propValues?.[def.discriminator];
         if (!values || values.size === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
         for (const v of values) {
@@ -2865,9 +2865,10 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-declare global {
-  interface File {}
-}
+type _File = typeof globalThis extends { File: new (...args: any[]) => any }
+  ? InstanceType<typeof globalThis.File>
+  : {};
+interface File extends _File {}
 
 export interface $ZodFileDef extends $ZodTypeDef {
   type: "file";
@@ -3314,11 +3315,8 @@ export interface $ZodCatchDef<T extends SomeType = $ZodType> extends $ZodTypeDef
 }
 
 export interface $ZodCatchInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, core.input<T> | util.Whatever> {
+  extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodCatchDef<T>;
-  // qin: T["_zod"]["qin"];
-  // qout: T["_zod"]["qout"];
-
   optin: T["_zod"]["optin"];
   optout: T["_zod"]["optout"];
   isst: never;
@@ -3428,6 +3426,7 @@ export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends Some
   values: A["_zod"]["values"];
   optin: A["_zod"]["optin"];
   optout: B["_zod"]["optout"];
+  propValues: A["_zod"]["propValues"];
 }
 
 export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
@@ -3439,6 +3438,7 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "values", () => def.in._zod.values);
   util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
   util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     const left = def.in._zod.run(payload, ctx);
@@ -3518,6 +3518,7 @@ function handleReadonlyResult(payload: ParsePayload): ParsePayload {
 export interface $ZodTemplateLiteralDef extends $ZodTypeDef {
   type: "template_literal";
   parts: $ZodTemplateLiteralPart[];
+  format?: string | undefined;
 }
 export interface $ZodTemplateLiteralInternals<Template extends string = string>
   extends $ZodTypeInternals<Template, Template> {
@@ -3624,7 +3625,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
           input: payload.value,
           inst,
           code: "invalid_format",
-          format: "template_literal",
+          format: def.format ?? "template_literal",
           pattern: inst._zod.pattern.source,
         });
         return payload;

@@ -9,16 +9,16 @@ import { Callout } from 'fumadocs-ui/components/callout';
   **注意** — Zod Mini 的文档通过带有标签页的代码块与常规 Zod 文档穿插展示。本页旨在讲解 Zod Mini 存在的原因，何时使用它，以及它与常规 Zod 的一些关键区别。
 </Callout>
 
-`zod/v4-mini` 版本是在 Zod 4 发布时引入的。要试用它：
+Zod Mini 变体在 Zod 4 发布时推出。要尝试它：
 
 ```sh
-npm install zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
 导入方法：
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 ```
 
 Zod Mini 实现了与 `zod` 完全相同的功能，但采用了*函数式*、*支持 tree-shaking* 的 API。如果你熟悉 `zod`，这意味着你通常会使用*函数*代替方法。
@@ -35,7 +35,7 @@ const mySchema = z.nullable(z.optional(z.string()));
 
 Tree-shaking 是现代打包工具用来从最终代码包中移除未使用代码的技术。它也称为*死代码消除*。
 
-在常规 Zod 中，模式提供了多种方便的方法来执行常见操作（如字符串模式上的 `.min()`）。打包工具通常无法从你的包中移除（“tree-shake”）未使用的方法实现，但能移除未使用的顶层函数。因此，`zod/v4-mini` 的 API 更倾向于使用函数而非方法。
+在常规 Zod 中，模式提供了多种方便的方法来执行常见操作（如字符串模式上的 `.min()`）。打包工具通常无法从你的包中移除（“tree-shake”）未使用的方法实现，但能移除未使用的顶层函数。因此，Zod Mini 的 API 更倾向于使用函数而非方法。
 
 ```ts
 // 常规 Zod
@@ -108,14 +108,14 @@ Zod Mini 的 API 更啰嗦且不易发现。Zod 的方法 API 在 Intellisense �
 
 ## `ZodMiniType`
 
-所有 `zod/v4-mini` 的模式都继承自 `z.ZodMiniType` 基类，而该类又继承自 [`zod/v4/core`](/packages/core) 中的 `z.core.$ZodType`。虽然它实现的方法比 `zod` 中的 `ZodType` 少很多，但依然保留了一些非常实用的方法。
+所有 Zod Mini 的模式都继承自 `z.ZodMiniType` 基类，而该类又继承自 [`zod/v4/core`](/packages/core) 中的 `z.core.$ZodType`。虽然它实现的方法比 `zod` 中的 `ZodType` 少很多，但依然保留了一些非常实用的方法。
 
 ### `.parse`
 
-这是最显而易见的。所有 `zod/v4-mini` 模式都实现了与 `zod` 相同的解析方法。
+这是最显而易见的。所有 Zod Mini 模式都实现了与 `zod` 相同的解析方法。
 
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 const mySchema = z.string();
 
@@ -127,10 +127,10 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-在 `zod/v4` 中，模式子类有专门的方法用来执行常见验证：
+在 regular Zod 中，模式子类有专门的方法用来执行常见验证：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.string()
   .min(5)
@@ -139,10 +139,10 @@ z.string()
   .trim()
 ```
 
-但在 `zod/v4-mini` 中没有实现此类方法。取而代之的是通过向模式调用 `.check()` 传入检查规则：
+但在 Zod Mini 中没有实现此类方法。取而代之的是通过向模式调用 `.check()` 传入检查规则：
 
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 z.string().check(
   z.minLength(5), 
@@ -206,7 +206,7 @@ z.string().register(myReg, { title: "我的酷炫字符串模式" });
 用于*品牌化*一个模式。详情参见 [品牌类型](/api#branded-types) 文档。
 
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 const USD = z.string().brand("USD");
 ```
@@ -223,12 +223,12 @@ mySchema.clone(mySchema._zod.def);
 
 ## 无默认语言环境
 
-虽然 `zod/v4` 默认自动加载英语 (`en`) 语言环境，但 `zod/v4-mini` 不会加载。这样减少了在不需要错误信息、本地化成非英语语言或其他定制情况下的包体积。
+虽然 regular Zod 默认自动加载英语 (`en`) 语言环境，但 Zod Mini 不会加载。这样减少了在不需要错误信息、本地化成非英语语言或其他定制情况下的包体积。
 
 这意味着默认情况下，所有错误的 `message` 属性都会简单显示为 `"Invalid input"`。要加载英语语言环境：
 
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 z.config(z.locales.en());
 ```

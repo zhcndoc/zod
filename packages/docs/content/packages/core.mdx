@@ -5,7 +5,7 @@ title: Zod 核心
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-该子包导出被 `zod/v4` 和 `zod/v4-mini` 使用的核心类和工具。它不打算被直接使用；相反，它设计为供其他包进行扩展。它实现了：
+该子包导出被 Zod 和 Zod Mini 使用的核心类和工具。它不打算被直接使用；相反，它设计为供其他包进行扩展。它实现了：
 
 ```ts
 import * as z from "zod/v4/core";
@@ -164,7 +164,7 @@ export type $ZodTypes =
 
 ## Internals（内部实现）
 
-所有 `zod/v4/core` 子类仅包含一个属性：`_zod`。该属性是包含 schema *内部信息*的对象。其目标是让 `zod/v4/core` 尽可能具有可扩展性和无特定立场。其他库可以基于这些类“构建自己的 Zod”，而不会让 `zod/v4/core` 混乱接口。关于如何扩展这些类，请参考 `zod/v4` 和 `zod/v4-mini` 的实现。
+所有 `zod/v4/core` 子类仅包含一个属性：`_zod`。该属性是一个包含模式*内部*的对象。目标是使 `zod/v4/core` 尽可能可扩展且不带偏见。其他库可以在这些类的基础上“构建自己的 Zod”，而不必让 `zod/v4/core` 使接口变得杂乱。请参考 `zod` 和 `zod/mini` 的实现，以获取如何扩展这些类的示例。
 
 `_zod` 内部属性包含一些重要属性：
 
@@ -379,8 +379,8 @@ z.string().check(z.email()).parse("user@example.com")
 
 > 出于性能考虑，`$ZodError` *不*继承内置的 `Error` 类！因此使用 `instanceof Error` 会返回 `false`。
 
-- `zod/v4` 包实现了 `$ZodError` 的子类 `ZodError`，带有一些额外的便捷方法。
-- `zod/v4-mini` 子包直接使用 `$ZodError`
+- `zod` 包实现了 `$ZodError` 的子类 `ZodError`，带有一些额外的便捷方法。
+- `zod/mini` 子包直接使用 `$ZodError`
 
 ```ts
 export class $ZodError<T = unknown> implements Error {

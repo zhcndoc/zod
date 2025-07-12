@@ -14,21 +14,20 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 ## 版本管理 
 
-为了简化用户和 Zod 关联库生态系统的迁移过程，Zod 4 将初期与 Zod 3 一起作为 `zod@3.25` 版本发布。尽管版本号为 3.x，但它被认为是稳定且已准备好用于生产环境。
+{/* <Callout> 
+  **Update** — `zod@4.0.0` has now been published to npm. To upgrad
+</Callout> */}
+
+{/* To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it is considered stable and ready for production use. */}
 
 升级命令： 
 
 ```
-npm upgrade zod@^3.25.0
+npm upgrade zod@^4.0.0
 ```
 
-然后从子路径 `"/v4"` 导入 Zod 4：
 
-```ts
-import * as z from "zod/v4";
-```
-
-未来当对 Zod 4 的支持广泛后，我们将发布 npm 版本 `zod@4.0.0`。届时，Zod 4 将从包根路径（`"zod"`）导出，`"zod/v4"` 子路径仍将保留。关于此版本方案的详细说明，请参考 [此 issue](https://github.com/colinhacks/zod/issues/4371)。
+{/* Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371).  */}
 
 关于所有重大变更的完整列表，请参阅 [迁移指南](/v4/changelog)。本文重点介绍新增功能和改进。
 
@@ -120,7 +119,7 @@ summary for z.object() safeParse
 考虑以下简单文件：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const A = z.object({
   a: z.string(),
@@ -152,7 +151,7 @@ $ pnpm bench object-with-extend
 更重要的是，Zod 4 重新设计简化了 `ZodObject` 及其它 schema 类的泛型，避免了某些棘手的“实例爆炸”问题。例如，重复链式调用 `.extend()` 和 `.omit()` —— 以前会导致编译器问题：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const a = z.object({
   a: z.string(),
@@ -266,7 +265,7 @@ Zod 3 编译此代码耗时约 4000ms；继续添加 `.extend()` 会触发“可
 考虑以下极简脚本：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.boolean();
 
@@ -277,25 +276,25 @@ schema.parse(true);
 
 | 包名    | 打包体积（gzip） |
 |---------|------------------|
-| `zod/v3`   | `12.47kb`       |
-| `zod/v4`   | `5.36kb`        |
+| Zod 3   | `12.47kb`       |
+| Zod 4   | `5.36kb`        |
 
 Zod 4 中核心包约减少 57%（2.3 倍）。这很好，但还有更大的提升空间。
 
 ## 介绍 Zod Mini
 
-Zod 的方法繁重 API 本质上难以做树摇优化。即使是我们的简单 `z.boolean()` 脚本，也会带入许多未使用的实现，比如 `.optional()`、`.array()` 等。写更精简的实现只能到此为止。此时 `zod/v4-mini` 问世。
+Zod 的方法繁重 API 本质上难以做树摇优化。即使是我们的简单 `z.boolean()` 脚本，也会带入许多未使用的实现，比如 `.optional()`、`.array()` 等。写更精简的实现只能到此为止。此时 Zod Mini 问世。
 
 ```sh
 npm install zod@^3.25.0
 ```
 
-它是符合 `zod` 功能一对一映射的变体，API 更函数式且支持树摇优化。Zod 采用链式方法，`zod/v4-mini` 通常用包装函数替代：
+它是符合 `zod` 功能一对一映射的变体，API 更函数式且支持树摇优化。Zod 采用链式方法，Zod Mini 通常用包装函数替代：
 
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.optional(z.string());
 
@@ -306,7 +305,7 @@ z.extend(z.object({ /* ... */ }), { age: z.number() });
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.string().optional();
 
@@ -317,10 +316,10 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-并非所有方法都消失了！解析方法在 `zod/v4` 和 `zod/v4-mini` 中完全相同。
+并不是所有的方法都消失了！Zod 和 Zod Mini 的解析方法是相同的：
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.string().parse("asdf");
 z.string().safeParse("asdf");
@@ -333,7 +332,7 @@ await z.string().safeParseAsync("asdf");
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.array(z.number()).check(
   z.minLength(5), 
@@ -344,7 +343,7 @@ z.array(z.number()).check(
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.array(z.number())
   .min(5)
@@ -354,10 +353,10 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-`zod/v4-mini` 中还包含以下顶级细化方法，名称自明，与方法式 API 对应。
+以下顶级细化在 Zod Mini 中可用。它们对应的 Zod 方法应该是相当自明的。
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 // 自定义检查
 z.refine();
@@ -397,12 +396,14 @@ z.toUpperCase();
 
 此更函数式 API 让打包工具更容易摇掉未使用 API。推荐绝大多数场景使用 `zod/v4`，但对包体积限制苛刻的项目应考虑 `zod/v4-mini`。
 
-### 核心包体积减少 6.6 倍
+这个更实用的 API 使得打包工具更容易去除你不使用的 API。虽然常规的 Zod 仍然推荐用于大多数用例，但任何对包大小有不寻常严格限制的项目都应该考虑使用 Zod Mini。
 
-继续上文示例，改用 `"zod/v4-mini"`：
+### 核心包大小减少 6.6 倍
+
+这是上面的脚本，已更新为使用 `"zod/mini"` 而不是 `"zod"`。
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const schema = z.boolean();
 schema.parse(false);
@@ -412,18 +413,18 @@ schema.parse(false);
 
 | 包名         | 打包体积（gzip） |
 |--------------|------------------|
-| `zod/v3`       | `12.47kb`       |
-| `zod/v4`       | `5.36kb`        |
-| `zod/v4-mini`  | `1.88kb`        |
+| Zod 3       | `12.47kb`       |
+| Zod 4 (regular)       | `5.36kb`        |
+| Zod 4 (mini)  | `1.88kb`        |
 
-更多信息请见专门的 [`zod/v4-mini`](/packages/mini) 文档页。完整 API 细节混入现有文档，每当 API 有差异处代码块均含 `"Zod"` 和 `"Zod Mini"` 选项卡。
+更多信息请见专门的 [`zod/mini`](/packages/mini) 文档页。完整 API 细节混入现有文档，每当 API 有差异处代码块均含 `"Zod"` 和 `"Zod Mini"` 选项卡。
 
 ## 元数据
 
 Zod 4 引入了一个为 schema 添加强类型元数据的新系统。元数据不存于 schema 内部，而存于一个“schema 注册表”，将 schema 与类型化元数据关联。通过 `z.registry()` 创建注册表：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ title: string; description: string }>();
 ```
@@ -493,7 +494,7 @@ z.string().meta({ description: "An email address" });
 Zod 4 原生支持通过 `z.toJSONSchema()` 转换为 JSON Schema。
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const mySchema = z.object({name: z.string(), points: z.number()});
 
@@ -590,7 +591,7 @@ fileSchema.mime(["image/png"]); // MIME 类型
 Zod 4 引入全局翻译错误消息的 `locales` API。
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // 配置英文（默认）
 z.config(z.locales.en());
@@ -915,20 +916,22 @@ z.number().overwrite(val => val ** 2).max(100);
 
 ## 可扩展基础：`zod/v4/core`
 
-此功能对大多数用户无关，但值得强调。`zod/v4-mini` 的添加催生了共享子包 `zod/v4/core`，包含 `zod/v4` 和 `zod/v4-mini` 共享的核心功能。
+此功能对大多数用户无关，但值得强调。Zod Mini 的添加催生了共享子包 `zod/v4/core`，包含 Zod 和 Zod Mini 共享的核心功能。
 
 起初我抗拒设立这个，但如今认为这是 Zod 4 最重要特性之一，使 Zod 从简单库变成可供其它库灵活集成的高性能验证“底座”。
 
-如果你在构建 Schema 库，请参考 `zod/v4` 和 `zod/v4-mini` 的实现，了解如何基于 `zod/v4/core` 构建。欢迎通过 GitHub 讨论或 [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) 联系我以获取帮助或反馈。
+如果你在构建 Schema 库，请参考 Zod 和 Zod Mini 的实现，了解如何基于 `zod/v4/core` 构建。欢迎通过 GitHub 讨论或 [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) 联系我以获取帮助或反馈。
 
 ## 总结
 
 我计划发布多篇解释诸如 `zod/v4-mini` 之类重大功能设计思想的系列文章，届时会更新本节。
 
-对于库作者，现在有专门的 [库作者指南](/library-authors)，介绍基于 Zod 构建的最佳实践，以及如何同时支持 Zod 3 和 Zod 4（含 Mini）的问题解答。
+我计划写一系列额外的帖子，解释一些主要功能（如 Zod Mini）背后的设计过程。随着这些帖子发布，我会更新这一部分。
+
+对于库的作者，现在有一个专门的 [库作者指南](/library-authors)，描述了在 Zod 上构建的最佳实践。它回答了关于如何同时支持 Zod 3 和 Zod 4（包括 Mini）的常见问题。
 
 ```sh
-pnpm upgrade zod@^3.25.0
+pnpm upgrade zod@latest
 ```
 
 祝你解析愉快！<br/>

@@ -14,7 +14,7 @@ import { Callout } from "fumadocs-ui/components/callout"
 Zod中的元数据通过*注册表*进行管理。注册表是架构的集合，每个架构都与某些*强类型*元数据关联。要创建一个简单的注册表：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ description: string }>();
 ```
@@ -98,7 +98,7 @@ export interface GlobalMeta {
 示例：向 `z.globalRegistry` 注册某个架构的元数据：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const emailSchema = z.email().register(z.globalRegistry, { 
   id: "email_address",
@@ -182,7 +182,7 @@ emailSchema.meta({ description: "一个电子邮件地址" });
 你已经看过一个简单的自定义注册表示例：
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ description: string }>();
 ```
@@ -194,7 +194,7 @@ const myRegistry = z.registry<{ description: string }>();
 将元数据类型引用为架构的*推断类型*通常非常有价值。例如，你可能希望 `examples` 字段包含该架构输出的示例。
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 type MyMeta = { examples: z.$output[] };
 const myRegistry = z.registry<MyMeta>();
@@ -210,7 +210,7 @@ myRegistry.add(z.number(), { examples: [1, 2, 3] });
 传递第二个泛型参数给 `z.registry()`，以限制可以添加到注册表中的架构类型。此注册表仅接受字符串架构。
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ description: string }, z.ZodString>();
 
