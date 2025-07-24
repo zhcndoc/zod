@@ -5,7 +5,7 @@ title: 迁移指南
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-> 本迁移指南旨在按照影响程度由高到低，列出 Zod 4 中的破坏性更改。要了解有关 Zod 4 性能提升和新功能的更多信息，请阅读 [介绍文章](/v4)。
+本迁移指南旨在按照影响程度由高到低，列出 Zod 4 中的破坏性更改。要了解有关 Zod 4 性能提升和新功能的更多信息，请阅读 [介绍文章](/v4)。 
 
 {/* 为了给生态系统留出迁移时间，Zod 4 将最初与 Zod v3.25 同时发布。要使用 Zod 4，请升级到 `zod@3.25.0` 或更高版本： */}
 
@@ -19,8 +19,14 @@ npm upgrade zod@^4.0.0
 import * as z from "zod";
 ``` */}
 
+Zod 的许多行为和 API 已变得更加直观和一致。本文档中描述的重大变更通常代表了 Zod 用户的主要生活质量改进。我强烈建议您仔细阅读本指南。
+
 <Callout>
 **注意** — Zod 3 导出了一些未记录的准内部工具类型和函数，这些不被视为公共 API 的一部分。它们的更改未在此处记录。
+</Callout>
+
+<Callout>
+**非官方代码迁移工具** — 社区维护了一个从 Zod v3 升级至 v4 的代码转换工具 [`zod-v3-to-v4`](https://github.com/nicoespeon/zod-v3-to-v4) 可供使用。
 </Callout>
 
 ## 错误定制
@@ -401,6 +407,20 @@ schema.parse(undefined); // => 4
 
 ## `z.object()`
 
+### 在可选字段中应用的默认值
+
+即使在可选字段中，您属性内的默认值也会被应用。这更符合预期，并解决了 Zod 3 中长期存在的可用性问题。这是一个微妙的变化，可能会导致依赖于键存在等的代码路径出现问题。
+
+```ts
+const schema = z.object({
+  a: z.string().default("tuna").optional(),
+});
+
+schema.parse({});
+// Zod 4: { a: "tuna" }
+// Zod 3: {}
+```
+
 ### 废弃 `.strict()` 和 `.passthrough()`
 
 这些方法一般不再必需。请使用顶级的 `z.strictObject()` 和 `z.looseObject()` 函数代替。
@@ -596,7 +616,7 @@ const longString = z.string().refine(
 );
 ```
 
-## `.superRefine()` 已弃用
+{/* ## `.superRefine()` 已弃用
 
 `.superRefine()` 方法已被弃用，推荐使用 `.check()`。`.check()` 方法提供相同的功能，并且具有更简洁的 API。`.check()` 方法也适用于 Zod 和 Zod Mini 模式。
 
@@ -621,7 +641,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 });
-```
+``` */}
 
 
 ## `z.ostring()` 等已删除

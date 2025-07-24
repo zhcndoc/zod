@@ -37,6 +37,7 @@ z.coerce.bigint();    // BigInt(input)
 
 这些模式的强制转换版本尝试将输入值转换为适合的类型。
 
+
 ```ts
 const schema = z.coerce.string();
 
@@ -44,6 +45,16 @@ schema.parse("tuna");    // => "tuna"
 schema.parse(42);        // => "42"
 schema.parse(true);      // => "true"
 schema.parse(null);      // => "null"
+```
+
+这些强制转换模式的输入类型默认为 `unknown`。要指定更具体的输入类型，请传递泛型参数：
+
+```ts
+const A = z.coerce.number();
+type AInput = z.infer<typeof A>; // => number
+
+const B = z.coerce.number<number>();
+type BInput = z.infer<typeof B>; // => number
 ```
 
 <Accordions type="single"><Accordion title="Zod 中的强制转换原理">
@@ -306,7 +317,6 @@ const schema = z.url();
 schema.parse("https://example.com"); // ✅
 schema.parse("http://localhost"); // ✅
 schema.parse("mailto:noreply@zod.dev"); // ✅
-schema.parse("sup"); // ✅
 ```
 
 如您所见，这非常宽松。内部使用 `new URL()` 构造函数验证输入；此行为可能因平台和运行时而异，但这是在任何 JS 运行时/引擎上验证 URI/URL 的最严谨方法。
@@ -346,11 +356,18 @@ schema.parse("http://example.com"); // ❌
   ```
 </Callout>
 
+要规范化 URL，请使用 `normalize` 标志。这将用 `new URL()` 返回的 [规范化 URL](https://chatgpt.com/share/6881547f-bebc-800f-9093-f5981e277c2c) 覆盖输入值。
+
+```ts
+new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
+// => "http://example.com/b?X=1#f%20oo"
+```
+
 ### ISO 日期时间
 
-您可能注意到，Zod 字符串包含一些日期/时间相关的验证。这些是基于正则表达式的，因此不如完整的日期/时间库严格，但非常方便验证用户输入。
+正如您可能注意到的，Zod 字符串包含了一些与日期/时间相关的验证。这些验证是基于正则表达式的，因此它们没有完整的日期/时间库那么严格。然而，它们对于验证用户输入非常方便。
 
-`z.iso.datetime()` 方法强制 ISO 8601 格式；默认不允许时区偏移：
+`z.iso.datetime()` 方法强制执行 ISO 8601；默认情况下，不允许时区偏移：
 
 ```ts
 const datetime = z.iso.datetime();
@@ -1074,7 +1091,7 @@ const DogWithBreed = z.extend(Dog, {
 此 API 可用于覆盖现有字段！请小心使用此功能！如果两个模式共享键，B 将覆盖 A。
 
 <Callout>
-**替代方案：解构** — 你可以完全避免使用 `.extend()`，通过创建一个全新的对象模式。这使得结果模式的严格程度在视觉上变得明显。
+**替代方案：扩展语法** — 你可以选择完全避免使用 `.extend()`，通过创建一个全新的对象模式。这使得结果模式的严格程度在视觉上变得明显。
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1095,10 +1112,10 @@ const DogWithBreed = z.object({
 
 这种方法有几个优点：
 
-1. 它使用语言级特性（[解构语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)），而不是特定于库的 API
+1. 它使用语言级特性（[扩展语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)），而不是特定于库的 API
 2. 相同的语法在 Zod 和 Zod Mini 中都适用
-3. 它在 `tsc` 上更高效 — `.extend()` 方法在大型模式上可能很昂贵，并且由于 [TypeScript 的限制](https://github.com/microsoft/TypeScript/pull/61505)，当调用链式调用时，它的成本会呈平方增长
-4. 如果需要，您可以通过使用 `z.strictObject()` 或 `z.looseObject()` 来更改结果模式的严格性级别
+3. 它更具 `tsc` 效率——在大型模式上，`.extend()` 方法可能会很昂贵，并且由于 [TypeScript 的限制](https://github.com/microsoft/TypeScript/pull/61505)，当调用链式调用时，它的成本会呈平方增长
+4. 如果您愿意，可以通过使用 `z.strictObject()` 或 `z.looseObject()` 来更改结果模式的严格性级别
 </Callout>
 
 ### `.pick()`
@@ -2067,7 +2084,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will not prevent the password check from running
 });
 ```
 </Tab>
