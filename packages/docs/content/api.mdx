@@ -207,13 +207,15 @@ z.string().check(z.lowercase());
 z.string().trim(); // 去除空白
 z.string().toLowerCase(); // 转小写
 z.string().toUpperCase(); // 转大写
+z.string().normalize(); // 规范化 Unicode 字符
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.string().check(z.trim()); // trim whitespace
-z.string().check(z.toLowerCase()); // toLowerCase
-z.string().check(z.toUpperCase()); // toUpperCase
+z.string().check(z.trim()); // 去除空白
+z.string().check(z.toLowerCase()); // 转小写
+z.string().check(z.toUpperCase()); // 转大写
+z.string().check(z.normalize()); // 规范化 Unicode 字符
 ```
 </Tab>
 </Tabs>
@@ -694,6 +696,19 @@ FishEnum.parse("Swordfish"); // => ❌
   type FishEnum = z.infer<typeof FishEnum>; // "Salmon" | "Tuna" | "Trout"
   ```
 </Callout>
+
+支持类似枚举的对象字面量 `{ [key: string]: string | number }`。
+
+```ts
+const Fish = {
+  Salmon: "Salmon",
+  Tuna: "Tuna"
+} as const
+
+const FishEnum = z.enum(Fish)
+FishEnum.parse("Salmon"); // => "Salmon"
+FishEnum.parse("Swordfish"); // => ❌
+```
 
 您也可以传入外部声明的 TypeScript 枚举。
 

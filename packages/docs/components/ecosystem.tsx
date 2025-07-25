@@ -134,7 +134,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "valype",
     url: "https://github.com/yuzheng14/valype",
-    description: "Typescript's type definition to runtime validator (includeing zod).",
+    description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
   },
 ];
@@ -175,7 +175,14 @@ const poweredByZodProjects: ZodResource[] = [
   },
 ];
 
-const zodUtilities: ZodResource[] = [];
+const zodUtilities: ZodResource[] = [
+  {
+    name: "zod-playground",
+    url: "https://github.com/marilari88/zod-playground",
+    description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
+    slug: "marilari88/zod-playground",
+  },
+];
 
 export {
   apiLibraries,

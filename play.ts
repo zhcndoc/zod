@@ -1,3 +1,15 @@
-import * as z from "zod";
+import * as z from "zod/v4";
 
-console.log(z.url().parse("sup")); // ❌
+z;
+
+function myThing() {
+  const schema = z.custom<string>((val) => typeof val === "string");
+  schema._zod.toJSONSchema = () => ({
+    type: "string",
+  });
+  return schema;
+}
+
+console.log(z.toJSONSchema(myThing()));
+
+z.file().parse({}).text;
