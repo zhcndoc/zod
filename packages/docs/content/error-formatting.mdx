@@ -1,5 +1,6 @@
 ---
 title: 格式化错误
+description: "用于格式化和显示 Zod 错误的工具"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -18,7 +19,7 @@ const schema = z.strictObject({
 });
 ```
 
-尝试解析此无效数据会产生一个包含两个问题的错误。
+尝试解析这些无效数据会导致包含三个问题的错误。
 
 ```ts
 const result = schema.safeParse({

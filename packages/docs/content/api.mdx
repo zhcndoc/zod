@@ -1,5 +1,6 @@
 ---
 title: 定义模式
+description: "所有 Zod 模式类型、方法和验证功能的完整 API 参考"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
@@ -228,9 +229,11 @@ z.string().check(z.normalize()); // 规范化 Unicode 字符
 z.email();
 z.uuid();
 z.url();
+z.hostname();
 z.emoji();         // 验证单个 emoji 字符
 z.base64();
 z.base64url();
+z.jwt();
 z.nanoid();
 z.cuid();
 z.cuid2();
@@ -490,6 +493,15 @@ cidrv4.parse("192.168.0.0/24"); // ✅
 
 const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### JWTs
+
+验证 [JSON Web Tokens](https://jwt.io/)。
+
+```ts
+z.jwt();
+z.jwt({ alg: "HS256" });
 ```
 
 ## 模板字面量
@@ -825,7 +837,7 @@ z.stringbool({
 });
 ```
 
-默认模式是*不区分大小写*的；所有输入先转换为小写，再与 `truthy` / `falsy` 比较。若要区分大小写：
+默认情况下，模式是*不区分大小写*的；所有输入在与 `truthy`/`falsy` 值比较之前都会转换为小写。要使其区分大小写：
 
 ```ts
 z.stringbool({
@@ -1618,7 +1630,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 ```
 
 <Callout type="warn">
-  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will gve you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
+  在合并对象模式时，优先使用 [`A.extend(B)`](#extend) 而不是交集。使用 `.extend()` 将为您提供一个新的对象模式，而 `z.intersection(A, B)` 返回一个 `ZodIntersection` 实例，该实例缺少像 `pick` 和 `omit` 这样的公共对象方法。
 </Callout>
 
 ## Record 类型
@@ -1810,6 +1822,30 @@ const TestSchema = z.instanceof(Test);
 
 TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
+```
+
+### 属性
+
+要验证类实例的特定属性是否符合 Zod 模式：
+
+```ts
+const blobSchema = z.instanceof(URL).check(
+  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
+);
+
+blobSchema.parse(new URL("https://example.com")); // ✅
+blobSchema.parse(new URL("http://example.com")); // ❌
+```
+
+`z.property()` API 可以与任何数据类型一起使用（但在与 `z.instanceof()` 结合使用时最为有效）。
+
+```ts
+const blobSchema = z.string().check(
+  z.property("length", z.number().min(10))
+);
+
+blobSchema.parse("hello there!"); // ✅
+blobSchema.parse("hello."); // ❌
 ```
 
 ## 精炼验证
@@ -2134,70 +2170,73 @@ schema.parse({
 
 
 ### `.superRefine()`
-
-<Callout type="warn">
-  在 Zod 4 中，`.superRefine()` 已被弃用，建议用 `.check()` 代替。
-  
-  <Accordions>
-  <Accordion title="查看 .superRefine() 示例">
     
-    <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-    <Tab value="Zod">
-    ```ts
-    const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
-      if (val.length > 3) {
-        ctx.addIssue({
-          code: "too_big",
-          maximum: 3,
-          origin: "array",
-          inclusive: true,
-          message: "Too many items 😡",
-          input: val,
-        });
-      }
 
-      if (val.length !== new Set(val).size) {
-        ctx.addIssue({
-          code: "custom",
-          message: `No duplicates allowed.`,
-          input: val,
-        });
-      }
+常规的 `.refine` API 仅生成一个带有 `"custom"` 错误代码的问题，但 `.superRefine()` 使得使用 Zod 的任何 [内部问题类型](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts) 创建多个问题成为可能。
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
+  if (val.length > 3) {
+    ctx.addIssue({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: val,
     });
-    ```
-    </Tab>
-    <Tab value="Zod Mini">
-    ```ts
-    // no equivalent, use `.check(checkFn)` instead
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-    ```
-    </Tab>
-    </Tabs>
-  </Accordion>
-  </Accordions>
-</Callout>
+  }
+
+  if (val.length !== new Set(val).size) {
+    ctx.addIssue({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: val,
+    });
+  }
+});
+
+
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const UniqueStringArray = z.array(z.string()).check(
+  z.superRefine((val, ctx) => {
+    if (val.length > 3) {
+      ctx.addIssue({
+        code: "too_big",
+        maximum: 3,
+        origin: "array",
+        inclusive: true,
+        message: "Too many items 😡",
+        input: val,
+      });
+    }
+
+    if (val.length !== new Set(val).size) {
+      ctx.addIssue({
+        code: "custom",
+        message: `No duplicates allowed.`,
+        input: val,
+      });
+    }
+  })
+);
+```
+</Tab>
+</Tabs>
 
 ### `.check()`
 
+<Callout>
+**Note** — The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
+</Callout>
 
+<Accordions>
+<Accordion title="View example">
 `.refine()` 是 `.check()` 的语法糖，后者更灵活（但更啰嗦）。您可以用它在单个精炼中产生多个问题，或完全控制问题对象。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -2256,8 +2295,8 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 ```
 </Tab>
 </Tabs>
-
-常规 `.refine` 仅生成 `"custom"` 错误代码的问题，但 `.check()` 可以抛出其他问题类型。详情请参阅 [错误定制](./error-customization) 文档。
+</Accordion>
+</Accordions>
 
 ## 管道（Pipes）
 
@@ -2305,6 +2344,10 @@ z.parse(castToString, true); // => "true"
 ```
 </Tab>
 </Tabs>
+
+<Callout type="warn">
+  精炼函数不应抛出错误。抛出的错误不会被 Zod 捕获。
+</Callout>
 
 {/* 变换模式的输出类型由变换函数推断：
 

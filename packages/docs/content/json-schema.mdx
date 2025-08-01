@@ -1,5 +1,6 @@
 ---
 title: "JSON Schema"
+description: "How to convert Zod schemas to JSON Schema"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
@@ -213,8 +214,9 @@ z.toJSONSchema(schema, {
 interface ToJSONSchemaParams {
   /** 目标 JSON Schema 版本。
    * - `"draft-2020-12"` — 默认。JSON Schema Draft 2020-12
-   * - `"draft-7"` — JSON Schema Draft 7 */
-  target?: "draft-7" | "draft-2020-12";
+   * - `"draft-7"` — JSON Schema Draft 7
+   * - `"draft-4"` — JSON Schema Draft 4 */
+  target?: "draft-4" | "draft-7" | "draft-2020-12";
 
   /** 用于查找每个 schema 的元数据的注册表。
    * 任何包含 `id` 属性的 schema 都将被提取为 $def。 */
@@ -249,6 +251,7 @@ interface ToJSONSchemaParams {
 ```ts
 z.toJSONSchema(schema, { target: "draft-7" });
 z.toJSONSchema(schema, { target: "draft-2020-12" });
+z.toJSONSchema(schema, { target: "draft-4" });
 ```
 
 ### `metadata`
