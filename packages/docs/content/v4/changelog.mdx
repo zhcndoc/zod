@@ -11,7 +11,7 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 {/* 为了给生态系统留出迁移时间，Zod 4 将最初与 Zod v3.25 同时发布。要使用 Zod 4，请升级到 `zod@3.25.0` 或更高版本： */}
 
 ```
-npm upgrade zod@^4.0.0
+npm install zod@^4.0.0
 ```
 
 {/* Zod 4 可通过 `"/v4"` 子路径获取：
@@ -840,4 +840,62 @@ z.preprocess(val => val, z.string()); // ZodPipe<ZodTransform, ZodString>
 
 ### 移除 `ZodBranded`
 
-Branding 现在通过直接修改推断类型实现，无专门的 `ZodBranded` 类。对用户的 API 无影响。
+品牌化现在通过直接修改推断类型来处理，而不是使用专门的 `ZodBranded` 类。面向用户的 API 保持不变。
+
+
+{/* - Dropping support for ES5
+  - Zod relies on `Set` internally */}
+
+{/* - `z.keyof` now returns `ZodEnum` instead of `ZodLiteral` */}
+
+
+
+{/* ## Changed: `.refine()`
+
+The `.refine()` method used to accept a function as the second argument. 
+
+```ts
+// no longer supported
+const longString = z.string().refine(
+  (val) => val.length > 10,
+  (val) => ({ message: `${val} is not more than 10 characters` })
+);
+```
+
+This can be better represented with the new `error` parameter, so this overload has been removed.
+
+```ts
+const longString = z.string().refine((val) => val.length > 10, {
+  error: (issue) => `${issue.input} is not more than 10 characters`,
+});
+``
+ */}
+
+
+{/* 
+- No support for `null` or `undefined` in `z.literal`
+  - `z.literal(null)`
+  - `z.literal(undefined)`
+  - this was never documented */}
+
+
+{/* - Array min/max/length checks now run after parsing. This means they won't run if the parse has already aborted. */}
+
+
+
+{/* - Drops single-argument `z.record()` */}
+{/* - Smarter `z.record`: no longer Partial by default */}
+
+{/* - Intersection merge errors are now thrown as Error not ZodError
+  - These usually do not reflect a parse error but a structural problem with the schema */}
+{/* - Consolidates `unknownKeys` and `catchall` in ZodObject */}
+{/* - Dropping
+  - `ZodBranded`: purely a static-domain annotation
+  - `ZodFunction` */}
+{/* - The `description` is now stored in `z.defaultRegistry`, not the def
+  - No support for `description` in factory params
+  - Descriptions do not cascade in `.optional()`, etc */}
+{/* - Enums:
+  - ZodEnum and ZodNativeEnum are merged
+  - `.Values` and `.Enum` are removed. Use `.enum` instead.
+  - `.options` is removed */}

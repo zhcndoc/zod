@@ -109,6 +109,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Generate Markdown docs from Zod schemas",
     slug: "matejchalk/zod2md",
   },
+  {
+    name: "prisma-zod-generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -127,7 +133,7 @@ const xToZodConverters: ZodResource[] = [
   {
 
     name: "Hey API",
-    url: "https://github.com/hey-api/openapi-ts",
+    url: "https://heyapi.dev/openapi-ts/plugins/zod",
     description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
     slug: "hey-api/openapi-ts",
   },
@@ -236,11 +242,7 @@ type ResourceTableProps = {
 async function ResourceTable({ resources }: ResourceTableProps) {
   await fetchStars(resources);
 
-  return (
-    <>
-      <Table resources={resources} />
-    </>
-  );
+  return <Table resources={resources} />;
 }
 
 export async function ApiLibraries() {
