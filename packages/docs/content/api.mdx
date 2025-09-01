@@ -38,7 +38,6 @@ z.coerce.bigint();    // BigInt(input)
 
 这些模式的强制转换版本尝试将输入值转换为适合的类型。
 
-
 ```ts
 const schema = z.coerce.string();
 
@@ -58,7 +57,8 @@ const B = z.coerce.number<number>();
 type BInput = z.infer<typeof B>; // => number
 ```
 
-<Accordions type="single"><Accordion title="Zod 中的强制转换原理">
+<Accordions type="single">
+<Accordion title="Zod 中的强制转换原理">
   
   Zod 使用内置构造函数对所有输入执行强制转换。
 
@@ -87,14 +87,31 @@ type BInput = z.infer<typeof B>; // => number
   schema.parse(null); // => false
   ```
 
-  若要完全控制强制转换逻辑，考虑使用 [`z.transform()`](#transforms) 或 [`z.pipe()`](#pipes)。
+  要完全控制强制逻辑，请考虑使用 [`z.transform()`](#transforms) 或 [`z.pipe()`](#pipes)。
 
-</Accordion></Accordions>
+</Accordion>
+<Accordion title="Customizing the input type">
+  
+  默认情况下，任何 `z.coerce` 模式的 _input_ 类型为 `unknown`。在某些情况下，输入类型可能更具体会更好。您可以通过泛型参数指定输入类型。
+
+  ```ts
+  const regular = z.coerce.string();
+  type RegularInput = z.input<typeof regularCoerce>; // => unknown
+  type RegularOutput = z.output<typeof regularCoerce>; // => string
+
+  const customInput = z.coerce.string<string>();
+  type CustomInput = z.input<typeof customInput>; // => string
+  type CustomOutput = z.output<typeof customInput>; // => string
+  ```
+
+</Accordion>
+</Accordions>
+
 
 
 ## 字面量
 
-字面量模式代表[字面量类型](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)，例如 `"hello world"` 或 `5`。
+字面量模式表示一种 [字面量类型](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)，例如 `"hello world"` 或 `5`。
 
 ```ts
 const tuna = z.literal("tuna");
@@ -122,7 +139,7 @@ colors.parse("yellow"); // ❌
 
 从字面量模式中提取允许值集合：
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]} persist>
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
 colors.values; // => Set<"red" | "green" | "blue">
@@ -229,10 +246,12 @@ z.string().check(z.normalize()); // 规范化 Unicode 字符
 z.email();
 z.uuid();
 z.url();
+z.httpUrl();       // http or https URLs only
 z.hostname();
 z.emoji();         // 验证单个 emoji 字符
 z.base64();
 z.base64url();
+z.hex();
 z.jwt();
 z.nanoid();
 z.cuid();
@@ -240,8 +259,9 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
-z.cidrv4();        // ipv4 CIDR 块
-z.cidrv6();        // ipv6 CIDR 块
+z.cidrv4();        // ipv4 CIDR block
+z.cidrv6();        // ipv6 CIDR block
+z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -504,9 +524,71 @@ z.jwt();
 z.jwt({ alg: "HS256" });
 ```
 
+### 哈希
+
+验证加密哈希值：
+
+```ts
+z.hash("md5");
+z.hash("sha1");
+z.hash("sha256");
+z.hash("sha384");
+z.hash("sha512");
+```
+
+默认情况下，`z.hash()` 期望十六进制编码，这是常规做法。您可以使用 `enc` 参数指定不同的编码：
+
+```ts
+z.hash("sha256", { enc: "hex" });       // default
+z.hash("sha256", { enc: "base64" });    // base64 encoding
+z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
+```
+
+<Accordions>
+<Accordion title="Expected lengths and padding">
+
+| Algorithm / Encoding | `"hex"`  | `"base64"`  | `"base64url"`  |
+|-----------|-----------|--------------|-----------------|
+| `"md5"`   | 32        | 24 (22 + "==") | 22              |
+| `"sha1"`  | 40        | 28 (27 + "=")  | 27              |
+| `"sha256"`| 64        | 44 (43 + "=")  | 43              |
+| `"sha384"`| 96        | 64 (no padding)| 64              |
+| `"sha512"`| 128       | 88 (86 + "==") | 86              |
+
+</Accordion>
+</Accordions>
+
+### 自定义格式
+
+要定义您自己的字符串格式：
+
+```ts
+const coolId = z.stringFormat("cool-id", ()=>{
+  // arbitrary validation here
+  return val.length === 100 && val.startsWith("cool-");
+});
+
+// a regex is also accepted
+z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
+```
+
+该模式将产生 `"invalid_format"` 问题，这比通过细化或 `z.custom()` 产生的 `"custom"` 错误更具描述性。
+
+```ts
+myFormat.parse("invalid input!");
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "cool-id",
+//     "path": [],
+//     "message": "Invalid cool-id"
+//   }
+// ]
+```
+
 ## 模板字面量
 
-> **Zod 4 新增**
+> **新** — 在 `zod@4.0` 中引入。
 
 定义模板字面量模式：
 
@@ -1017,7 +1099,7 @@ const LooseDog = z.looseObject({
   name: z.string(),
 });
 
-Dog.parse({ name: "Yeller", extraKey: true });
+LooseDog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller", extraKey: true }
 ```
 
@@ -1118,7 +1200,7 @@ const DogWithBreed = z.extend(Dog, {
 此 API 可用于覆盖现有字段！请小心使用此功能！如果两个模式共享键，B 将覆盖 A。
 
 <Callout>
-**替代方案：扩展语法** — 你可以选择完全避免使用 `.extend()`，通过创建一个全新的对象模式。这使得结果模式的严格程度在视觉上变得明显。
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1144,6 +1226,48 @@ const DogWithBreed = z.object({
 3. 它更具 `tsc` 效率——在大型模式上，`.extend()` 方法可能会很昂贵，并且由于 [TypeScript 的限制](https://github.com/microsoft/TypeScript/pull/61505)，当调用链式调用时，它的成本会呈平方增长
 4. 如果您愿意，可以通过使用 `z.strictObject()` 或 `z.looseObject()` 来更改结果模式的严格性级别
 </Callout>
+
+### `.safeExtend()`
+
+`.safeExtend()` 方法的工作方式类似于 `.extend()`，但它不会让你用不可分配的模式覆盖现有的属性。换句话说，`.safeExtend()` 的结果将具有一个推断类型，该类型 [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) 原始类型（在 TypeScript 的意义上）。
+
+```ts
+z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.number() });
+//                                       ^  ❌ ZodNumber is not assignable 
+```
+
+使用 `.safeExtend()` 来扩展包含细化的模式。（常规的 `.extend()` 在用于包含细化的模式时会抛出错误。）
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).refine(user => user.a === user.b);
+
+// Extended inherits the refinements of Base
+const Extended = UserSchema.safeExtend({
+  a: z.string().min(10)
+});
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).check(z.refine(user => user.a === user.b));
+
+// Extended inherits the refinements of Base
+const Extended = z.safeExtend(UserSchema, {
+  a: z.string().min(10)
+});
+```
+</Tab>
+</Tabs>
 
 ### `.pick()`
 
@@ -1566,6 +1690,8 @@ const MyResult = z.discriminatedUnion("status", [
   z.object({ status: z.literal("failed"), error: z.string() }),
 ]);
 ```
+
+每个选项应该是一个 *对象模式*，其区分符属性（上面示例中的 `status`）对应某个字面值或一组值，通常是 `z.enum()`、`z.literal()`、`z.null()` 或 `z.undefined()`。
 
 {/* 
 <Callout>
@@ -2052,9 +2178,9 @@ const userId = z.string().refine(async (id) => {
 
 #### `when`
 
-> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
+> **注意** — 这是一个高级用户功能，绝对可能被滥用，从而增加未捕获错误的概率，这些错误源自于您的修饰。
 
-By default, refinements don't run if any *non-continuable* issues have already been encountered. Zod is careful to ensure the type signature of the value is correct before passing it into any refinement functions.
+默认情况下，如果已经遇到任何*不可继续*的问题，修饰将不会运行。Zod 会仔细确保值的类型签名在传递给任何修饰函数之前是正确的。
 
 ```ts
 const schema = z.string().refine((val) => {
@@ -2064,7 +2190,7 @@ const schema = z.string().refine((val) => {
 schema.parse(1234); // invalid_type: refinement won't be executed
 ```
 
-In some cases, you want finer control over when refinements run. For instance consider this "password confirm" check:
+在某些情况下，您希望更精细地控制何时运行优化。例如，考虑这个“密码确认”检查：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2091,7 +2217,7 @@ schema.parse({
 ```ts
 const schema = z
   .object({
-    password: z.string().min(8),
+    password: z.string().check(z.minLength(8)),
     confirmPassword: z.string(),
     anotherField: z.string(),
   })
@@ -2298,9 +2424,64 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 </Accordion>
 </Accordions>
 
-## 管道（Pipes）
+## 编解码器
 
-模式可串联成“管道”。管道主要在搭配[变换](#transforms)时有用。
+> **新** — 在 Zod 4.1 中引入。有关更多信息，请参阅专门的 [编解码器](/codecs) 页面。
+
+编解码器是一种特殊的模式，实现在两个其他模式之间的 *双向转换*。
+
+```ts
+const stringToDate = z.codec(
+  z.iso.datetime(),  // input schema: ISO date string
+  z.date(),          // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(),       // Date → ISO string
+  }
+);
+```
+
+常规的 `.parse()` 操作执行 *前向变换*。它调用编解码器的 `decode` 函数。
+
+```ts
+stringToDate.parse("2024-01-15T10:30:00.000Z"); // => Date
+```
+
+您可以选择使用顶级的 `z.decode()` 函数。与接受 `unknown` 输入的 `.parse()` 不同，`z.decode()` 期望一个强类型的输入（在此示例中为 `string`）。
+
+```ts
+z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); // => Date
+```
+
+要执行*反向变换*，请使用反函数：`z.encode()`。
+
+```ts
+z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+请参阅专门的 [编解码器](/codecs) 页面以获取更多信息。该页面包含您可以复制/粘贴到项目中的常用编解码器的实现：
+
+- [**`stringToNumber`**](/codecs#stringtonumber)
+- [**`stringToInt`**](/codecs#stringtoint)
+- [**`stringToBigInt`**](/codecs#stringtobigint)
+- [**`numberToBigInt`**](/codecs#numbertobigint)
+- [**`isoDatetimeToDate`**](/codecs#isodatetimetodate)
+- [**`epochSecondsToDate`**](/codecs#epochsecondstodate)
+- [**`epochMillisToDate`**](/codecs#epochmillistodate)
+- [**`jsonCodec`**](/codecs#jsoncodec)
+- [**`utf8ToBytes`**](/codecs#utf8tobytes)
+- [**`bytesToUtf8`**](/codecs#bytestoutf8)
+- [**`base64ToBytes`**](/codecs#base64tobytes)
+- [**`base64urlToBytes`**](/codecs#base64urltobytes)
+- [**`hexToBytes`**](/codecs#hextobytes)
+- [**`stringToURL`**](/codecs#stringtourl)
+- [**`stringToHttpURL`**](/codecs#stringtohttpurl)
+- [**`uriComponent`**](/codecs#uricomponent)
+- [**`stringToBoolean`**](/codecs#stringtoboolean)
+
+## 管道
+
+模式可以链接在一起形成“管道”。管道在与[转换](#transforms)结合使用时特别有用。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2322,7 +2503,9 @@ z.parse(stringToLength, "hello"); // => 5
 
 ## 变换（Transforms）
 
-变换是一种特殊模式。它们不验证输入，而是接受任何数据并执行转换。定义变换：
+> **注意** — 对于双向转换，请使用 [codecs](/codecs)。
+
+转换是一种特殊的模式，执行单向转换。它们不验证输入，而是接受任何内容并对数据进行某种转换。要定义一个转换：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2719,38 +2902,8 @@ const jsonSchema = z.lazy(() => {
 ```
 
 
-## 自定义
-
-使用 `z.custom()` 创建任何 TypeScript 类型的 Zod 模式。适合创建 Zod 不支持的类型模式，如模板字符串字面量。
-
-```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
-
-type px = z.infer<typeof px>; // `${number}px`
-
-px.parse("42px"); // "42px"
-px.parse("42vw"); // 抛错
-```
-
-若不提供验证函数，Zod 将允许任何值。这可能不安全！
-
-```ts
-z.custom<{ arg: string }>(); // 不执行任何验证
-```
-
-可通过第二参数定制错误消息及其它选项，与[`.refine`](#refine)的参数用法相同。
-
-```ts
-z.custom<...>((val) => ..., "custom error message");
-```
 
 ## 函数
-
-<Callout type="warn">
-  Zod 4 中，`z.function()` 不再返回 Zod 模式。
-</Callout>
 
 Zod 提供 `z.function()` 工具定义经过 Zod 验证的函数。避免验证码混入业务逻辑。
 
@@ -2759,6 +2912,9 @@ const MyFunction = z.function({
   input: [z.string()], // 参数（必须为数组或 ZodTuple）
   output: z.number()  // 返回值类型
 });
+
+type MyFunction = z.infer<typeof MyFunction>;
+// (input: string) => number
 ```
 
 函数模式拥有 `.implement()` 方法，接受函数，返回自动验证输入输出的新函数。
@@ -2787,4 +2943,42 @@ const MyFunction = z.function({
 });
 
 const computeTrimmedLength = MyFunction.implement((input) => input.trim.length);
+```
+
+
+使用 `.implementAsync()` 方法创建一个异步函数。
+
+```ts
+const computeTrimmedLengthAsync = MyFunction.implementAsync(
+  async (input) => input.trim().length
+);
+
+computeTrimmedLengthAsync("sandwich"); // => Promise<8>
+```
+
+## 自定义
+
+您可以通过使用 `z.custom()` 为任何 TypeScript 类型创建 Zod 模式。这对于为 Zod 默认不支持的类型（例如模板字符串字面量）创建模式非常有用。
+
+```ts
+const px = z.custom<`${number}px`>((val) => {
+  return typeof val === "string" ? /^\d+px$/.test(val) : false;
+});
+
+type px = z.infer<typeof px>; // `${number}px`
+
+px.parse("42px"); // "42px"
+px.parse("42vw"); // throws;
+```
+
+如果您不提供验证函数，Zod 将允许任何值。这可能是危险的！
+
+```ts
+z.custom<{ arg: string }>(); // performs no validation
+```
+
+您可以通过传递第二个参数来自定义错误消息和其他选项。此参数的工作方式与 [`.refine`](#refine) 的 params 参数相同。
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
 ```
