@@ -830,8 +830,10 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const [address, prefix] = payload.value.split("/");
+      const parts = payload.value.split("/");
       try {
+        if (parts.length !== 2) throw new Error();
+        const [address, prefix] = parts;
         if (!prefix) throw new Error();
         const prefixNum = Number(prefix);
         if (`${prefixNum}` !== prefix) throw new Error();
@@ -1762,7 +1764,7 @@ export interface $ZodObject<
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
   for (const k of keys) {
-    if (!def.shape[k]._zod.traits.has("$ZodType")) {
+    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
       throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
     }
   }
@@ -1862,6 +1864,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
+
     for (const key of value.keys) {
       const el = shape[key]!;
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
@@ -1907,7 +1910,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {}`);
+      doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
@@ -1920,6 +1923,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           })));
         }
         
+        
         if (${id}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
@@ -1927,6 +1931,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           newResult[${k}] = ${id}.value;
         }
+        
       `);
       }
 
@@ -3590,9 +3595,9 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   in: A;
   out: B;
   /** Only defined inside $ZodCodec instances. */
-  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
+  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
   /** Only defined inside $ZodCodec instances. */
-  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
+  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
 export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
@@ -3650,8 +3655,8 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodPipeDef<A, B> {
-  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
-  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
+  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
+  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
 export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>

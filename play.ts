@@ -1,23 +1,10 @@
 import * as z from "zod";
 
-const myFunction = z.function({
-  input: [
-    z.object({
-      name: z.string(),
-      age: z.number().int(),
-    }),
-  ],
-  output: z.string(),
-});
+z;
 
-const fn = myFunction.implement((input) => {
-  input;
-  return `Hello ${input.name}, you are ${input.age} years old.`;
+z.superRefine((val, ctx) => {
+  ctx.addIssue({
+    code: "custom",
+    message: "Custom message",
+  });
 });
-
-console.log(
-  fn({
-    name: "John",
-    age: 30,
-  })
-);

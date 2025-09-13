@@ -51,10 +51,10 @@ schema.parse(null);      // => "null"
 
 ```ts
 const A = z.coerce.number();
-type AInput = z.infer<typeof A>; // => number
+type AInput = z.input<typeof A>; // => unknown
 
 const B = z.coerce.number<number>();
-type BInput = z.infer<typeof B>; // => number
+type BInput = z.input<typeof B>; // => number
 ```
 
 <Accordions type="single">
@@ -95,7 +95,7 @@ type BInput = z.infer<typeof B>; // => number
   默认情况下，任何 `z.coerce` 模式的 _input_ 类型为 `unknown`。在某些情况下，输入类型可能更具体会更好。您可以通过泛型参数指定输入类型。
 
   ```ts
-  const regular = z.coerce.string();
+  const regularCoerce = z.coerce.string();
   type RegularInput = z.input<typeof regularCoerce>; // => unknown
   type RegularOutput = z.output<typeof regularCoerce>; // => string
 
@@ -572,7 +572,7 @@ const coolId = z.stringFormat("cool-id", ()=>{
 z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
 ```
 
-该模式将产生 `"invalid_format"` 问题，这比通过细化或 `z.custom()` 产生的 `"custom"` 错误更具描述性。
+此模式将产生 `"invalid_format"` 问题，这些问题比通过细化或 `z.custom()` 产生的 `"custom"` 错误更具描述性。
 
 ```ts
 myFormat.parse("invalid input!");
@@ -1249,7 +1249,7 @@ const Base = z.object({
 }).refine(user => user.a === user.b);
 
 // Extended inherits the refinements of Base
-const Extended = UserSchema.safeExtend({
+const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
 ```
@@ -1262,7 +1262,7 @@ const Base = z.object({
 }).check(z.refine(user => user.a === user.b));
 
 // Extended inherits the refinements of Base
-const Extended = z.safeExtend(UserSchema, {
+const Extended = z.safeExtend(Base, {
   a: z.string().min(10)
 });
 ```
@@ -1761,7 +1761,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 ## Record 类型
 
-Record 模式用于验证如 `Record<string, number>` 类型。
+Record 模式用于验证如 `Record<string, string>` 类型。
 
 ```ts
 const IdCache = z.record(z.string(), z.string());
@@ -2037,7 +2037,7 @@ const myString = z.string()
   
 
 const result = myString.safeParse("OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2052,7 +2052,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2072,7 +2072,7 @@ const myString = z.string()
 
 
 const result = myString.safeParse("OH NO");
-result.error!.issues;
+result.error?.issues;
 // => [{ "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
@@ -2084,7 +2084,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error!.issues;
+result.error?.issues;
 // [ { "code": "custom", "message": "Too short!" }]
 ```
 </Tab>

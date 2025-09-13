@@ -5,7 +5,6 @@ description: "基本使用指南，包括模式定义、数据解析、错误处
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
-import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 本页将引导你了解创建 schema、解析数据和使用推断类型的基础知识。有关 Zod schema API 的完整文档，请参阅 [定义 schema](/api)。
 
@@ -36,24 +35,6 @@ const Player = z.object({
 </Tab>
 </Tabs>
 
-{/* <Accordions>
-<Accordion title='为什么带上 "/v4" 后缀？'>
-  为了给生态系统迁移留出时间，将会有一个过渡期，在此期间 Zod 4 会与 Zod 3 一起发布，并通过子路径导入的方式提供使用：
-
-  ```ts
-  import * as z from "zod"
-  ```
-
-  在过渡期内：
-
-  1. Zod 4 被视为稳定且可用于生产环境
-  2. `"zod"` 包仍将在 npm 上发布 `3.x.x` 版本范围。`/v4` 子路径会在 `zod@3.25` 中添加。
-  3. Zod 3 会继续从包根目录（`"zod"`）以及新的子路径（`"zod/v3"`）导出，并继续接收错误修复和稳定性提升。
-
-  有关子路径版本策略的完整说明，请参见 [相关说明](https://github.com/colinhacks/zod/issues/4371)。
-</Accordion>
-</Accordions> */}
-
 ## 解析数据
 
 对于任何 Zod schema，使用 `.parse` 方法验证输入。如果输入有效，Zod 会返回输入的强类型*深拷贝*。
@@ -64,7 +45,7 @@ Player.parse({ username: "billie", xp: 100 });
 ```
 
 <Callout>
-**注意** — 如果您的模式使用某些异步 API，如 `async` [细化](#refine) 或 [转换](/api#transform)，您需要使用 `.parseAsync()` 方法。
+**注意** — 如果您的模式使用某些异步 API，如 `async` [细化](/api#refinements) 或 [转换](/api#transforms)，您需要使用 `.parseAsync()` 方法。
 
 ```ts
 await Player.parseAsync({ username: "billie", xp: 100 }); 
@@ -140,7 +121,7 @@ if (!result.success) {
 ```
 
 <Callout>
-**注意** — 如果您的模式使用某些异步 API，如 `async` [细化](#refine) 或 [转换](/api#transform)，您需要使用 `.safeParseAsync()` 方法。
+**注意** — 如果您的模式使用某些异步 API，如 `async` [细化](/api#refinements) 或 [转换](/api#transforms)，您需要使用 `.safeParseAsync()` 方法。
 
 ```ts
 await schema.safeParseAsync("hello");
