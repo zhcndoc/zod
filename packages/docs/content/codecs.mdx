@@ -1,22 +1,22 @@
 ---
-title: Codecs
-description: "Bidirectional transformations with encode and decode"
+title: 编解码器
+description: "使用 encode 和 decode 进行双向转换"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { ThemedImage } from "@/components/themed-image";
 
-> ✨ **New** — Introduced in `zod@4.1`
+> ✨ **新特性** — `zod@4.1` 中新增
 
-All Zod schemas can process inputs in both the forward and backward direction: 
+所有 Zod 模式(schema)都支持正向和反向两种输入处理方式：
 
-- **Forward**: `Input` to `Output`
+- **正向**：`Input` 到 `Output`
   - `.parse()`
   - `.decode()`
-- **Backward**: `Output` to `Input`
+- **反向**：`Output` 到 `Input`
   - `.encode()`
 
-In most cases, this is a distinction without a difference. The input and output types are identical, so there's no difference between "forward" and "backward".
+在大多数情况下，这种区分没有区别。输入类型和输出类型是相同的，所以“正向”和“反向”没有差异。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -46,20 +46,20 @@ z.encode(schema, "asdf");  // => "asdf"
 </Tabs>
 
 
-However, some schema types cause the input and output types to diverge, notably `z.codec()`. Codecs are a special type of schema that defines a *bi-directional transformation* between two other schemas.
+然而，某些模式类型会导致输入类型和输出类型不一致，尤其是 `z.codec()`。编码器是一种特殊的模式(schema)，定义了两个其他模式之间的**双向转换**。
 
 ```ts
 const stringToDate = z.codec(
-  z.iso.datetime(),  // input schema: ISO date string
-  z.date(),          // output schema: Date object
+  z.iso.datetime(),  // 输入模式：ISO 日期字符串
+  z.date(),          // 输出模式：Date 对象
   {
-    decode: (isoString) => new Date(isoString), // ISO string → Date
-    encode: (date) => date.toISOString(),       // Date → ISO string
+    decode: (isoString) => new Date(isoString), // ISO 字符串 → Date
+    encode: (date) => date.toISOString(),       // Date → ISO 字符串
   }
 );
 ```
 
-In these cases, `z.decode()` and `z.encode()` behave quite differently.
+在这些情况下，`z.decode()` 和 `z.encode()` 的行为截然不同。
 
 <Tabs items={['Zod', 'Zod Mini']}>
 <Tab value="Zod">
@@ -82,21 +82,21 @@ z.encode(stringToDate, new Date("2024-01-15T10:30:00.000Z"))
 </Tab>
 </Tabs>
 
-> **Note** —There's nothing special about the directions or terminology here. Instead of *encoding* with an `A -> B` codec, you could instead *decode* with a `B -> A` codec. The use of the terms "decode" and "encode" is just a convention.
+> **注意** — 这里的“方向”和术语没有特别含义。使用 `A -> B` 编解码器进行*编码*，也可以用 `B -> A` 编解码器进行*解码*。这里的“decode”和“encode”只是约定俗成的用语。
 
-This is particularly useful when parsing data at a network boundary. You can share a single Zod schema between your client and server, then use this single schema to convert between a network-friendly format (say, JSON) and a richer JavaScript representation.
+这对在网络边界处理数据特别有用。你可以在客户端和服务器间共享单个 Zod 模式，并用它在网络友好格式（如 JSON）和 JavaScript 丰富数据表示之间做转换。
 
 <ThemedImage 
   lightSrc="/codecs/codecs-network-light.svg" 
   darkSrc="/codecs/codecs-network-dark.svg" 
-  alt="Codecs encoding and decoding data across a network boundary" 
+  alt="代码器在网络边界进行编码和解码数据" 
 />
 
-### Composability
+### 组合性
 
-> **Note** — You can use `z.encode()` and `z.decode()` with any schema. It doesn't have to be a ZodCodec.
+> **注意** — 你可以对任何模式使用 `z.encode()` 和 `z.decode()`，不必非得是 ZodCodec。
 
-Codecs are a schema like any other. You can nest them inside objects, arrays, pipes, etc. There are no rules on where you can use them!
+编解码器和普通模式一样。它们可以嵌套在对象、数组、管道等结构中，使用没有任何限制！
 
 ```ts
 const payloadSchema = z.object({ 
@@ -109,33 +109,33 @@ payloadSchema.decode({
 ```
 
 
-### Type-safe inputs
+### 类型安全的输入
 
-While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By constrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
+`.parse()` 和 `.decode()` 在**运行时**行为一致，但它们的类型签名不同。`.parse()` 方法接受 `unknown` 类型输入，返回符合模式推断的*输出类型*的值。相比之下，`z.decode()` 和 `z.encode()` 函数的输入是**强类型**的。
 
 ```ts
 stringToDate.parse(12345); 
-// no complaints from TypeScript (fails at runtime)
+// TypeScript 无提示（但运行时会失败）
 
 stringToDate.decode(12345); 
-// ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'string'.
+// ❌ TypeScript 错误：参数类型 'number' 不能赋值给类型 'string'。
 
 stringToDate.encode(12345); 
-// ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
+// ❌ TypeScript 错误：参数类型 'number' 不能赋值给类型 'Date'。
 ```
 
-Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods
-Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
+为什么有区别？编码和解码意味着*转换*。在很多场景中，这些方法的输入在应用代码里已经是强类型，因此 `z.decode` 和 `z.encode` 接受强类型输入以便在编译时发现错误。
+下面的示意图展示了 `parse()`、`decode()` 和 `encode()` 的类型签名差异。
 
 <ThemedImage 
   lightSrc="/codecs/codecs-light.png" 
   darkSrc="/codecs/codecs-dark.png" 
-  alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
+  alt="编码器方向示意图，展示输入和输出模式之间的双向转换" 
 />
 
-### Async and safe variants
+### 异步和安全版本
 
-As with `.transform()` and `.refine()`, codecs support async transforms.
+和 `.transform()` 及 `.refine()` 一样，编解码器支持异步转换。
 
 ```ts
 const asyncCodec = z.codec(z.string(), z.number(), {
@@ -144,7 +144,7 @@ const asyncCodec = z.codec(z.string(), z.number(), {
 });
 ```
 
-As with regular `parse()`, there are "safe" and "async" variants of `decode()` and `encode()`.
+和普通的 `parse()` 一样，`decode()` 和 `encode()` 有“安全”及异步版本。
 
 ```ts
 stringToDate.decode("2024-01-15T10:30:00.000Z"); 
@@ -160,21 +160,21 @@ stringToDate.decodeSafeAsync("2024-01-15T10:30:00.000Z");
 // => Promise<{ success: true, data: Date } | { success: false, error: ZodError }>
 ```
 
-## How encoding works
+## 编码机制详解
 
-There are some subtleties to how certain Zod schemas "reverse" their parse behavior. 
+某些 Zod 模式“反转”其解析行为存在细微差别。
 
-### Codecs
+### 编解码器（Codecs）
 
-This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed. During `z.encode()`, the `encode` transform is executed.
+这个比较直观。编解码器封装了两个类型之间的双向转换。`z.decode()` 会触发 `decode` 转换，将输入转换为解析后的值，而 `z.encode()` 则触发 `encode` 转换，序列化回去。
 
 ```ts
 const stringToDate = z.codec(
-  z.iso.datetime(),  // input schema: ISO date string
-  z.date(),          // output schema: Date object
+  z.iso.datetime(),  // 输入模式：ISO 日期字符串
+  z.date(),          // 输出模式：Date 对象
   {
-    decode: (isoString) => new Date(isoString), // ISO string → Date
-    encode: (date) => date.toISOString(),       // Date → ISO string
+    decode: (isoString) => new Date(isoString), // ISO 字符串 → Date
+    encode: (date) => date.toISOString(),       // Date → ISO 字符串
   }
 );
 
@@ -186,18 +186,18 @@ stringToDate.encode(new Date("2024-01-15"));
 ```
 
 
-### Pipes
+### 管道（Pipes）
 
-> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic. 
+> **趣闻** — 编解码器实际上是内部基于管道（pipe）的**子类**，并添加了“中间”转换逻辑。
 
-During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with `A`, then pass it into `B`. As you might expect, during encoding, the data is first encoded with `B`, then passed into `A`.
+在普通解码时，`ZodPipe<A, B>` 模式先用 `A` 解析数据，再传给 `B`。编码时，数据先用 `B` 编码，再传回 `A`。
 
-### Refinements
+### 约束（Refinements）
 
-All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
+所有验证检查（`.refine()`、`.min()`、`.max()` 等）在两种方向都会执行。
 
 ```ts
-const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millenium");
+const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "必须是本千年");
 
 schema.encode(new Date("2000-01-01"));
 // => Date
@@ -207,14 +207,14 @@ schema.encode(new Date("1999-01-01"));
 //   {
 //     "code": "custom",
 //     "path": [],
-//     "message": "Must be this millenium"
+//     "message": "必须是本千年"
 //   }
 // ]
 ```
 
-To avoid unexpected errors in your custom `.refine()` logic, Zod performs two "passes" during `z.encode()`. The first pass ensures the input type conforms to the expected type (no `invalid_type` errors). If that passes, Zod performs the second pass which executes the refinement logic.
+为了避免自定义 `.refine()` 逻辑在 `z.encode()` 中抛出意外错误，Zod 会进行两遍“检测”。第一遍确保输入符合期望类型（避免出现 `invalid_type`），通过后才会进行第二遍执行约束逻辑。
 
-This approach also supports "mutating transforms" like `z.string().trim()` or `z.string().toLowerCase()`:
+这种设计也支持“变异转换”（mutating transforms），比如 `z.string().trim()` 或 `z.string().toLowerCase()`：
 
 ```ts
 const schema = z.string().trim();
@@ -226,9 +226,10 @@ schema.encode("  hello  ");
 // => "hello"
 ```
 
-### Defaults and prefaults
+### 默认值和前置默认值
 
-Defaults and prefaults are only applied in the "forward" direction. 
+默认值和前置默认值仅应用于“正向”方向。
+
 ```ts
 const stringWithDefault = z.string().default("hello");
 
@@ -236,14 +237,14 @@ stringWithDefault.decode(undefined);
 // => "hello"
 
 stringWithDefault.encode(undefined); 
-// => ZodError: Expected string, received undefined
+// => ZodError: 预期 string，收到 undefined
 ```
 
-When you attach a default value to a schema, the input becomes optional (`| undefined`) but the output does not. As such, `undefined` is not a valid input to `z.encode()` and defaults/prefaults will not be applied. 
+当你给模式附加默认值时，输入变成可选（`| undefined`），但输出不变。因此，`undefined` 不是 `z.encode()` 的有效输入，默认值不会生效。
 
-### Catch
+### 捕获（Catch）
 
-Similarly, `.catch()` is only applied in the "forward" direction.
+同样地，`.catch()` 仅在“正向”方向生效。
 
 ```ts
 const stringWithCatch = z.string().catch("hello");
@@ -252,14 +253,14 @@ stringWithCatch.decode(1234);
 // => "hello"
 
 stringWithCatch.encode(1234); 
-// => ZodError: Expected string, received number
+// => ZodError: 预期 string，收到 number
 ```
 
 ### Stringbool
 
-> **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec. 
+> **注意** — [Stringbool](/api#stringbool) 早于 Zod 引入编解码器。现在它内部已重写为编解码器实现。
 
-The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`..
+`z.stringbool()` API 将字符串值（如 `"true"`、`"false"`、`"yes"`、`"no"` 等）转换成 `boolean`。默认情况下，`z.encode()` 会将 `true` 转成 `"true"`，将 `false` 转成 `"false"`。
 
 ```ts
 const stringbool = z.stringbool();
@@ -271,7 +272,7 @@ stringbool.encode(true);    // => "true"
 stringbool.encode(false);   // => "false"
 ```
 
-If you specify a custom set of `truthy` and `falsy` values, the *first element in the array* will be used instead.
+如果你指定了自定义的 `truthy` 和 `falsy` 数组，则*数组的第一个元素*会被用作编码结果。
 
 ```ts
 const stringbool = z.stringbool({ truthy: ["yes", "y"], falsy: ["no", "n"] });
@@ -280,20 +281,20 @@ stringbool.encode(true);    // => "yes"
 stringbool.encode(false);   // => "no"
 ```
 
-### Transforms
+### 转换（Transforms）
 
-⚠️ — The `.transform()` API implements a *unidirectional* transformation. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). 
+⚠️ — `.transform()` API 实现的是**单向**转换。如果你的某个模式包含 `.transform()`，调用 `z.encode()` 会发生*运行时错误*（非 `ZodError`）。
 
 ```ts
 const schema = z.string().transform(val => val.length);
 
 schema.encode(1234); 
-// ❌ Error: Encountered unidirectional transform during encode: ZodTransform
+// ❌ Error: 编码时遇到单向转换: ZodTransform
 ```
 
 {/* ### Success
 
-`ZodSuccess` is also strictly unidirectional, and will throw an error if encountered during an encode operation.
+`ZodSuccess` 也是严格单向的，如果在 encode 操作中遇到会抛出错误。
 
 ```ts
 const successSchema = z.success(z.string());
@@ -302,19 +303,19 @@ z.decode(successSchema, "hello");
 // => true
 
 z.encode(successSchema, true);    
-// ❌ Error: Encountered unidirectional transform during encode: ZodSuccess
+// ❌ Error: 编码时遇到单向转换: ZodSuccess
 ``` */}
 
 
-## Useful codecs
+## 有用的编解码器
 
-Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Instead, you should copy/paste them into your project and modify them as needed.
+下面是常用编解码器的实现示例。为便于定制，这些并未作为 Zod 的一等 API 直接提供。你应复制粘贴进项目中，根据需要修改。
 
-> **Note** — All of these codec implementations have been tested for correctness. 
+> **注意** — 所有下列编解码器实现均经过正确性测试。
 
 ### `stringToNumber`
 
-Converts string representations of numbers to JavaScript `number` type using `parseFloat()`.
+使用 `parseFloat()` 将数字字符串转换为 JavaScript `number` 类型。
 
 ```ts
 const stringToNumber = z.codec(z.string().regex(z.regexes.number), z.number(), {
@@ -328,7 +329,7 @@ stringToNumber.encode(42.5);    // => "42.5"
 
 ### `stringToInt`
 
-Converts string representations of integers to JavaScript `number` type using `parseInt()`.
+使用 `parseInt()` 将整数字符串转换为 JavaScript 的 `number` 类型。
 
 ```ts
 const stringToInt = z.codec(z.string().regex(z.regexes.integer), z.int(), {
@@ -342,7 +343,7 @@ stringToInt.encode(42);    // => "42"
 
 ### `stringToBigInt`
 
-Converts string representations to JavaScript `bigint` type.
+将字符串转换为 JavaScript 的 `bigint` 类型。
 
 ```ts
 const stringToBigInt = z.codec(z.string(), z.bigint(), {
@@ -356,7 +357,7 @@ stringToBigInt.encode(12345n);   // => "12345"
 
 ### `numberToBigInt`
 
-Converts JavaScript `number` to `bigint` type.
+将 JavaScript 的 `number` 转换为 `bigint` 类型。
 
 ```ts
 const numberToBigInt = z.codec(z.int(), z.bigint(), {
@@ -370,7 +371,7 @@ numberToBigInt.encode(42n);  // => 42
 
 ### `isoDatetimeToDate`
 
-Converts ISO datetime strings to JavaScript `Date` objects.
+将 ISO 日期时间字符串转换为 JavaScript `Date` 对象。
 
 ```ts
 const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
@@ -378,13 +379,13 @@ const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
   encode: (date) => date.toISOString(),
 });
 
-isoDatetimeToDate.decode("2024-01-15T10:30:00.000Z");  // => Date object
+isoDatetimeToDate.decode("2024-01-15T10:30:00.000Z");  // => Date 对象
 isoDatetimeToDate.encode(new Date("2024-01-15"));       // => "2024-01-15T00:00:00.000Z"
 ```
 
 ### `epochSecondsToDate`
 
-Converts Unix timestamps (seconds since epoch) to JavaScript `Date` objects.
+将 Unix 时间戳（秒）转换为 JavaScript `Date` 对象。
 
 ```ts
 const epochSecondsToDate = z.codec(z.int().min(0), z.date(), {
@@ -392,13 +393,13 @@ const epochSecondsToDate = z.codec(z.int().min(0), z.date(), {
   encode: (date) => Math.floor(date.getTime() / 1000),
 });
 
-epochSecondsToDate.decode(1705314600);  // => Date object
-epochSecondsToDate.encode(new Date());  // => Unix timestamp in seconds
+epochSecondsToDate.decode(1705314600);  // => Date 对象
+epochSecondsToDate.encode(new Date());  // => Unix 秒时间戳
 ```
 
 ### `epochMillisToDate`
 
-Converts Unix timestamps (milliseconds since epoch) to JavaScript `Date` objects.
+将 Unix 时间戳（毫秒）转换为 JavaScript `Date` 对象。
 
 ```ts
 const epochMillisToDate = z.codec(z.int().min(0), z.date(), {
@@ -406,13 +407,13 @@ const epochMillisToDate = z.codec(z.int().min(0), z.date(), {
   encode: (date) => date.getTime(),
 });
 
-epochMillisToDate.decode(1705314600000);  // => Date object
-epochMillisToDate.encode(new Date());     // => Unix timestamp in milliseconds
+epochMillisToDate.decode(1705314600000);  // => Date 对象
+epochMillisToDate.encode(new Date());     // => Unix 毫秒时间戳
 ```
 
 ### `json(schema)`
 
-Parses JSON strings into structured data and serializes back to JSON. This generic function accepts an output schema to validate the parsed JSON data.
+将 JSON 字符串解析为结构化数据，并序列化回 JSON。该泛型函数接受一个输出模式用于验证解析后的 JSON。
 
 ```ts
 const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
@@ -434,7 +435,7 @@ const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
   });
 ```
 
-Usage example with a specific schema:
+使用示例：
 
 ```ts
 const jsonToObject = jsonCodec(z.object({ name: z.string(), age: z.number() }));
@@ -458,7 +459,7 @@ jsonToObject.decode('~~invalid~~');
 
 ### `utf8ToBytes`
 
-Converts UTF-8 strings to `Uint8Array` byte arrays.
+将 UTF-8 字符串转换为 `Uint8Array` 字节数组。
 
 ```ts
 const utf8ToBytes = z.codec(z.string(), z.instanceof(Uint8Array), {
@@ -472,7 +473,7 @@ utf8ToBytes.encode(bytes);          // => "Hello, 世界!"
 
 ### `bytesToUtf8`
 
-Converts `Uint8Array` byte arrays to UTF-8 strings.
+将 `Uint8Array` 字节数组转换为 UTF-8 字符串。
 
 ```ts
 const bytesToUtf8 = z.codec(z.instanceof(Uint8Array), z.string(), {
@@ -486,7 +487,7 @@ bytesToUtf8.encode("Hello, 世界!");  // => Uint8Array
 
 ### `base64ToBytes`
 
-Converts base64 strings to `Uint8Array` byte arrays and vice versa.
+将 Base64 字符串转换为 `Uint8Array` 字节数组，反之亦然。
 
 ```ts
 const base64ToBytes = z.codec(z.base64(), z.instanceof(Uint8Array), {
@@ -500,7 +501,7 @@ base64ToBytes.encode(bytes);       // => "SGVsbG8="
 
 ### `base64urlToBytes`
 
-Converts base64url strings (URL-safe base64) to `Uint8Array` byte arrays.
+将 Base64url 字符串（URL安全的 Base64）转换为 `Uint8Array` 字节数组。
 
 ```ts
 const base64urlToBytes = z.codec(z.base64url(), z.instanceof(Uint8Array), {
@@ -514,7 +515,7 @@ base64urlToBytes.encode(bytes);      // => "SGVsbG8"
 
 ### `hexToBytes`
 
-Converts hexadecimal strings to `Uint8Array` byte arrays and vice versa.
+将十六进制字符串转换为 `Uint8Array` 字节数组，反之亦然。
 
 ```ts
 const hexToBytes = z.codec(z.hex(), z.instanceof(Uint8Array), {
@@ -528,7 +529,7 @@ hexToBytes.encode(bytes);            // => "48656c6c6f"
 
 ### `stringToURL`
 
-Converts URL strings to JavaScript `URL` objects.
+将 URL 字符串转换为 JavaScript `URL` 对象。
 
 ```ts
 const stringToURL = z.codec(z.url(), z.instanceof(URL), {
@@ -536,13 +537,13 @@ const stringToURL = z.codec(z.url(), z.instanceof(URL), {
   encode: (url) => url.href,
 });
 
-stringToURL.decode("https://example.com/path");  // => URL object
+stringToURL.decode("https://example.com/path");  // => URL 对象
 stringToURL.encode(new URL("https://example.com"));  // => "https://example.com/"
 ```
 
 ### `stringToHttpURL`
 
-Converts HTTP/HTTPS URL strings to JavaScript `URL` objects.
+将 HTTP/HTTPS URL 字符串转换为 JavaScript `URL` 对象。
 
 ```ts
 const stringToHttpURL = z.codec(z.httpUrl(), z.instanceof(URL), {
@@ -550,13 +551,13 @@ const stringToHttpURL = z.codec(z.httpUrl(), z.instanceof(URL), {
   encode: (url) => url.href,
 });
 
-stringToHttpURL.decode("https://api.example.com/v1");  // => URL object
+stringToHttpURL.decode("https://api.example.com/v1");  // => URL 对象
 stringToHttpURL.encode(url);                           // => "https://api.example.com/v1"
 ```
 
 ### `uriComponent`
 
-Encodes and decodes URI components using `encodeURIComponent()` and `decodeURIComponent()`.
+使用 `encodeURIComponent()` 和 `decodeURIComponent()` 编码和解码 URI 组件。
 
 ```ts
 const uriComponent = z.codec(z.string(), z.string(), {

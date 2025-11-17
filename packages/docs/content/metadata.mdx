@@ -114,6 +114,9 @@ declare module "zod" {
     examples?: unknown[];
   }
 }
+
+// forces TypeScript to consider the file a module
+export {}
 ```
 
 ### `.meta()`
@@ -149,8 +152,8 @@ emailSchema.meta();
 元数据与*特定*的架构实例相关联。这一点十分重要，尤其是因为 Zod 方法是不可变的——它们总是返回新实例。
 
 ```ts
-const A = z.string().meta({ description: "一个很棒的字符串" });
-A.meta(); // => { description: "一个很棒的字符串" }
+const A = z.string().meta({ description: "A cool string" });
+A.meta(); // => { description: "A cool string" }
 
 const B = A.refine(_ => true);
 B.meta(); // => undefined

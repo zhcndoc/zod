@@ -791,20 +791,33 @@ FishEnum.parse("Swordfish"); // => ❌
   ```
 </Callout>
 
-支持类似枚举的对象字面量 `{ [key: string]: string | number }`。
+支持类似枚举的对象字面量 `{ [key: string]: string | number }`。 
 
 ```ts
 const Fish = {
-  Salmon: "Salmon",
-  Tuna: "Tuna"
+  Salmon: 0,
+  Tuna: 1
 } as const
 
 const FishEnum = z.enum(Fish)
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Swordfish"); // => ❌
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
 ```
 
-您也可以传入外部声明的 TypeScript 枚举。
+你也可以传入一个外部声明的 TypeScript 枚举。
+
+```ts
+enum Fish {
+  Salmon = 0,
+  Tuna = 1
+}
+
+const FishEnum = z.enum(Fish);
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 <Callout>
 **Zod 4** — 这取代了 Zod 3 中的 `z.nativeEnum()` API。
@@ -2529,7 +2542,7 @@ z.parse(castToString, true); // => "true"
 </Tabs>
 
 <Callout type="warn">
-  精炼函数不应抛出错误。抛出的错误不会被 Zod 捕获。
+  转换函数不应抛出异常。Zod不会捕获抛出的错误。
 </Callout>
 
 {/* 变换模式的输出类型由变换函数推断：

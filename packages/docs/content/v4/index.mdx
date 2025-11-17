@@ -287,7 +287,7 @@ Zod 4 中核心包约减少 57%（2.3 倍）。这很好，但还有更大的提
 Zod 的方法繁重 API 本质上难以做树摇优化。即使是我们的简单 `z.boolean()` 脚本，也会带入许多未使用的实现，比如 `.optional()`、`.array()` 等。写更精简的实现只能到此为止。此时 Zod Mini 问世。
 
 ```sh
-npm install zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
 它是符合 `zod` 功能一对一映射的变体，API 更函数式且支持树摇优化。Zod 采用链式方法，Zod Mini 通常用包装函数替代：
@@ -598,7 +598,7 @@ import * as z from "zod";
 z.config(z.locales.en());
 ```
 
-本文撰写时仅有英文，社区即将发起贡献呼吁，将在此更新支持的语言列表。
+请参阅自定义错误（/error-customization#locales）中支持的区域设置的完整列表；本节总是在可用时更新受支持语言的列表。
 
 ## 错误美化打印
 

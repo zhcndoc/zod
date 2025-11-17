@@ -146,16 +146,14 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // base methods
   inst.check = (...checks) => {
     return inst.clone(
-      {
-        ...def,
+      util.mergeDefs(def, {
         checks: [
           ...(def.checks ?? []),
           ...checks.map((ch) =>
             typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
           ),
         ],
-      }
-      // { parent: true }
+      })
     );
   };
   inst.clone = (def, params) => core.clone(inst, def, params);
@@ -794,6 +792,7 @@ export interface ZodNumber extends _ZodNumber<core.$ZodNumberInternals<number>> 
 
 export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$constructor("ZodNumber", (inst, def) => {
   core.$ZodNumber.init(inst, def);
+
   ZodType.init(inst, def);
 
   inst.gt = (value, params) => inst.check(checks.gt(value, params));
@@ -1196,7 +1195,10 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   core.$ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
 
-  util.defineLazy(inst, "shape", () => def.shape);
+  util.defineLazy(inst, "shape", () => {
+    return def.shape;
+  });
+
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1223,10 +1225,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 ): ZodObject<util.Writeable<T>, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    get shape() {
-      util.assignProp(this, "shape", shape ? util.objectClone(shape) : {});
-      return this.shape;
-    },
+    shape: shape ?? {},
     ...util.normalizeParams(params),
   };
   return new ZodObject(def) as any;
@@ -1240,10 +1239,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
 ): ZodObject<T, core.$strict> {
   return new ZodObject({
     type: "object",
-    get shape() {
-      util.assignProp(this, "shape", util.objectClone(shape));
-      return this.shape;
-    },
+    shape,
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
@@ -1257,10 +1253,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
 ): ZodObject<T, core.$loose> {
   return new ZodObject({
     type: "object",
-    get shape() {
-      util.assignProp(this, "shape", util.objectClone(shape));
-      return this.shape;
-    },
+    shape,
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;

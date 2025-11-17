@@ -489,7 +489,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
             code: "invalid_format",
             format: "url",
             note: "Invalid hostname",
-            pattern: regexes.hostname.source,
+            pattern: def.hostname.source,
             input: payload.value,
             inst,
             continue: !def.abort,
@@ -741,10 +741,8 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-  inst._zod.onattach.push((inst) => {
-    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
-    bag.format = `ipv4`;
-  });
+
+  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -765,10 +763,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.onattach.push((inst) => {
-    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
-    bag.format = `ipv6`;
-  });
+  inst._zod.bag.format = `ipv6`;
 
   inst._zod.check = (payload) => {
     try {
@@ -879,9 +874,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64";
-    });
+    inst._zod.bag.contentEncoding = "base64";
 
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
@@ -918,9 +911,7 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     def.pattern ??= regexes.base64url;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64url";
-    });
+    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1065,8 +1056,8 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
 
+  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
@@ -1113,10 +1104,10 @@ export interface $ZodNumberFormat extends $ZodType {
 }
 
 export const $ZodNumberFormat: core.$constructor<$ZodNumberFormat> = /*@__PURE__*/ core.$constructor(
-  "$ZodNumber",
+  "$ZodNumberFormat",
   (inst, def) => {
     checks.$ZodCheckNumberFormat.init(inst, def);
-    $ZodNumber.init(inst, def); // no format checksp
+    $ZodNumber.init(inst, def); // no format checks
   }
 );
 
@@ -1237,7 +1228,7 @@ export interface $ZodBigIntFormat extends $ZodType {
 }
 
 export const $ZodBigIntFormat: core.$constructor<$ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(
-  "$ZodBigInt",
+  "$ZodBigIntFormat",
   (inst, def) => {
     checks.$ZodCheckBigIntFormat.init(inst, def);
     $ZodBigInt.init(inst, def); // no format checks
@@ -1739,7 +1730,7 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 
 export interface $ZodObjectInternals<
   /** @ts-ignore Cast variance */
-  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
+  out Shape extends $ZodShape = $ZodShape,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends _$ZodTypeInternals {
   def: $ZodObjectDef<Shape>;
@@ -1792,7 +1783,7 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  for (const key of Object.keys(input)) {
+  for (const key in input) {
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
@@ -1825,6 +1816,21 @@ function handleCatchall(
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
+  // const sh = def.shape;
+  const desc = Object.getOwnPropertyDescriptor(def, "shape");
+  if (!desc?.get) {
+    const sh = def.shape;
+    Object.defineProperty(def, "shape", {
+      get: () => {
+        const newSh = { ...sh };
+        Object.defineProperty(def, "shape", {
+          value: newSh,
+        });
+
+        return newSh;
+      },
+    });
+  }
 
   const _normalized = util.cached(() => normalizeDef(def));
 
@@ -1853,7 +1859,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
-
         input,
         inst,
       });
@@ -2406,7 +2411,6 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
-  const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2422,6 +2426,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     payload.value = [];
     const proms: Promise<any>[] = [];
+
+    const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
+    const optStart = reversedIndex === -1 ? 0 : items.length - reversedIndex;
 
     if (!def.rest) {
       const tooBig = input.length > items.length;
@@ -2928,7 +2935,8 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
       throw new Error("Cannot create literal schema with no valid values");
     }
 
-    inst._zod.values = new Set<util.Literal>(def.values);
+    const values = new Set<util.Literal>(def.values);
+    inst._zod.values = values;
     inst._zod.pattern = new RegExp(
       `^(${def.values
 
@@ -2938,7 +2946,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
-      if (inst._zod.values.has(input)) {
+      if (values.has(input)) {
         return payload;
       }
       payload.issues.push({
@@ -4098,7 +4106,7 @@ export interface $ZodPromiseDef<T extends SomeType = $ZodType> extends $ZodTypeD
 }
 
 export interface $ZodPromiseInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, util.MaybeAsync<core.input<T>>> {
+  extends $ZodTypeInternals<Promise<core.output<T>>, util.MaybeAsync<core.input<T>>> {
   def: $ZodPromiseDef<T>;
   isst: never;
 }
@@ -4158,10 +4166,10 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   //   return () => _innerType;
   // });
   util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
-  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
-  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
+  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod.pattern);
+  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod.propValues);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod.optin ?? undefined);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
