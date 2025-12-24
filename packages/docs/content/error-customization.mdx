@@ -276,8 +276,8 @@ z.config({
 > 详见所有 Zod issue 代码的拆解，参考 [`zod/v4/core`](/packages/core#issue-types) 文档。
 
 ```ts
-const result = schema.safeParse(12, {
-  error: (iss) => {
+z.config({
+  customError: (iss) => {
     if (iss.code === "invalid_type") {
       return `无效类型，期望 ${iss.expected}`;
     }
@@ -285,8 +285,8 @@ const result = schema.safeParse(12, {
       return `最小值为 ${iss.minimum}`;
     }
     // ...
-  }
-})
+  },
+});
 ```
 
 ## 国际化

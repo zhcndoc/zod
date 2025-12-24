@@ -259,6 +259,7 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
+z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
@@ -466,7 +467,7 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO 时间
 
-`z.iso.time()` 方法验证格式为 `HH:MM[:SS[.s+]]` 的字符串。默认情况下，秒是可选的，亚秒的小数部分也是可选的。
+`z.iso.time()` 方法用于验证格式为 `HH:MM[:SS[.s+]]` 的字符串。默认情况下，秒是可选的，子秒小数也是可选的。
 
 ```ts
 const time = z.iso.time();
@@ -487,10 +488,10 @@ time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
 
 ```ts
 z.iso.time({ precision: -1 }); // HH:MM (minute precision)
-z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
-z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
-z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
-z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
+z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP 地址
@@ -508,11 +509,27 @@ ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 验证使用[CIDR 表示法](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)的 IP 地址段。
 
 ```ts
-const cidrv4 = z.string().cidrv4();
+const cidrv4 = z.cidrv4();
 cidrv4.parse("192.168.0.0/24"); // ✅
 
-const cidrv6 = z.string().cidrv6();
+const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### MAC Addresses
+
+Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+
+```ts
+const mac = z.mac(); 
+mac.parse("00:1A:2B:3C:4D:5E");  // ✅
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
+mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
+
+// custom delimiter
+const dashMac = z.mac({ delimiter: "-" });
+dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
 ### JWTs
@@ -1118,9 +1135,7 @@ LooseDog.parse({ name: "Yeller", extraKey: true });
 
 ### `.catchall()`
 
-定义*catchall*模式，验证所有未识别的键：
-
-
+要定义一个*通用模式*，用于验证任何未被识别的键：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -1242,7 +1257,7 @@ const DogWithBreed = z.object({
 
 ### `.safeExtend()`
 
-`.safeExtend()` 方法的工作方式类似于 `.extend()`，但它不会让你用不可分配的模式覆盖现有的属性。换句话说，`.safeExtend()` 的结果将具有一个推断类型，该类型 [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) 原始类型（在 TypeScript 的意义上）。
+`.safeExtend()` 方法的工作方式类似于 `.extend()`，但它不会允许你用不可赋值的模式覆盖已有属性。换句话说，`.safeExtend()` 的结果将具有一个推断类型，该类型在 TypeScript 的意义上 [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) 原始类型。
 
 ```ts
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
@@ -1675,6 +1690,37 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 <br/> */}
 
+## 排他联合（XOR）
+
+排他联合（XOR）是一种联合，其中必须恰好有一个选项匹配。与普通联合只要有任意一个选项匹配就成功不同，`z.xor()`在没有选项匹配或有多个选项匹配时都会失败。
+
+```ts
+const schema = z.xor([z.string(), z.number()]);
+
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
+```
+
+当你想确保选项之间互斥时，这很有用：
+
+```ts
+// Validate that exactly ONE of these matches
+const payment = z.xor([
+  z.object({ type: z.literal("card"), cardNumber: z.string() }),
+  z.object({ type: z.literal("bank"), accountNumber: z.string() }),
+]);
+
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+```
+
+如果输入可以匹配多个选项，`z.xor()` 将会失败：
+
+```ts
+const overlapping = z.xor([z.string(), z.any()]);
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+```
+
 ## 带分辨字段的联合
 
 [带分辨字段的联合](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) 是一种特殊联合，要求 a) 所有选项均为对象模式且 b) 共享特定键（“分辨字段”）。根据分辨字段的值，TypeScript 能精确缩小类型。
@@ -1742,6 +1788,7 @@ const MyResult = z.discriminatedUnion("status", [
 </Accordion>
 </Accordions>
 
+
 ## 交叉类型
 
 交叉类型 (`A & B`) 代表逻辑“且”。
@@ -1776,6 +1823,8 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record 模式用于验证如 `Record<string, string>` 类型。
 
+### `z.record`
+
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1802,6 +1851,9 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+### `z.partialRecord`
+
+
 <Callout>
   **Zod 4** — 在 Zod 4 中，若将 `z.enum` 传给 `z.record()` 作为第一个参数，Zod 会详尽检查输入对象是否包含所有枚举值作为键。此行为与 TypeScript 保持一致：
 
@@ -1821,6 +1873,23 @@ const Person = z.record(Keys, z.string());
 const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
 const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
+```
+
+### `z.looseRecord`
+
+By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
+
+```ts
+const schema = z.object({ name: z.string() }).passthrough()
+  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
+  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
+
+schema.parse({ 
+  name: "John",
+  other: "value",    // passes through unchanged
+  S_foo: "bar",     // validated as string
+  N_count: 123,     // validated as number
+});
 ```
 
 <Accordions>
@@ -2822,13 +2891,30 @@ const simba: Cat = pluto; // ❌ 不允许
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
-带品牌后，普通（无品牌）数据结构不再可赋值给推断类型。需解析获得品牌数据。
+使用此品牌后，任何普通（无品牌）数据结构都不再可分配给推断类型。你必须使用模式解析一些数据，以获得带品牌的数据。
 
+> 请注意，品牌类型不会影响 `.parse` 的运行时结果。它只是一个仅用于静态的结构。
 
-> 注意，品牌类型不会影响 `.parse` 的运行时结果，只是静态构造。
+默认情况下，只有*输出类型*是带品牌的。
+
+```ts
+const USD = z.string().brand<"USD">();
+
+type USDOutput = z.output<typeof USD>; // string & z.$brand<"USD">
+type USDInput = z.input<typeof USD>; // string
+```
+
+要自定义此项，请向 `.brand()` 传递第二个泛型以指定品牌的方向。
+
+```ts
+// requires Zod 4.2+
+z.string().brand<"Cat", "in">(); // output is branded (default)
+z.string().brand<"Cat", "out">(); // input is branded
+z.string().brand<"Cat", "inout">(); // both are branded
+```
 
 ## 只读
 

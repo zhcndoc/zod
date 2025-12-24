@@ -29,7 +29,7 @@ myRegistry.add(mySchema, { description: "一个很棒的架构！" });
 myRegistry.has(mySchema); // => true
 myRegistry.get(mySchema); // => { description: "一个很棒的架构！" }
 myRegistry.remove(mySchema);
-myRegistry.clear(); // wipe registry
+myRegistry.clear(); // 清空注册表
 ```
 
 TypeScript 会强制确保每个架构的元数据类型与注册表的**元数据类型**相匹配。
@@ -105,17 +105,17 @@ const emailSchema = z.email().register(z.globalRegistry, {
 });
 ```
 
-To globally augment the `GlobalMeta` interface, use [*declaration merging*](https://www.typescriptlang.org/docs/handbook/declaration-merging.html). Add the following anywhere in your codebase. Creating a `zod.d.ts` file in your project root is a common convention.
+要全局扩展 `GlobalMeta` 接口，使用[*声明合并*](https://www.typescriptlang.org/docs/handbook/declaration-merging.html)。在代码库中的任意位置添加以下内容。通常的约定是在项目根目录创建一个 `zod.d.ts` 文件。
 
 ```ts
 declare module "zod" {
   interface GlobalMeta {
-    // add new fields here
+    // 在此添加新字段
     examples?: unknown[];
   }
 }
 
-// forces TypeScript to consider the file a module
+// 防止 TypeScript 将该文件视为全局脚本文件
 export {}
 ```
 
@@ -136,8 +136,6 @@ const emailSchema = z.email().meta({
 <Tab value="Zod Mini">
 ```ts
 // 无等价实现
-  
- 
 ```
 </Tab>
 </Tabs>
@@ -180,10 +178,6 @@ emailSchema.meta({ description: "一个电子邮件地址" });
 <Tab value="Zod Mini">
 ```ts
 // 无等价实现
- 
- 
- 
- 
 ```
 </Tab>
 </Tabs>
