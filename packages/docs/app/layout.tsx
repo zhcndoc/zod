@@ -43,7 +43,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 verticalAd.className = "wwads-cn wwads-vertical";
                 verticalAd.setAttribute(
                   "style",
-                  "width: 100%; margin: 1rem 0 !important;"
+                  "width: 100%; margin: 1rem 0 !important; flex-shrink: 0;"
                 );
                 verticalAd.setAttribute("data-id", "354");
                 firstChild.insertBefore(verticalAd, firstChild.firstChild);
