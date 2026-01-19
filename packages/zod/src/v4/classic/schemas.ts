@@ -38,6 +38,7 @@ export interface ZodType<
 
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -88,7 +89,10 @@ export interface ZodType<
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
-  refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
+  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+    check: Ch,
+    params?: string | core.$ZodCustomParams
+  ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
@@ -96,6 +100,7 @@ export interface ZodType<
 
   // wrappers
   optional(): ZodOptional<this>;
+  exactOptional(): ZodExactOptional<this>;
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
@@ -142,6 +147,7 @@ export interface ZodType<
    * ```
    */
   isNullable(): boolean;
+  apply<T>(fn: (schema: this) => T): T;
 }
 
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -171,9 +177,13 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
             typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
           ),
         ],
-      })
+      }),
+      {
+        parent: true,
+      }
     );
   };
+  inst.with = inst.check;
   inst.clone = (def, params) => core.clone(inst, def, params);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {
@@ -199,12 +209,13 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
 
   // refinements
-  inst.refine = (check, params) => inst.check(refine(check, params));
+  inst.refine = (check, params) => inst.check(refine(check, params)) as never;
   inst.superRefine = (refinement) => inst.check(superRefine(refinement));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
   // wrappers
   inst.optional = () => optional(inst);
+  inst.exactOptional = () => exactOptional(inst);
   inst.nullable = () => nullable(inst);
   inst.nullish = () => optional(nullable(inst));
   inst.nonoptional = (params) => nonoptional(inst, params);
@@ -243,6 +254,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // helpers
   inst.isOptional = () => inst.safeParse(undefined).success;
   inst.isNullable = () => inst.safeParse(null).success;
+  inst.apply = (fn) => fn(inst);
   return inst;
 });
 
@@ -1198,11 +1210,11 @@ export interface ZodObject<
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
   pick<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   omit<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   partial(): ZodObject<
@@ -1212,7 +1224,7 @@ export interface ZodObject<
     Config
   >;
   partial<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
       [k in keyof Shape]: k extends keyof M
@@ -1233,7 +1245,7 @@ export interface ZodObject<
     Config
   >;
   required<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
@@ -1835,6 +1847,31 @@ export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> 
   }) as any;
 }
 
+// ZodExactOptional
+export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
+  extends _ZodType<core.$ZodExactOptionalInternals<T>>,
+    core.$ZodExactOptional<T> {
+  "~standard": ZodStandardSchemaWithJSON<this>;
+  unwrap(): T;
+}
+export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodExactOptional",
+  (inst, def) => {
+    core.$ZodExactOptional.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.optionalProcessor(inst, ctx, json, params);
+
+    inst.unwrap = () => inst._zod.def.innerType;
+  }
+);
+
+export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOptional<T> {
+  return new ZodExactOptional({
+    type: "optional",
+    innerType: innerType as any as core.$ZodType,
+  }) as any;
+}
+
 // ZodNullable
 export interface ZodNullable<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodNullableInternals<T>>,
@@ -2300,9 +2337,7 @@ type ZodInstanceOfParams = core.Params<
 >;
 function _instanceof<T extends typeof util.Class>(
   cls: T,
-  params: ZodInstanceOfParams = {
-    error: `Input not instance of ${cls.name}`,
-  }
+  params: ZodInstanceOfParams = {}
 ): ZodCustom<InstanceType<T>, InstanceType<T>> {
   const inst = new ZodCustom({
     type: "custom",
@@ -2312,6 +2347,18 @@ function _instanceof<T extends typeof util.Class>(
     ...(util.normalizeParams(params) as any),
   });
   inst._zod.bag.Class = cls;
+  // Override check to emit invalid_type instead of custom
+  inst._zod.check = (payload) => {
+    if (!(payload.value instanceof cls)) {
+      payload.issues.push({
+        code: "invalid_type",
+        expected: cls.name,
+        input: payload.value,
+        inst,
+        path: [...(inst._zod.def.path ?? [])],
+      });
+    }
+  };
   return inst as any;
 }
 export { _instanceof as instanceof };

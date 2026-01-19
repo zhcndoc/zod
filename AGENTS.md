@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 此文件为 Claude Code (claude.ai/code) 在处理本仓库代码时提供指导。
 
@@ -34,3 +34,4 @@
 - 新建文件前需先询问
 - 使用 `util.defineLazy()` 定义计算属性以避免循环依赖
 - 性能至关重要 —— 为了优化允许进行参数重赋值
+- 始终使用 `gh` CLI 获取 GitHub 信息（issues、PR 等），不要依赖网页搜索或臆测

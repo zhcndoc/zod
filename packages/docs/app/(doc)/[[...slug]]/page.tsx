@@ -38,13 +38,13 @@ export default async function Page(props: {
           <div className="flex items-center gap-2">
             <CopyMarkdownButton content={markdownContent} />
             <a
-              href={`https://github.com/colinhacks/zod/edit/main/packages/docs/content/${page.file.path}`}
+              href={`https://github.com/zhcndoc/zod/edit/main/packages/docs/content/${page.file.path}`}
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-fd-muted-foreground hover:text-fd-foreground border border-[var(--color-fd-border)] rounded hover:bg-fd-muted/50 transition-colors"
             >
               <Github className="w-3 h-3" />
-              Edit this page
+              编辑此页面
             </a>
           </div>
         </div>
@@ -68,6 +68,7 @@ export default async function Page(props: {
           }}
         />
       </DocsBody>
+      <div className="wwads-cn wwads-horizontal w-full my-4" data-id="354"></div>
     </DocsPage>
   );
 }

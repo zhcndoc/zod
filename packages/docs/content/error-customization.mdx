@@ -293,7 +293,7 @@ z.config({
 
 为支持错误信息的国际化，Zod 提供了多个内置**语言包（locales）**。它们从 `zod/v4/core` 包导出。
 
-> **注意** — 常规的 `zod` 库会自动加载 `en` 语言环境。Zod Mini 默认不加载任何语言环境；相反，所有错误消息默认显示为 `无效输入`。
+> **注意** — 常规的 `zod` 库会自动加载 `en` 语言环境。Zod Mini 默认不会加载任何语言环境，所有错误信息都默认为“输入无效”。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -367,6 +367,7 @@ z.config(z.locales.en());
 - `frCA` — Canadian French
 - `he` — Hebrew
 - `hu` — Hungarian
+- `hy` — Armenian
 - `id` — Indonesian
 - `is` — Icelandic
 - `it` — Italian
@@ -391,6 +392,7 @@ z.config(z.locales.en());
 - `tr` — Türkçe
 - `uk` — Ukrainian
 - `ur` — Urdu
+- `uz` — Uzbek
 - `vi` — Tiếng Việt
 - `zhCN` — Simplified Chinese
 - `zhTW` — Traditional Chinese

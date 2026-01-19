@@ -1851,6 +1851,29 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+**New** — As of v4.2, Zod properly supports numeric keys inside records in a way that more closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+
+```ts
+const numberKeys = z.record(z.number(), z.string());
+numberKeys.parse({ 
+  1: "one", // ✅
+  2: "two", // ✅
+  "1.5": "one", // ✅
+  "-3": "two", // ✅
+  abc: "one" // ❌
+});
+
+// further validation is also supported
+const intKeys = z.record(z.int().step(1).min(0).max(10), z.string());
+intKeys.parse({ 
+  0: "zero", // ✅
+  1: "one", // ✅
+  2: "two", // ✅
+  12: "twelve", // ❌
+  abc: "one" // ❌
+});
+```
+
 ### `z.partialRecord`
 
 
@@ -1880,33 +1903,20 @@ const Person = z.partialRecord(Keys, z.string());
 By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
 
 ```ts
-const schema = z.object({ name: z.string() }).passthrough()
-  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
-  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
+const schema = z
+  .object({ name: z.string() })
+  .and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
+
+type schema = z.infer<typeof schema>;
+// => { name: string } & Record<string, string>
 
 schema.parse({ 
   name: "John",
-  other: "value",    // passes through unchanged
-  S_foo: "bar",     // validated as string
-  N_count: 123,     // validated as number
+  home_phone: "+12345678900",     // validated as phone number
+  work_phone: "+12345678900",     // validated as phone number
 });
 ```
 
-<Accordions>
-<Accordion title="关于数字键的说明">
-
-尽管 TypeScript 允许定义 `Record<number, unknown>` 等数字键的 Record 类型，JavaScript 中数字键实际上不存在，都会转换为字符串。
-
-```ts
-const myObject = { 1: "one" };
-
-Object.keys(myObject); 
-// => ["1"]
-```
-
-如上所示，JS 会将所有数字键自动转换为字符串。因此，在 `z.record()` 中使用 `z.number()` 作为键模式，解析时会抛错，但 Zod 为保持与 TypeScript 的一致性，仍允许此用法。
-
-</Accordion></Accordions>
 
 ## Map 类型
 
@@ -3081,3 +3091,44 @@ z.custom<{ arg: string }>(); // performs no validation
 ```ts
 z.custom<...>((val) => ..., "custom error message");
 ```
+
+## Apply
+
+Use `.apply()` to incorporate external functions into Zod's method chain:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+function setCommonNumberChecks<T extends z.ZodNumber>(schema: T) {
+  return schema
+    .min(0)
+    .max(100);
+}
+
+const schema = z.number()
+  .apply(setCommonNumberChecks)
+  .nullable();
+
+schema.parse(0);  // => 0
+schema.parse(-1); // ❌ throws
+schema.parse(101); // ❌ throws
+schema.parse(null); // => null
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
+  return schema.check(z.minimum(0), z.maximum(100));
+}
+
+const schema = z.nullable(
+  z.number().apply(setCommonNumberChecks)
+);
+
+z.parse(schema, 0);   // => 0
+z.parse(schema, -1);  // ❌ throws
+z.parse(schema, 101); // ❌ throws
+z.parse(schema, null); // => null
+```
+</Tab>
+</Tabs>

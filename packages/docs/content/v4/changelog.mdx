@@ -34,9 +34,9 @@ Zod 的许多行为和 API 已变得更加直观和一致。本文档中描述�
 
 Zod 4 统一整合了错误定制的 API，统一使用单一的 `error` 参数。之前 Zod 的错误定制 API 分散且不一致，Zod 4 中已清理优化。
 
-### 废弃 `message`
+### 弃用 `message` 参数
 
-用 `error` 取代 `message`。虽然 `message` 参数仍受支持，但已废弃。
+将 `message` 参数替换为 `error`。旧的 `message` 参数仍然支持，但已被弃用。
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">

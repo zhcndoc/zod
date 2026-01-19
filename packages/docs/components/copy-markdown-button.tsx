@@ -17,7 +17,7 @@ export function CopyMarkdownButton({ content, className = "" }: CopyMarkdownButt
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy markdown:", err);
+      console.error("复制 Markdown 失败:", err);
     }
   };
 
@@ -26,11 +26,11 @@ export function CopyMarkdownButton({ content, className = "" }: CopyMarkdownButt
       type="button"
       onClick={handleCopy}
       className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs text-fd-muted-foreground hover:text-fd-foreground border border-[var(--color-fd-border)] rounded hover:bg-fd-muted/50 transition-colors ${className}`}
-      title="Copy markdown content"
+      title="复制 Markdown 内容"
     >
       <div className="flex items-center gap-1.5">
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        <span>Copy markdown</span>
+        <span>复制 Markdown</span>
       </div>
     </button>
   );

@@ -228,7 +228,7 @@ inferSchema(z.string());
 import * as z4 from "zod/v4/core";
 
 // 只接受对象 schema
-function inferSchema<T>(schema: z4.$ZodObject) {
+function inferSchema<T extends z4.$ZodObject>(schema: T) {
   return schema;
 }
 ```
