@@ -319,7 +319,7 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
-注意，不可表示类型会在该函数调用之前抛出 `Error`。如果你想为不可表示类型定义自定义行为，需要同时设置 `unrepresentable: "any"` 并使用 `override`。
+请注意，不可表示的类型会在调用此函数之前抛出一个 `Error`。如果你想为不可表示的类型定义自定义行为，你需要将 `unrepresentable: "any"` 与 `override` 一起设置。
 
 ```ts
 // 支持将 z.date() 表示为 ISO 日期时间字符串
