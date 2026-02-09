@@ -34,7 +34,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
-  /** A may to mark a whole payload as aborted. Used in codecs/pipes. */
+  /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
 }
 
@@ -220,6 +220,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
         if (ch._zod.def.when) {
+          if (util.explicitlyAborted(payload)) continue;
           const shouldRun = ch._zod.def.when(payload);
           if (!shouldRun) continue;
         } else if (isAborted) {
@@ -477,6 +478,23 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+
+      // When normalize is off, require :// for http/https URLs
+      // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
+      if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
+        if (!/^https?:\/\//i.test(trimmed)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid URL format",
+            input: payload.value,
+            inst,
+            continue: !def.abort,
+          });
+          return;
+        }
+      }
+
       // @ts-ignore
       const url = new URL(trimmed);
 

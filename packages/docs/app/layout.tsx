@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           as="image"
           href="https://raw.githubusercontent.com/colinhacks/zod/3782fe29920c311984004c350b9fefaf0ae4c54a/logo.svg"
         />
-        <script async src="https://www.zhcndoc.com/js/common.js"></script>
+        <Script async src="https://www.zhcndoc.com/js/common.js"></Script>
         <Script id="wwads-inject" strategy="afterInteractive">
           {`
             (function () {
@@ -43,7 +43,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 verticalAd.className = "wwads-cn wwads-vertical";
                 verticalAd.setAttribute(
                   "style",
-                  "width: 100%; margin: 1rem 0 !important; flex-shrink: 0;"
+                  "max-width: 200px; margin-top: 0; margin-bottom: 1rem; flex-shrink: 0;"
                 );
                 verticalAd.setAttribute("data-id", "354");
                 firstChild.insertBefore(verticalAd, firstChild.firstChild);

@@ -248,8 +248,8 @@ export function floatSafeRemainder(val: number, step: number): number {
   const valDecCount = (val.toString().split(".")[1] || "").length;
   const stepString = step.toString();
   let stepDecCount = (stepString.split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
-    const match = stepString.match(/\d?e-(\d?)/);
+  if (stepDecCount === 0 && /\d?e-\d+/.test(stepString)) {
+    const match = stepString.match(/\d?e-(\d+)/);
     if (match?.[1]) {
       stepDecCount = Number.parseInt(match[1]);
     }
@@ -805,6 +805,18 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
     if (x.issues[i]?.continue !== true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
+// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i]?.continue === false) {
       return true;
     }
   }
