@@ -6,7 +6,7 @@ description: "完整的变更日志和从 Zod 3 升级到 Zod 4 的迁移指南"
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-本迁移指南旨在按照影响程度由高到低，列出 Zod 4 中的破坏性更改。要了解有关 Zod 4 性能提升和新功能的更多信息，请阅读 [介绍文章](/v4)。 
+本迁移指南旨在按照影响程度由高到低，列出 Zod 4 中的破坏性更改。要了解有关 Zod 4 性能提升和新功能的更多信息，请阅读 [介绍文章](/v4)。
 
 {/* 为了给生态系统留出迁移时间，Zod 4 将最初与 Zod v3.25 同时发布。要使用 Zod 4，请升级到 `zod@3.25.0` 或更高版本： */}
 
@@ -255,7 +255,11 @@ mySchema.parse(12, { error: () => "上下文错误" }); // => "Schema 级别错�
 
 此 API 与 `.flatten()` 完全相同，历史遗留且未记录。
 
-### 废弃 `.addIssue()` 和 `.addIssues()`
+### 删除 `.errors`
+
+此 API 在 Zod v3 中是 `.issues` 的别名，但现已移除。请改用 `.issues`。
+
+### 弃用 `.addIssue()` 和 `.addIssues()`
 
 如有必要，请直接向 `err.issues` 数组推入新问题。
 
@@ -331,8 +335,8 @@ z.email(); // ✅
 `z.uuid()` 现在根据 RFC 9562/4122 规范更严格地验证 UUID；具体来说，变体位必须是 `10`。对于更宽松的“类似 UUID”验证器，请使用 `z.guid()`。
 
 ```ts
-z.uuid(); // RFC 9562/4122 compliant UUID
-z.guid(); // any 8-4-4-4-12 hex pattern
+z.uuid(); // 符合 RFC 9562/4122 的 UUID
+z.guid(); // 任意 8-4-4-4-12 十六进制模式
 ```
 
 ### `.base64url()` 不支持填充字符
@@ -468,13 +472,13 @@ const mySchema = z.object({
 `ZodObject` 上的 `.merge()` 方法已被不推荐使用，建议使用 `.extend()`。`.extend()` 方法提供相同的功能，避免了严格性继承的模糊性，并且在 TypeScript 中性能更好。
 
 ```ts
-// .merge (deprecated)
+// .merge（已弃用）
 const ExtendedSchema = BaseSchema.merge(AdditionalSchema);
 
-// .extend (recommended)
+// .extend（推荐）
 const ExtendedSchema = BaseSchema.extend(AdditionalSchema.shape);
 
-// or use destructuring (best tsc performance)
+// 或使用对象解构（TS 编译性能最佳）
 const ExtendedSchema = z.object({
   ...BaseSchema.shape,
   ...AdditionalSchema.shape,
@@ -777,7 +781,7 @@ function handleError(iss: z.$ZodError) {
 }
 ```
 
-For convenience, the contents of `zod/v4/core` are also re-exported from `zod` and `zod/mini` under the `z.core` namespace. 
+为方便起见，`zod/v4/core` 的内容也会通过 `z.core` 命名空间从 `zod` 和 `zod/mini` 中重新导出。
 
 ```ts
 import * as z from "zod";

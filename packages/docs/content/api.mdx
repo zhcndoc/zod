@@ -43,8 +43,8 @@ const schema = z.coerce.string();
 
 schema.parse("tuna");    // => "tuna"
 schema.parse(42);        // => "42"
-schema.parse(true);      // => "true"
-schema.parse(null);      // => "null"
+schema.parse(true);       // => "true"
+schema.parse(null);       // => "null"
 ```
 
 这些强制转换模式的输入类型默认为 `unknown`。要指定更具体的输入类型，请传递泛型参数：
@@ -90,7 +90,7 @@ type BInput = z.input<typeof B>; // => number
   要完全控制强制逻辑，请考虑使用 [`z.transform()`](#transforms) 或 [`z.pipe()`](#pipes)。
 
 </Accordion>
-<Accordion title="Customizing the input type">
+<Accordion title="自定义输入类型">
   
   默认情况下，任何 `z.coerce` 模式的 _input_ 类型为 `unknown`。在某些情况下，输入类型可能更具体会更好。您可以通过泛型参数指定输入类型。
 
@@ -246,7 +246,7 @@ z.string().check(z.normalize()); // 规范化 Unicode 字符
 z.email();
 z.uuid();
 z.url();
-z.httpUrl();       // http or https URLs only
+z.httpUrl();       // 仅限 http 或 https URL
 z.hostname();
 z.emoji();         // 验证单个 emoji 字符
 z.base64();
@@ -260,9 +260,9 @@ z.ulid();
 z.ipv4();
 z.ipv6();
 z.mac();
-z.cidrv4();        // ipv4 CIDR block
-z.cidrv6();        // ipv6 CIDR block
-z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
+z.cidrv4();        // ipv4 CIDR 块
+z.cidrv6();        // ipv6 CIDR 块
+z.hash("sha256");  // 或 "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -327,7 +327,7 @@ z.uuidv6();
 z.uuidv7();
 ```
 
-The RFC 9562/4122 UUID spec requires the first two bits of byte 8 to be `10`. Other UUID-like identifiers do not enforce this constraint. To validate any UUID-like identifier:
+RFC 9562/4122 UUID 规范要求字节 8 的前两位为 `10`。其他类似 UUID 的标识符不会强制执行此约束。要验证任意类似 UUID 的标识符：
 
 ```ts
 z.guid();
@@ -366,7 +366,7 @@ schema.parse("http://example.com"); // ❌
 ```
 
 <Callout>
-  **Web URLs** — 许多情况下，您可能只想验证 Web URL。推荐的模式如下：
+  **Web URL** — 在许多情况下，您可能只想验证 Web URL。推荐的模式如下：
 
   ```ts
   const httpUrl = z.url({
@@ -400,9 +400,9 @@ const datetime = z.iso.datetime();
 
 datetime.parse("2020-01-01T06:15:00Z"); // ✅
 datetime.parse("2020-01-01T06:15:00.123Z"); // ✅
-datetime.parse("2020-01-01T06:15:00.123456Z"); // ✅ (arbitrary precision)
-datetime.parse("2020-01-01T06:15:00+02:00"); // ❌ (offsets not allowed)
-datetime.parse("2020-01-01T06:15:00"); // ❌ (local not allowed)
+datetime.parse("2020-01-01T06:15:00.123456Z"); // ✅（任意精度）
+datetime.parse("2020-01-01T06:15:00+02:00"); // ❌（不允许偏移）
+datetime.parse("2020-01-01T06:15:00"); // ❌（不允许本地时间）
 ```
 
 允许时区偏移：
@@ -410,14 +410,14 @@ datetime.parse("2020-01-01T06:15:00"); // ❌ (local not allowed)
 ```ts
 const datetime = z.iso.datetime({ offset: true });
 
-// allows timezone offsets
+// 允许时区偏移
 datetime.parse("2020-01-01T06:15:00+02:00"); // ✅
 
-// basic offsets not allowed
+// 不允许基本偏移格式
 datetime.parse("2020-01-01T06:15:00+02");    // ❌
 datetime.parse("2020-01-01T06:15:00+0200");  // ❌
 
-// Z is still supported
+// 仍然支持 Z
 datetime.parse("2020-01-01T06:15:00Z"); // ✅ 
 ```
 
@@ -426,7 +426,7 @@ datetime.parse("2020-01-01T06:15:00Z"); // ✅
 ```ts
 const schema = z.iso.datetime({ local: true });
 schema.parse("2020-01-01T06:15:01"); // ✅
-schema.parse("2020-01-01T06:15"); // ✅ seconds optional
+schema.parse("2020-01-01T06:15"); // ✅ 秒可选
 ```
 
 限制允许的时间 `precision`。默认情况下，秒数为可选且允许任意亚秒级精度。
@@ -437,17 +437,17 @@ a.parse("2020-01-01T06:15Z"); // ✅
 a.parse("2020-01-01T06:15:00Z"); // ✅
 a.parse("2020-01-01T06:15:00.123Z"); // ✅
 
-const b = z.iso.datetime({ precision: -1 }); // minute precision (no seconds)
+const b = z.iso.datetime({ precision: -1 }); // 分钟精度（无秒）
 b.parse("2020-01-01T06:15Z"); // ✅
 b.parse("2020-01-01T06:15:00Z"); // ❌
 b.parse("2020-01-01T06:15:00.123Z"); // ❌
 
-const c = z.iso.datetime({ precision: 0 }); // second precision only
+const c = z.iso.datetime({ precision: 0 }); // 仅秒级精度
 c.parse("2020-01-01T06:15Z"); // ❌
 c.parse("2020-01-01T06:15:00Z"); // ✅
 c.parse("2020-01-01T06:15:00.123Z"); // ❌
 
-const d = z.iso.datetime({ precision: 3 }); // millisecond precision only
+const d = z.iso.datetime({ precision: 3 }); // 仅毫秒级精度
 d.parse("2020-01-01T06:15Z"); // ❌
 d.parse("2020-01-01T06:15:00Z"); // ❌
 d.parse("2020-01-01T06:15:00.123Z"); // ✅
@@ -474,24 +474,24 @@ const time = z.iso.time();
 
 time.parse("03:15"); // ✅
 time.parse("03:15:00"); // ✅
-time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
+time.parse("03:15:00.9999999"); // ✅（任意精度）
 ```
 
-不允许任何形式的抵消。
+不允许任何形式的偏移。
 
 ```ts
-time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
-time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
+time.parse("03:15:00Z"); // ❌（不允许 `Z`）
+time.parse("03:15:00+02:00"); // ❌（不允许偏移）
 ```
 
 使用 `precision` 参数来限制允许的小数精度。
 
 ```ts
-z.iso.time({ precision: -1 }); // HH:MM (minute precision)
-z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
-z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
-z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
-z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
+z.iso.time({ precision: -1 }); // HH:MM（分钟精度）
+z.iso.time({ precision: 0 });  // HH:MM:SS（秒级精度）
+z.iso.time({ precision: 1 });  // HH:MM:SS.s（十分之一秒精度）
+z.iso.time({ precision: 2 });  // HH:MM:SS.ss（百分之一秒精度）
+z.iso.time({ precision: 3 });  // HH:MM:SS.sss（毫秒精度）
 ```
 
 ### IP 地址
@@ -516,23 +516,23 @@ const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
-### MAC Addresses
+### MAC 地址
 
-Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+验证标准的 48 位 MAC 地址 [IEEE 802](https://en.wikipedia.org/wiki/MAC_address)。
 
 ```ts
 const mac = z.mac(); 
 mac.parse("00:1A:2B:3C:4D:5E");  // ✅
-mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
-mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
-mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ 默认使用冒号分隔
+mac.parse("001A:2B3C:4D5E");     // ❌ 仅支持标准格式
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ 不允许混合大小写
 
-// custom delimiter
+// 自定义分隔符
 const dashMac = z.mac({ delimiter: "-" });
 dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
-### JWTs
+### JWT
 
 验证 [JSON Web Tokens](https://jwt.io/)。
 
@@ -556,9 +556,9 @@ z.hash("sha512");
 默认情况下，`z.hash()` 期望十六进制编码，这是常规做法。您可以使用 `enc` 参数指定不同的编码：
 
 ```ts
-z.hash("sha256", { enc: "hex" });       // default
-z.hash("sha256", { enc: "base64" });    // base64 encoding
-z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
+z.hash("sha256", { enc: "hex" });       // 默认
+z.hash("sha256", { enc: "base64" });    // base64 编码
+z.hash("sha256", { enc: "base64url" }); // base64url 编码（无填充）
 ```
 
 <Accordions>
@@ -580,12 +580,12 @@ z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 要定义您自己的字符串格式：
 
 ```ts
-const coolId = z.stringFormat("cool-id", ()=>{
-  // arbitrary validation here
+const coolId = z.stringFormat("cool-id", (val)=>{
+  // 此处进行任意验证
   return val.length === 100 && val.startsWith("cool-");
 });
 
-// a regex is also accepted
+// 也接受正则表达式
 z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
 ```
 
@@ -598,7 +598,7 @@ myFormat.parse("invalid input!");
 //     "code": "invalid_format",
 //     "format": "cool-id",
 //     "path": [],
-//     "message": "Invalid cool-id"
+//     "message": "无效的 cool-id"
 //   }
 // ]
 ```
@@ -721,12 +721,12 @@ z.bigint().multipleOf(5n);             // 同 `.step(5n)`
 z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // 同 `.minimum(5n)`
 z.bigint().check(z.lt(5n));
-z.bigint().check(z.lte(5n));           // 同 `.maximum(5n)`
-z.bigint().check(z.positive());        // 同 `.gt(0n)` 
-z.bigint().check(z.nonnegative()); 
-z.bigint().check(z.negative()); 
-z.bigint().check(z.nonpositive()); 
-z.bigint().check(z.multipleOf(5n));    // 同 `.step(5n)`
+z.bigint().check(z.lte(5n));           // 别名 `.maximum(5n)`
+z.bigint().check(z.positive());        // 别名 `.gt(0n)`
+z.bigint().check(z.nonnegative());
+z.bigint().check(z.negative());
+z.bigint().check(z.nonpositive());
+z.bigint().check(z.multipleOf(5n));    // 别名 `.step(5n)`
 ```
 
 </Tab>
@@ -746,15 +746,15 @@ z.boolean().parse(false); // => false
 使用 `z.date()` 验证 `Date` 实例。
 
 ```ts
-z.date().safeParse(new Date()); // success: true
-z.date().safeParse("2022-01-12T06:15:00.000Z"); // success: false
+z.date().safeParse(new Date()); // 成功：true
+z.date().safeParse("2022-01-12T06:15:00.000Z"); // 成功：false
 ```
 
 自定义错误消息：
 
 ```ts
 z.date({
-  error: issue => issue.input === undefined ? "Required" : "Invalid date"
+  error: issue => issue.input === undefined ? "必填" : "无效日期"
 });
 ```
 
@@ -763,14 +763,14 @@ Zod 提供了一些针对日期的验证。
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-z.date().min(new Date("1900-01-01"), { error: "Too old!" });
-z.date().max(new Date(), { error: "Too young!" });
+z.date().min(new Date("1900-01-01"), { error: "太旧了！" });
+z.date().max(new Date(), { error: "太年轻了！" });
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
-z.date().check(z.maximum(new Date(), { error: "Too young!" }));
+z.date().check(z.minimum(new Date("1900-01-01"), { error: "太旧了！" }));
+z.date().check(z.maximum(new Date(), { error: "太年轻了！" }));
 ```
 </Tab>
 </Tabs>
@@ -888,7 +888,7 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-// no equivalent
+// 无对应实现
  
 ```
 </Tab>
@@ -907,7 +907,7 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-// no equivalent
+// 无对应实现
  
 ```
 </Tab>
@@ -1228,10 +1228,10 @@ const DogWithBreed = z.extend(Dog, {
 此 API 可用于覆盖现有字段！请小心使用此功能！如果两个模式共享键，B 将覆盖 A。
 
 <Callout>
-**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**替代方案：展开语法** — 你也可以完全不使用 `.extend()`，而是直接创建一个新的对象模式。这会让生成模式的严格级别在视觉上更加明显。
 
 ```ts
-const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
+const DogWithBreed = z.object({ // 或 z.strictObject() 或 z.looseObject()...
   ...Dog.shape,
   breed: z.string(),
 });
@@ -1263,7 +1263,7 @@ const DogWithBreed = z.object({
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
 z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
 z.object({ a: z.string() }).safeExtend({ a: z.number() });
-//                                       ^  ❌ ZodNumber is not assignable 
+//                                       ^  ❌ ZodNumber 不能赋值给 
 ```
 
 使用 `.safeExtend()` 来扩展包含细化的模式。（常规的 `.extend()` 在用于包含细化的模式时会抛出错误。）
@@ -1586,12 +1586,12 @@ const stringArray = z.array(z.string());
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-stringArray.unwrap(); // => string schema
+stringArray.unwrap(); // => 字符串模式
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-stringArray.def.element; // => string schema
+stringArray.def.element; // => 字符串模式
 ```
 </Tab>
 </Tabs>
@@ -1608,16 +1608,16 @@ z.array(z.string()).length(5); // 恰好包含 5 项
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
-z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
-z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
+z.array(z.string()).check(z.minLength(5)); // 必须包含 5 项或更多
+z.array(z.string()).check(z.maxLength(5)); // 必须包含 5 项或更少
+z.array(z.string()).check(z.length(5)); // 必须恰好包含 5 项
 ```
 </Tab>
 </Tabs>
 
 {/* 与 `.nonempty()` 不同，这些方法不改变推断类型。 */}
 
-## 元组
+## Tuple
 
 元组通常是固定长度数组，每个索引指定不同的模式。
 
@@ -1639,7 +1639,7 @@ const variadicTuple = z.tuple([z.string()], z.number());
 // => [string, ...number[]];
 ```
 
-## 联合类型
+## Union Types
 
 联合类型（`A | B`）代表逻辑“或”。Zod 联合模式依次检查输入，返回第一个验证成功的选项。
 
@@ -1697,28 +1697,28 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 ```ts
 const schema = z.xor([z.string(), z.number()]);
 
-schema.parse("hello"); // ✅ passes
-schema.parse(42);      // ✅ passes
-schema.parse(true);    // ❌ fails (zero matches)
+schema.parse("hello"); // ✅ 通过
+schema.parse(42);      // ✅ 通过
+schema.parse(true);    // ❌ 失败（零个匹配）
 ```
 
 当你想确保选项之间互斥时，这很有用：
 
 ```ts
-// Validate that exactly ONE of these matches
+// 验证这两个中恰好有一个匹配
 const payment = z.xor([
   z.object({ type: z.literal("card"), cardNumber: z.string() }),
   z.object({ type: z.literal("bank"), accountNumber: z.string() }),
 ]);
 
-payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ 通过
 ```
 
 如果输入可以匹配多个选项，`z.xor()` 将会失败：
 
 ```ts
 const overlapping = z.xor([z.string(), z.any()]);
-overlapping.parse("hello"); // ❌ fails (matches both string and any)
+overlapping.parse("hello"); // ❌ 失败（同时匹配 string 和 any）
 ```
 
 ## 带分辨字段的联合
@@ -1769,7 +1769,7 @@ const MyResult = z.discriminatedUnion("status", [
 <Accordions type="single">
 <Accordion title="嵌套带分辨字段的联合">
 
-  高级用例中，分辨联合可嵌套。Zod 会确定每层最佳解析策略，利用各层分辨字段。
+  在高级用例中，分辨联合可以嵌套。Zod 会为每一层确定最佳解析策略，并利用每层的分辨字段。
 
   ```ts
   const BaseError = { status: z.literal("failed"), message: z.string() };
@@ -1801,7 +1801,7 @@ const c = z.intersection(a, b);
 type c = z.infer<typeof c>; // => number
 ```
 
-这对合并两个对象类型很有用。
+这对于合并两个对象类型很有用。
 
 ```ts
 const Person = z.object({ name: z.string() });
@@ -1851,7 +1851,7 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
-**New** — As of v4.2, Zod properly supports numeric keys inside records in a way that more closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+**New** — 自 v4.2 起，Zod 已能正确支持 Record 中的数值键，其行为更接近 TypeScript 本身。`number` 模式在用作 Record 键时，会验证该键是否为有效的“数字字符串”。其他数值约束（min、max、step 等）也会一并验证。
 
 ```ts
 const numberKeys = z.record(z.number(), z.string());
@@ -1863,7 +1863,7 @@ numberKeys.parse({
   abc: "one" // ❌
 });
 
-// further validation is also supported
+// 也支持进一步验证
 const intKeys = z.record(z.int().step(1).min(0).max(10), z.string());
 intKeys.parse({ 
   0: "zero", // ✅
@@ -1900,7 +1900,7 @@ const Person = z.partialRecord(Keys, z.string());
 
 ### `z.looseRecord`
 
-By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
+默认情况下，`z.record()` 会对不匹配键模式的键报错。使用 `z.looseRecord()` 可以让不匹配的键原样通过。当与交叉类型结合，用于建模多个模式属性时，这一点尤其有用：
 
 ```ts
 const schema = z
@@ -1912,8 +1912,8 @@ type schema = z.infer<typeof schema>;
 
 schema.parse({ 
   name: "John",
-  home_phone: "+12345678900",     // validated as phone number
-  work_phone: "+12345678900",     // validated as phone number
+  home_phone: "+12345678900",     // 已验证为电话号码
+  work_phone: "+12345678900",     // 已验证为电话号码
 });
 ```
 
@@ -1971,10 +1971,10 @@ z.set(z.string()).check(z.size(5)); // 恰好 5 个元素
 ```ts
 const fileSchema = z.file();
 
-fileSchema.min(10_000); // minimum .size (bytes)
-fileSchema.max(1_000_000); // maximum .size (bytes)
-fileSchema.mime("image/png"); // MIME type
-fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
+fileSchema.min(10_000); // 最小 .size（字节）
+fileSchema.max(1_000_000); // 最大 .size（字节）
+fileSchema.mime("image/png"); // MIME 类型
+fileSchema.mime(["image/png", "image/jpeg"]); // 多种 MIME 类型
 ```
 
 </Tab>
@@ -1983,10 +1983,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 const fileSchema = z.file();
 
 fileSchema.check(
-  z.minSize(10_000), // minimum .size (bytes)
-  z.maxSize(1_000_000), // maximum .size (bytes)
-  z.mime("image/png"), // MIME type
-  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
+  z.minSize(10_000), // 最小 .size（字节）
+  z.maxSize(1_000_000), // 最大 .size（字节）
+  z.mime("image/png"), // MIME 类型
+  z.mime(["image/png", "image/jpeg"]); // 多种 MIME 类型
 )
 ```
 </Tab>
@@ -2092,7 +2092,7 @@ const myString = z.string().check(z.refine((val) => val.length <= 255));
 </Tabs>
 
 <Callout type="warn">
-  精炼函数不应抛异常，且应返回假值表示失败。抛出错误不被 Zod 捕获。
+  精炼函数不应抛出异常，且应返回假值表示失败。抛出错误不会被 Zod 捕获。
 </Callout>
 
 #### `error` 
@@ -2118,7 +2118,7 @@ const myString = z.string().check(
 
 #### `abort` 
 
-默认情况下，验证问题视为*可继续*，即所有检查都会依次执行，即便前面发生错误。此行为通常有利，可一次发现尽可能多错误。
+默认情况下，验证问题被视为*可继续*，即使前面发生错误，所有检查也都会依次执行。此行为通常有利，可一次发现尽可能多的错误。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2153,7 +2153,7 @@ result.error?.issues;
 </Tab>
 </Tabs>
 
-要将特定的细化标记为*不可继续*，请使用`abort`参数。如果检查失败，验证将终止。
+要将特定的精炼标记为*不可继续*，请使用`abort`参数。如果检查失败，验证将终止。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2195,7 +2195,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // 错误路径
   });
 ```
@@ -2208,7 +2208,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .check(z.refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // 错误路径
   }));
 ```
@@ -2242,11 +2242,11 @@ result.error.issues;
 </Tab>
 </Tabs>
 
-要定义一个异步细化，只需传递一个 `async` 函数：
+要定义一个异步精炼，只需传递一个 `async` 函数：
 
 ```ts
 const userId = z.string().refine(async (id) => {
-  // 验证 ID 是否存在数据库
+  // 验证 ID 是否存在于数据库中
   return true;
 });
 ```
@@ -2279,7 +2279,7 @@ const schema = z.string().refine((val) => {
   return val.length > 8
 });
 
-schema.parse(1234); // invalid_type: refinement won't be executed
+schema.parse(1234); // invalid_type: 不会执行精炼
 ```
 
 在某些情况下，您希望更精细地控制何时运行优化。例如，考虑这个“密码确认”检查：
@@ -2301,7 +2301,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ 此错误会阻止密码检查运行
 });
 ```
 </Tab>
@@ -2321,30 +2321,31 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ 此错误会阻止密码检查运行
 });
 ```
 </Tab>
 </Tabs>
 
-An error on `anotherField` will prevent the password confirmation check from executing, even though the check doesn't depend on `anotherField`. To control when a refinement will run, use the `when` parameter:
+`anotherField` 上的错误会阻止密码确认检查执行，即使该检查并不依赖 `anotherField`。要控制精炼何时运行，请使用 `when` 参数：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-    anotherField: z.string(),
-  })
+const baseSchema = z.object({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+  anotherField: z.string(),
+});
+
+const schema = baseSchema
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
 
-    // run if password & confirmPassword are valid
+    // 如果 password 和 confirmPassword 有效则运行
     when(payload) { // [!code ++]
-      return schema // [!code ++]
+      return baseSchema // [!code ++]
         .pick({ password: true, confirmPassword: true }) // [!code ++]
         .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
@@ -2353,7 +2354,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will not prevent the password check from running
+  anotherField: 1234 // ❌ 此错误不会阻止密码检查运行
 });
 ```
 </Tab>
@@ -2369,7 +2370,7 @@ const schema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
     when(payload) { // [!code ++]
-      // no issues with `password` or `confirmPassword` // [!code ++]
+      // `password` 或 `confirmPassword` 没有问题 // [!code ++]
       return payload.issues.every((iss) => { // [!code ++]
         const firstPathEl = iss.path?.[0]; // [!code ++]
         return firstPathEl !== "password" && firstPathEl !== "confirmPassword"; // [!code ++]
@@ -2380,7 +2381,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ 此错误不会阻止密码检查运行
 });
 ```
 </Tab>
@@ -2450,11 +2451,11 @@ const UniqueStringArray = z.array(z.string()).check(
 ### `.check()`
 
 <Callout>
-**Note** — The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
+**注意** — `.check()` API 是一个更底层的 API，通常比 `.superRefine()` 更复杂。它在性能敏感的代码路径中可能更快，但也更冗长。
 </Callout>
 
 <Accordions>
-<Accordion title="View example">
+<Accordion title="查看示例">
 `.refine()` 是 `.check()` 的语法糖，后者更灵活（但更啰嗦）。您可以用它在单个精炼中产生多个问题，或完全控制问题对象。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -2462,7 +2463,7 @@ const UniqueStringArray = z.array(z.string()).check(
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
-    // full control of issue objects
+    // 完全控制问题对象
     ctx.issues.push({
       code: "too_big",
       maximum: 3,
@@ -2473,7 +2474,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
-  // create multiple issues in one refinement
+  // 在一次精炼中创建多个问题
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2488,7 +2489,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 <Tab value="Zod Mini">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
-  // full control of issue objects
+  // 完全控制问题对象
   if (ctx.value.length > 3) {
     ctx.issues.push({
       code: "too_big",
@@ -2500,7 +2501,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
-// create multiple issues in one refinement
+// 在一次精炼中创建多个问题
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2524,11 +2525,11 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ```ts
 const stringToDate = z.codec(
-  z.iso.datetime(),  // input schema: ISO date string
-  z.date(),          // output schema: Date object
+  z.iso.datetime(),  // 输入模式：ISO 日期字符串
+  z.date(),          // 输出模式：Date 对象
   {
-    decode: (isoString) => new Date(isoString), // ISO string → Date
-    encode: (date) => date.toISOString(),       // Date → ISO string
+    decode: (isoString) => new Date(isoString), // ISO 字符串 → Date
+    encode: (date) => date.toISOString(),       // Date → ISO 字符串
   }
 );
 ```
@@ -2654,7 +2655,7 @@ const coercedInt = z.transform((val, ctx) => {
   } catch (e) {
     ctx.issues.push({
       code: "custom",
-      message: "Not a number",
+      message: "不是数字",
       input: val,
     });
 
@@ -2920,7 +2921,7 @@ type USDInput = z.input<typeof USD>; // string
 要自定义此项，请向 `.brand()` 传递第二个泛型以指定品牌的方向。
 
 ```ts
-// requires Zod 4.2+
+// 需要 Zod 4.2+
 z.string().brand<"Cat", "out">(); // output is branded (default)
 z.string().brand<"Cat", "in">(); // input is branded
 z.string().brand<"Cat", "inout">(); // both are branded
@@ -3067,34 +3068,32 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## 自定义
 
-您可以通过使用 `z.custom()` 为任何 TypeScript 类型创建 Zod 模式。这对于为 Zod 默认不支持的类型（例如模板字符串字面量）创建模式非常有用。
+可以通过使用 `z.custom()` 为任何 TypeScript 类型创建 Zod 模式。这对于验证来自第三方库的类型或任何其他内置模式未涵盖的类型非常有用。对于类实例，优先使用 [`z.instanceof()`](#instanceof)；对于模板字面量类型，优先使用 [`z.templateLiteral()`](#template-literals)。
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+import { Decimal } from "decimal.js";
 
-type px = z.infer<typeof px>; // `${number}px`
+const decimalSchema = z.custom<Decimal>((val) => Decimal.isDecimal(val));
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+decimalSchema.parse(new Decimal("1.5")); // 通过
+decimalSchema.parse("1.5");              // 抛出
 ```
 
 如果您不提供验证函数，Zod 将允许任何值。这可能是危险的！
 
 ```ts
-z.custom<{ arg: string }>(); // performs no validation
+z.custom<{ arg: string }>(); // 不执行任何验证
 ```
 
 您可以通过传递第二个参数来自定义错误消息和其他选项。此参数的工作方式与 [`.refine`](#refine) 的 params 参数相同。
 
 ```ts
-z.custom<...>((val) => ..., "custom error message");
+z.custom<...>((val) => ..., "自定义错误消息");
 ```
 
 ## Apply
 
-Use `.apply()` to incorporate external functions into Zod's method chain:
+使用 `.apply()` 将外部函数纳入 Zod 的方法链：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -3110,8 +3109,8 @@ const schema = z.number()
   .nullable();
 
 schema.parse(0);  // => 0
-schema.parse(-1); // ❌ throws
-schema.parse(101); // ❌ throws
+schema.parse(-1); // ❌ 抛出
+schema.parse(101); // ❌ 抛出
 schema.parse(null); // => null
 ```
 </Tab>
@@ -3126,8 +3125,8 @@ const schema = z.nullable(
 );
 
 z.parse(schema, 0);   // => 0
-z.parse(schema, -1);  // ❌ throws
-z.parse(schema, 101); // ❌ throws
+z.parse(schema, -1);  // ❌ 抛出
+z.parse(schema, 101); // ❌ 抛出
 z.parse(schema, null); // => null
 ```
 </Tab>
