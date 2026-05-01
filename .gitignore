@@ -23,4 +23,5 @@ packages/tsc-perf
 tsconfig.vitest-temp.json
 *.tgz
 
-.vercel
+open-issues-triage.md
+triage/

@@ -1207,17 +1207,19 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
+export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
+  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals;
+export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
+  _zod: $ZodTypeDiscriminableInternals<Disc>;
 }
+
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
 export function _discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
+  Types extends [$ZodTypeDiscriminable<Disc>, ...$ZodTypeDiscriminable<Disc>[]],
   Disc extends string,
 >(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,

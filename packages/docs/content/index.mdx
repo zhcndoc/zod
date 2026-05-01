@@ -1,13 +1,12 @@
 ---
 title: "简介"
 mode: "center"
-description: "Zod 简介 - 面向 TypeScript 的模式验证库，支持静态类型推断"
+description: "Zod 介绍 - 以 TypeScript 为首的模式验证库，具备静态类型推断"
 ---
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tabs } from 'fumadocs-ui/components/tabs';
 
-import { Featured } from '../components/featured';
 import { Platinum } from '../components/platinum';
 import { Gold } from '../components/gold';
 import { Silver } from '../components/silver';
@@ -18,7 +17,7 @@ import { HeroLogo } from '../components/hero-logo';
 <div className="flex flex-col items-stretch text-center">
   <HeroLogo />
   <h1 className="text-3xl font-bold">Zod</h1>
-  <p className="mt-2 mb-1">TypeScript 优先的模式验证与静态类型推断<br/>作者 <a href="https://x.com/colinhacks">@colinhacks</a> </p>
+  <p className="mt-2 mb-1">带有静态类型推断的 TypeScript 优先 schema 验证<br/>作者 <a href="https://x.com/colinhacks">@colinhacks</a> </p>
   <br/>
   <div  className="flex flex-row flex-wrap justify-center gap-1 py-2">
     <a className="border-none" href="https://github.com/colinhacks/zod/actions?query=branch%3Amain">
@@ -34,13 +33,11 @@ import { HeroLogo } from '../components/hero-logo';
       <img  className="h-[20px] m-0!" src="https://img.shields.io/npm/dw/zod.svg" alt="npm" />
     </a>
     <a className="border-none" href="https://github.com/colinhacks/zod" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/stars/colinhacks/zod" alt="Star 数" />
+      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars" />
     </a>
   </div>
   <div className="flex flex-row justify-center gap-1">
-    <a href="https://www.zhcndoc.com" target='_blank'>简中文档</a>
-    <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-    <a href="https://zod.zhcndoc.com">Zod 文档</a>
+    <a href="https://zod.dev">网站</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
     <a href="https://discord.gg/RcG33DQJdf">Discord</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -54,37 +51,28 @@ import { HeroLogo } from '../components/hero-logo';
 <br/>
 
 {/* <ParamField path="param" type="string">
-  参数字段示例
+  An example of a parameter field
 </ParamField>
 
 <ParamField query="filter" type="string" default="none" required>
-  用于筛选用户的过滤命令
+  The filtering command used to sort through the users
 </ParamField>
 
 <ParamField body="user_age" type="integer" default="0" required>
-  用户年龄，不能小于 0
+  The age of the user. Cannot be less than 0
 </ParamField> */}
 
 <div className="mt-5 font-gray-100 mx-auto text-center pt-12">
   <span className="">
-    Zod 4 已稳定发布！阅读<a rel="noopener noreferrer" href="/v4" alt="zod 4 发行说明">发行说明</a>。
+    Zod 4 已稳定。请阅读 <a rel="noopener noreferrer" href="/v4" alt="zod 4 release notes">发布说明</a> 和 <a rel="noopener noreferrer" href="/v4/changelog" alt="zod 4 migration guide">迁移指南</a>。
   </span>
 </div>
 
-{/* <br /><br /><br />
+<br /><br /><br />
 
-<Featured data={{
-  name: "Jazz",
-  link: "https://jazz.tools/?utm_source=zod",
-  lightImage: "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
-  
-  darkImage: "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
-}} /> */}
+## 简介
 
-
-## 介绍
-
-Zod 是一个 TypeScript 优先的验证库。使用 Zod，你可以定义*模式*来验证数据，从简单的 `string` 到复杂的嵌套对象。
+Zod 是一个以 TypeScript 为优先的验证库。使用 Zod，你可以定义 *schemas*，用它们来验证数据，从简单的 `string` 到复杂的嵌套对象。
 
 ```ts
 import * as z from "zod";
@@ -94,23 +82,23 @@ const User = z.object({
 });
 
 // 一些不可信的数据...
-const input = { /* 内容 */ };
+const input = { /* stuff */ };
 
-// 解析结果是验证过且类型安全的！
+// 解析后的结果经过验证，并且类型安全！
 const data = User.parse(input);
 
-// 因此你可以放心使用 :)
+// 所以你可以放心使用它 :)
 console.log(data.name);
 ```
 
 ## 特性
 
 - 零外部依赖
-- 支持 Node.js 和所有现代浏览器
-- 极简：核心包大小 2kb（压缩后）
-- 不可变 API：方法返回新实例
-- 简洁接口
-- 支持 TypeScript 和普通 JS
+- 可在 Node.js 和所有现代浏览器中运行
+- 体积小：核心包 2kb（gzip 后）
+- 不可变 API：方法会返回一个新实例
+- 简洁的接口
+- 同时适用于 TypeScript 和普通 JS
 - 内置 JSON Schema 转换
 - 丰富的生态系统
 
@@ -122,13 +110,13 @@ console.log(data.name);
 npm install zod
 ```
 
-> Zod 也可以在 [jsr.io](https://jsr.io/@zod/zod) 上以 `@zod/zod` 的形式获取。
+> Zod 也可以通过 [jsr.io](https://jsr.io/@zod/zod) 以 `@zod/zod` 的形式获取。
 
-Zod 提供一个 MCP 服务器，供代理搜索 Zod 的文档。要将其添加到您的编辑器，请按照 [这些说明](https://share.inkeep.com/zod/mcp) 操作。Zod 还提供一个 [llms.txt](https://zod.dev/llms.txt) 文件。
+Zod 提供了一个 MCP 服务器，代理可以用它来搜索 Zod 的文档。若要添加到你的编辑器中，请按照[这些说明](https://share.inkeep.com/zod/mcp)操作。Zod 还提供了一个 [llms.txt](https://zod.dev/llms.txt) 文件。
 
 ## 要求
 
-Zod 在 *TypeScript v5.5* 及更高版本中测试通过。较旧版本可能可用，但不正式支持。
+Zod 已针对 *TypeScript v5.5* 及更高版本进行测试。较旧的版本可能也能工作，但不受官方支持。
 
 ### `"strict"`
 
@@ -148,48 +136,47 @@ Zod 在 *TypeScript v5.5* 及更高版本中测试通过。较旧版本可能可
 
 ## 生态系统
 
-Zod 拥有一个繁荣的库、工具和集成生态系统。请参阅 [生态系统页面](/ecosystem) 以获取支持 Zod 或基于 Zod 构建的库的完整列表。
+Zod 拥有一个蓬勃发展的库、工具和集成生态系统。有关完整的支持 Zod 或基于 Zod 构建的库列表，请参阅 [生态系统页面](/ecosystem)。
 
 - [资源](/ecosystem?id=resources)
 - [API 库](/ecosystem?id=api-libraries)
 - [表单集成](/ecosystem?id=form-integrations)
-- [Zod 到 X](/ecosystem?id=zod-to-x)
-- [X 到 Zod](/ecosystem?id=x-to-zod)
+- [Zod to X](/ecosystem?id=zod-to-x)
+- [X to Zod](/ecosystem?id=x-to-zod)
 - [模拟库](/ecosystem?id=mocking-libraries)
-- [由 Zod 提供支持](/ecosystem?id=powered-by-zod)
+- [由 Zod 驱动](/ecosystem?id=powered-by-zod)
 
-我还参与了以下项目，想要特别强调：
+我也为以下项目做出了贡献，我想特别推荐它们：
 
-- [tRPC](https://trpc.io) - 端到端类型安全的 API，支持 Zod 模式
-- [React Hook Form](https://react-hook-form.com) - 基于 Hook 的表单验证，带有 [Zod 解析器](https://react-hook-form.com/docs/useform#resolver)
-- [zshy](https://github.com/colinhacks/zshy) - 最初作为 Zod 的内部构建工具创建。无捆绑、内置电池的 TypeScript 库构建工具。由 `tsc` 提供支持。
+- [tRPC](https://trpc.io) - 端到端类型安全 API，支持 Zod schemas
+- [React Hook Form](https://react-hook-form.com) - 基于 Hook 的表单验证，带有 [Zod resolver](https://react-hook-form.com/docs/useform#resolver)
+- [zshy](https://github.com/colinhacks/zshy) - 最初作为 Zod 的内部构建工具创建。面向 TypeScript 库的无打包器、开箱即用构建工具。由 `tsc` 驱动。
 
-{/* ## 赞助商
+## 赞助
 
-任何级别的赞助都受到欢迎和鼓励。如果您使用 Zod 构建了付费产品，请考虑其中一个 [企业级别](https://github.com/sponsors/colinhacks)。
+欢迎并鼓励任何级别的赞助。如果你使用 Zod 构建了付费产品，请考虑选择 [企业赞助档位](https://github.com/sponsors/colinhacks) 之一。
 
 
-### 白金赞助
+### 白金
 
 <Platinum />
 
 <br/>
 
-### 黄金赞助
+### 黄金
 
 <Gold />
 
 <br/>
 
-### 白银赞助
+### 白银
 
 <Silver />
 
 <br/>
 
-### 铜牌赞助
+### 青铜
 
 <Bronze />
 
-<br /> */}
-
+<br />

@@ -34,19 +34,19 @@ result.error!.issues;
     expected: 'string',
     code: 'invalid_type',
     path: [ 'username' ],
-    message: 'Invalid input: expected string, received number'
+    message: '无效输入：期望 string，接收到 number'
   },
   {
     expected: 'number',
     code: 'invalid_type',
     path: [ 'favoriteNumbers', 1 ],
-    message: 'Invalid input: expected number, received string'
+    message: '无效输入：期望 number，接收到 string'
   },
   {
     code: 'unrecognized_keys',
     keys: [ 'extraKey' ],
     path: [],
-    message: 'Unrecognized key: "extraKey"'
+    message: '未识别的键："extraKey"'
   }
 ];
 ```
@@ -62,15 +62,15 @@ const tree = z.treeifyError(result.error);
 
 // =>
 {
-  errors: [ 'Unrecognized key: "extraKey"' ],
+  errors: [ '未识别的键："extraKey"' ],
   properties: {
-    username: { errors: [ 'Invalid input: expected string, received number' ] },
+    username: { errors: [ '无效输入：期望 string，接收到 number' ] },
     favoriteNumbers: {
       errors: [],
       items: [
         undefined,
         {
-          errors: [ 'Invalid input: expected number, received string' ]
+          errors: [ '无效输入：期望 number，接收到 string' ]
         }
       ]
     }
@@ -82,10 +82,10 @@ const tree = z.treeifyError(result.error);
 
 ```ts
 tree.properties?.username?.errors;
-// => ["Invalid input: expected string, received number"]
+// => ["无效输入：期望 string，接收到 number"]
 
 tree.properties?.favoriteNumbers?.items?.[1]?.errors;
-// => ["Invalid input: expected number, received string"];
+// => ["无效输入：期望 number，接收到 string"];
 ```
 
 > 访问嵌套属性时，请务必使用可选链操作符（`?.`）以避免错误。
@@ -101,10 +101,10 @@ const pretty = z.prettifyError(result.error);
 它返回以下字符串：
 
 ```
-✖ Unrecognized key: "extraKey"
-✖ Invalid input: expected string, received number
+✖ 未识别的键："extraKey"
+✖ 无效输入：期望 string，接收到 number
   → at username
-✖ Invalid input: expected number, received string
+✖ 无效输入：期望 number，接收到 string
   → at favoriteNumbers[1]
 ```
 
@@ -112,7 +112,7 @@ const pretty = z.prettifyError(result.error);
 ## `z.formatError()`
 
 <Callout type="warn">
-  该方法已被弃用，建议使用 `z.treeifyError()` 替代。
+  已弃用。请改用 `z.treeifyError()`。
 </Callout>
 
 <Accordions>
@@ -125,10 +125,10 @@ const pretty = z.prettifyError(result.error);
 
     // 返回：
     {
-      _errors: [ 'Unrecognized key: "extraKey"' ],
-      username: { _errors: [ 'Invalid input: expected string, received number' ] },
+      _errors: [ '未识别的键："extraKey"' ],
+      username: { _errors: [ '无效输入：期望 string，接收到 number' ] },
       favoriteNumbers: {
-        '1': { _errors: [ 'Invalid input: expected number, received string' ] },
+        '1': { _errors: [ '无效输入：期望 number，接收到 string' ] },
         _errors: []
       }
     }
@@ -138,10 +138,10 @@ const pretty = z.prettifyError(result.error);
 
     ```ts
     formatted?.username?._errors;
-    // => ["Invalid input: expected string, received number"]
+    // => ["无效输入：期望 string，接收到 number"]
 
     formatted?.favoriteNumbers?.[1]?._errors;
-    // => ["Invalid input: expected number, received string"]
+    // => ["无效输入：期望 number，接收到 string"]
     ```
 
     > 访问嵌套属性时，请务必使用可选链操作符（`?.`）以避免错误。
@@ -158,10 +158,10 @@ const flattened = z.flattenError(result.error);
 // { errors: string[], properties: { [key: string]: string[] } }
 
 {
-  formErrors: [ 'Unrecognized key: "extraKey"' ],
+  formErrors: [ '未识别的键："extraKey"' ],
   fieldErrors: {
-    username: [ 'Invalid input: expected string, received number' ],
-    favoriteNumbers: [ 'Invalid input: expected number, received string' ]
+    username: [ '无效输入：期望 string，接收到 number' ],
+    favoriteNumbers: [ '无效输入：期望 number，接收到 string' ]
   }
 }
 ```
@@ -169,6 +169,6 @@ const flattened = z.flattenError(result.error);
 `formErrors` 数组包含任何顶层错误（即 `path` 为空数组）。`fieldErrors` 对象为模式中的每个字段提供错误数组。
 
 ```ts
-flattened.fieldErrors.username; // => [ 'Invalid input: expected string, received number' ]
-flattened.fieldErrors.favoriteNumbers; // => [ 'Invalid input: expected number, received string' ]
+flattened.fieldErrors.username; // => [ '无效输入：期望 string，接收到 number' ]
+flattened.fieldErrors.favoriteNumbers; // => [ '无效输入：期望 number，接收到 string' ]
 ```

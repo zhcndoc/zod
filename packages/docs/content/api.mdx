@@ -30,10 +30,10 @@ z.null();
 若要将输入数据强制转换为适当的类型，请改用 `z.coerce`：
 
 ```ts
-z.coerce.string();    // String(input)
-z.coerce.number();    // Number(input)
-z.coerce.boolean();   // Boolean(input)
-z.coerce.bigint();    // BigInt(input)
+z.coerce.string();    // String(输入)
+z.coerce.number();    // Number(输入)
+z.coerce.boolean();   // Boolean(输入)
+z.coerce.bigint();    // BigInt(输入)
 ```
 
 这些模式的强制转换版本尝试将输入值转换为适合的类型。
@@ -248,6 +248,7 @@ z.uuid();
 z.url();
 z.httpUrl();       // 仅限 http 或 https URL
 z.hostname();
+z.e164();          // E.164 电话号码
 z.emoji();         // 验证单个 emoji 字符
 z.base64();
 z.base64url();
@@ -260,8 +261,8 @@ z.ulid();
 z.ipv4();
 z.ipv6();
 z.mac();
-z.cidrv4();        // ipv4 CIDR 块
-z.cidrv6();        // ipv6 CIDR 块
+z.cidrv4();        // IPv4 CIDR 块
+z.cidrv6();        // IPv6 CIDR 块
 z.hash("sha256");  // 或 "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
@@ -388,6 +389,19 @@ schema.parse("http://example.com"); // ❌
 new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
+
+### 电话号码
+
+要验证 E.164 格式的电话号码：
+
+```ts
+const phone = z.e164();
+
+phone.parse("+15555555555"); // ✅
+phone.parse("555-555-5555"); // ❌
+```
+
+此模式验证以 `+` 开头、国家代码非 0，且总共 7 到 15 位数字的字符串。
 
 ### ISO 日期时间
 
@@ -562,14 +576,14 @@ z.hash("sha256", { enc: "base64url" }); // base64url 编码（无填充）
 ```
 
 <Accordions>
-<Accordion title="Expected lengths and padding">
+<Accordion title="期望的长度和填充">
 
 | Algorithm / Encoding | `"hex"`  | `"base64"`  | `"base64url"`  |
 |-----------|-----------|--------------|-----------------|
 | `"md5"`   | 32        | 24 (22 + "==") | 22              |
 | `"sha1"`  | 40        | 28 (27 + "=")  | 27              |
 | `"sha256"`| 64        | 44 (43 + "=")  | 43              |
-| `"sha384"`| 96        | 64 (no padding)| 64              |
+| `"sha384"`| 96        | 64 (无填充)    | 64              |
 | `"sha512"`| 128       | 88 (86 + "==") | 86              |
 
 </Accordion>
@@ -581,7 +595,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url 编码（无填充）
 
 ```ts
 const coolId = z.stringFormat("cool-id", (val)=>{
-  // 此处进行任意验证
+  // 在此处执行任意验证
   return val.length === 100 && val.startsWith("cool-");
 });
 
@@ -605,7 +619,7 @@ myFormat.parse("invalid input!");
 
 ## 模板字面量
 
-> **新** — 在 `zod@4.0` 中引入。
+> 引入于 `zod@4.0`。
 
 定义模板字面量模式：
 
@@ -694,7 +708,7 @@ z.int32();   // 限制在 int32 范围
 
 ## BigInt
 
-验证 BigInts：
+验证 BigInt：
 
 ```ts
 z.bigint();
@@ -837,7 +851,7 @@ FishEnum.parse(2); // => ❌
 ```
 
 <Callout>
-**Zod 4** — 这取代了 Zod 3 中的 `z.nativeEnum()` API。
+Use `z.enum()` for externally declared TypeScript enums. The `z.nativeEnum()` API is deprecated.
 
 请注意，使用 TypeScript 的 `enum` 关键字[并不推荐](https://www.totaltypescript.com/why-i-dont-like-typescript-enums)。
 </Callout>
@@ -915,9 +929,9 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 
 ## 字符串布尔值 [#stringbool]
 
-> **💎 Zod 4 新增**
+> 引入于 `zod@4.0`。
 
-某些情况下（如解析环境变量），将某些字符串“布尔值”解析为纯 `boolean` 值非常有用。为支持此功能，Zod 4 引入了 `z.stringbool()`：
+在某些情况下（例如解析环境变量），将某些字符串形式的“布尔样”值解析为普通的 `boolean` 值很有用。可使用 `z.stringbool()`：
 
 ```ts
 const strbool = z.stringbool();
@@ -1140,10 +1154,13 @@ LooseDog.parse({ name: "Yeller", extraKey: true });
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts z.object
-const DogWithStrings = z.object({
-  name: z.string(),
-  age: z.number().optional(),
-}).catchall(z.string());
+const DogWithStrings = z
+  .object({
+    name: z.string(),
+    age: z.number().optional(),
+  })
+  .catchall(z.string());
+
 
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
@@ -1276,7 +1293,7 @@ const Base = z.object({
   b: z.string()
 }).refine(user => user.a === user.b);
 
-// Extended inherits the refinements of Base
+// Extended 继承了 Base 的细化
 const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
@@ -1289,7 +1306,7 @@ const Base = z.object({
   b: z.string()
 }).check(z.refine(user => user.a === user.b));
 
-// Extended inherits the refinements of Base
+// Extended 继承了 Base 的细化
 const Extended = z.safeExtend(Base, {
   a: z.string().min(10)
 });
@@ -1617,7 +1634,7 @@ z.array(z.string()).check(z.length(5)); // 必须恰好包含 5 项
 
 {/* 与 `.nonempty()` 不同，这些方法不改变推断类型。 */}
 
-## Tuple
+## 元组
 
 元组通常是固定长度数组，每个索引指定不同的模式。
 
@@ -1639,7 +1656,7 @@ const variadicTuple = z.tuple([z.string()], z.number());
 // => [string, ...number[]];
 ```
 
-## Union Types
+## 联合类型
 
 联合类型（`A | B`）代表逻辑“或”。Zod 联合模式依次检查输入，返回第一个验证成功的选项。
 
@@ -1752,20 +1769,6 @@ const MyResult = z.discriminatedUnion("status", [
 
 每个选项应该是一个 *对象模式*，其区分符属性（上面示例中的 `status`）对应某个字面值或一组值，通常是 `z.enum()`、`z.literal()`、`z.null()` 或 `z.undefined()`。
 
-{/* 
-<Callout>
-  在 Zod 3 中，必须先指定分辨字段。Zod 4 支持自动检测，无需手动指定。
-
-  ```ts
-  const MyResult = z.discriminatedUnion("status", [
-    z.object({ status: z.literal("success"), data: z.string() }),
-    z.object({ status: z.literal("failed"), error: z.string() }),
-  ]);
-  ```
-
-  若无法找到分辨字段，Zod 会在模式创建时抛错。
-</Callout> */}
-
 <Accordions type="single">
 <Accordion title="嵌套带分辨字段的联合">
 
@@ -1851,7 +1854,7 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
-**New** — 自 v4.2 起，Zod 已能正确支持 Record 中的数值键，其行为更接近 TypeScript 本身。`number` 模式在用作 Record 键时，会验证该键是否为有效的“数字字符串”。其他数值约束（min、max、step 等）也会一并验证。
+Zod 支持在 record 中使用数值键，其行为与 TypeScript 本身非常相似。将 `number` 模式用作 record 键时，会验证该键是否为有效的“数值字符串”。同时也会验证额外的数值约束（min、max、step 等）。
 
 ```ts
 const numberKeys = z.record(z.number(), z.string());
@@ -1878,7 +1881,7 @@ intKeys.parse({
 
 
 <Callout>
-  **Zod 4** — 在 Zod 4 中，若将 `z.enum` 传给 `z.record()` 作为第一个参数，Zod 会详尽检查输入对象是否包含所有枚举值作为键。此行为与 TypeScript 保持一致：
+  如果你将 `z.enum` 作为 `z.record()` 的第一个参数传入，Zod 会穷尽检查所有枚举值是否都作为键存在于输入中。此行为与 TypeScript 一致：
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
@@ -1886,7 +1889,7 @@ intKeys.parse({
   const myRecord: MyRecord = { a: "foo" }; // ❌ 缺少必需键 `b`
   ```
 
-  在 Zod 3 中，没有检查穷尽性。要复制旧的行为，请使用 `z.partialRecord()`。
+  对于部分键集合，请使用 `z.partialRecord()`。
 
 </Callout>
 
@@ -1982,12 +1985,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // 多种 MIME 类型
 ```ts
 const fileSchema = z.file();
 
-fileSchema.check(
-  z.minSize(10_000), // 最小 .size（字节）
-  z.maxSize(1_000_000), // 最大 .size（字节）
-  z.mime("image/png"), // MIME 类型
-  z.mime(["image/png", "image/jpeg"]); // 多种 MIME 类型
-)
+fileSchema.check(z.minSize(10_000)); // minimum .size (bytes)
+fileSchema.check(z.maxSize(1_000_000)); // maximum .size (bytes)
+fileSchema.check(z.mime("image/png")); // MIME type
+fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
 ```
 </Tab>
 </Tabs>
@@ -1995,7 +1996,7 @@ fileSchema.check(
 ## Promise
 
 <Callout type="warn">
-  **已弃用** — `z.promise()` 在 Zod 4 中已弃用。有效的使用场景极少。若怀疑值是 `Promise`，应在 Zod 验证前先 `await`。
+  **已弃用** — `z.promise()` 已弃用。对于 `Promise` 模式，几乎没有真正有效的使用场景。如果你怀疑某个值可能是 `Promise`，只需先 `await` 它，然后再用 Zod 进行解析。
 </Callout>
 
 <Accordions type="single"><Accordion title="查看 z.promise() 文档">
@@ -2369,6 +2370,7 @@ const schema = z
   .check(z.refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+
     when(payload) { // [!code ++]
       // `password` 或 `confirmPassword` 没有问题 // [!code ++]
       return payload.issues.every((iss) => { // [!code ++]
@@ -2519,7 +2521,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ## 编解码器
 
-> **新** — 在 Zod 4.1 中引入。有关更多信息，请参阅专门的 [编解码器](/codecs) 页面。
+> 引入于 `zod@4.1`。更多信息请参阅专门的 [Codecs](/codecs) 页面。
 
 编解码器是一种特殊的模式，实现在两个其他模式之间的 *双向转换*。
 
@@ -2552,7 +2554,16 @@ z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); // => Date
 z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
 ```
 
-请参阅专门的 [编解码器](/codecs) 页面以获取更多信息。该页面包含您可以复制/粘贴到项目中的常用编解码器的实现：
+使用 `z.invertCodec()` 以在交换输入和输出模式后派生一个新的编解码器。
+
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+z.decode(dateToString, new Date("2024-01-15")); // => string
+z.encode(dateToString, "2024-01-15T00:00:00.000Z"); // => Date
+```
+
+更多信息请参阅专门的 [Codecs](/codecs) 页面。该页面包含常用编解码器的实现，您可以直接复制/粘贴到项目中：
 
 - [**`stringToNumber`**](/codecs#stringtonumber)
 - [**`stringToInt`**](/codecs#stringtoint)
@@ -2594,7 +2605,7 @@ z.parse(stringToLength, "hello"); // => 5
 </Tabs>
 
 
-## 变换（Transforms）
+## 转换（Transforms）
 
 > **注意** — 对于双向转换，请使用 [codecs](/codecs)。
 
@@ -2849,7 +2860,8 @@ numberWithCatch.parse("tuna"); // => 42
 <Tab value="Zod">
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
-  ctx.error; // 捕获的 ZodError
+  ctx.error; // 捕获到的 ZodError
+
   return Math.random();
 });
 
@@ -2882,7 +2894,7 @@ type Cat = { name: string };
 type Dog = { name: string };
 
 const pluto: Dog = { name: "pluto" };
-const simba: Cat = pluto; // works fine
+const simba: Cat = pluto; // 正常工作
 ```
 
 某些情况中，想在 TypeScript 内模拟[标称类型](https://en.wikipedia.org/wiki/Nominal_type_system)，可用*品牌类型*（又称“不透明类型”）。
@@ -2905,7 +2917,7 @@ const Cat = z.object({ name: z.string() }).brand<"Cat">();
 type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
-使用此品牌后，任何普通（无品牌）数据结构都不再可分配给推断类型。你必须使用模式解析一些数据，以获得带品牌的数据。
+有了这个品牌，普通（未加品牌）的数据结构就不能赋值给推断类型。你必须先用该模式解析一些数据，才能得到带品牌的数据。
 
 > 请注意，品牌类型不会影响 `.parse` 的运行时结果。它只是一个仅用于静态的结构。
 
@@ -2922,9 +2934,9 @@ type USDInput = z.input<typeof USD>; // string
 
 ```ts
 // 需要 Zod 4.2+
-z.string().brand<"Cat", "out">(); // output is branded (default)
-z.string().brand<"Cat", "in">(); // input is branded
-z.string().brand<"Cat", "inout">(); // both are branded
+z.string().brand<"Cat", "out">(); // 输出带品牌（默认）
+z.string().brand<"Cat", "in">(); // 输入带品牌
+z.string().brand<"Cat", "inout">(); // 二者都带品牌
 ```
 
 ## 只读
@@ -2948,7 +2960,7 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 </Tab>
 </Tabs>
 
-新模式推断类型会标记为 `readonly`。注意，在 TypeScript 中，这只影响对象、数组、元组、`Set` 和 `Map`：
+推断出的类型会被标记为 `readonly`。请注意，在 TypeScript 中，这只影响对象、数组、元组、`Set` 和 `Map`：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -3117,7 +3129,9 @@ schema.parse(null); // => null
 <Tab value="Zod Mini">
 ```ts
 function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
-  return schema.check(z.minimum(0), z.maximum(100));
+  return schema.check(
+    z.minimum(0), z.maximum(100)
+  );
 }
 
 const schema = z.nullable(

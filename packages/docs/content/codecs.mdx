@@ -6,7 +6,7 @@ description: "使用 encode 和 decode 进行双向转换"
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { ThemedImage } from "@/components/themed-image";
 
-> ✨ **新特性** — `zod@4.1` 中新增
+> 版本引入于 `zod@4.1`。
 
 所有 Zod 模式(schema)都支持正向和反向两种输入处理方式：
 
@@ -92,7 +92,38 @@ z.encode(stringToDate, new Date("2024-01-15T10:30:00.000Z"))
   alt="代码器在网络边界进行编码和解码数据" 
 />
 
-### 组合性
+### 反转编解码器
+
+使用 `z.invertCodec()` 从现有编解码器派生反向编解码器。返回的编解码器会交换输入和输出模式，然后交换 `decode` 和 `encode` 转换。
+
+<Tabs items={['Zod', 'Zod Mini']}>
+<Tab value="Zod">
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+dateToString.decode(new Date("2024-01-15T10:30:00.000Z"));
+// => string
+
+dateToString.encode("2024-01-15T10:30:00.000Z");
+// => Date
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+z.decode(dateToString, new Date("2024-01-15T10:30:00.000Z"));
+// => string
+
+z.encode(dateToString, "2024-01-15T10:30:00.000Z");
+// => Date
+```
+</Tab>
+</Tabs>
+
+`z.invertCodec()` 只会反转你传给它的那个编解码器。它不会递归反转嵌套在另一个模式中的编解码器；请在你定义反向模式的地方反转这些编解码器。
+
+### 可组合性
 
 > **注意** — 你可以对任何模式使用 `z.encode()` 和 `z.decode()`，不必非得是 ZodCodec。
 
@@ -188,7 +219,7 @@ stringToDate.encode(new Date("2024-01-15"));
 
 ### 管道（Pipes）
 
-> **趣闻** — 编解码器实际上是内部基于管道（pipe）的**子类**，并添加了“中间”转换逻辑。
+> **有趣的事实** — Codecs 在内部实现为带有“中间”转换逻辑的 pipe 子类。 
 
 在普通解码时，`ZodPipe<A, B>` 模式先用 `A` 解析数据，再传给 `B`。编码时，数据先用 `B` 编码，再传回 `A`。
 
@@ -311,7 +342,7 @@ z.encode(successSchema, true);
 
 下面是常用编解码器的实现示例。为便于定制，这些并未作为 Zod 的一等 API 直接提供。你应复制粘贴进项目中，根据需要修改。
 
-> **注意** — 所有下列编解码器实现均经过正确性测试。
+> **注意** — 下面的编解码器实现已通过正确性测试。
 
 ### `stringToNumber`
 
@@ -501,7 +532,7 @@ base64ToBytes.encode(bytes);       // => "SGVsbG8="
 
 ### `base64urlToBytes`
 
-将 Base64url 字符串（URL安全的 Base64）转换为 `Uint8Array` 字节数组。
+将 Base64url 字符串（URL 安全的 Base64）转换为 `Uint8Array` 字节数组。
 
 ```ts
 const base64urlToBytes = z.codec(z.base64url(), z.instanceof(Uint8Array), {

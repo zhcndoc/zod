@@ -8,11 +8,11 @@ import { Callout } from "fumadocs-ui/components/callout"
 
 {/* > Zod 4+ 提供了原生的 `.toJSONSchema()` 功能，利用注册表从 Zod 生成地道的 JSON Schema。有关详细信息，请参考 [JSON Schema 文档](/json-schema)。 */}
 
-在文档、代码生成、AI结构化输出、表单验证及其他用途中，为某些架构关联一些额外的*元数据*常常非常有用。
+在文档、代码生成、AI 结构化输出、表单验证及其他用途中，为某些架构关联一些额外的*元数据*常常非常有用。
 
 ## 注册表
 
-Zod中的元数据通过*注册表*进行管理。注册表是架构的集合，每个架构都与某些*强类型*元数据关联。要创建一个简单的注册表：
+Zod 中的元数据通过*注册表*进行管理。注册表是架构的集合，每个架构都与某些*强类型*元数据关联。要创建一个简单的注册表：
 
 ```ts
 import * as z from "zod";
@@ -160,7 +160,7 @@ B.meta(); // => undefined
 ### `.describe()`
 
 <Callout>
-`.describe()` 方法仍然存在，以保持与 Zod 3 的兼容，但现在推荐使用 `.meta()` 方法。
+`.describe()` 方法仍然可用，但推荐使用 `.meta()`。
 </Callout>
 
 `.describe()` 方法是一个快捷方式，用于在 `z.globalRegistry` 中以只有 `description` 字段的方式注册架构。

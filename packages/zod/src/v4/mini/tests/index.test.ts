@@ -247,6 +247,11 @@ test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject
   }
 });
 
+test("z.discriminatedUnion rejects object options missing the discriminator at type level", () => {
+  // @ts-expect-error missing discriminator property
+  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });

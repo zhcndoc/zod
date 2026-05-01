@@ -264,6 +264,9 @@ test("valid discriminator value, invalid data", () => {
 });
 
 test("wrong schema - missing discriminator", () => {
+  // @ts-expect-error missing discriminator property
+  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+
   try {
     z.discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),

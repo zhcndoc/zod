@@ -1,6 +1,6 @@
 ---
 title: Zod Mini
-description: "Zod Mini - a tree-shakable Zod"
+description: "Zod Mini - 可进行 tree-shaking 的 Zod"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
@@ -10,7 +10,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
   **注意** — Zod Mini 的文档通过带有标签页的代码块与常规 Zod 文档穿插展示。本页旨在讲解 Zod Mini 存在的原因，何时使用它，以及它与常规 Zod 的一些关键区别。
 </Callout>
 
-Zod Mini 变体在 Zod 4 发布时推出。要尝试它：
+Zod Mini 是 Zod 的一个可 tree-shaking 版本。要试用它：
 
 ```sh
 npm install zod@^4.0.0
@@ -128,7 +128,7 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-在 regular Zod 中，模式子类有专门的方法用来执行常见验证：
+在常规 Zod 中，模式子类有专门的方法用来执行常见验证：
 
 ```ts
 import * as z from "zod";
@@ -191,7 +191,7 @@ z.trim();
 z.toLowerCase();
 z.toUpperCase();
 
-// metadata (registers schema in z.globalRegistry)
+// 元数据（在 z.globalRegistry 中注册模式）
 z.meta({ title: "...", description: "..." });
 z.describe("...");
 ```
@@ -228,7 +228,7 @@ mySchema.clone(mySchema._zod.def);
 
 ## 无默认语言环境
 
-虽然 regular Zod 默认自动加载英语 (`en`) 语言环境，但 Zod Mini 不会加载。这样减少了在不需要错误信息、本地化成非英语语言或其他定制情况下的包体积。
+虽然常规 Zod 默认自动加载英语 (`en`) 语言环境，但 Zod Mini 不会加载。这样减少了在不需要错误信息、本地化成非英语语言或其他定制情况下的包体积。
 
 这意味着默认情况下，所有错误的 `message` 属性都会简单显示为 `"Invalid input"`。要加载英语语言环境：
 

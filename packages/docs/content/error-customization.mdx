@@ -141,11 +141,7 @@ z.set(z.string(), { error: "无效集合！" });
 z.string({ error: () => `[${Date.now()}]: 验证失败。` });
 ```
 
-<Callout>
-**注意** — 在 Zod v3 中，`message`（字符串）和 `errorMap`（函数）是分开的参数。它们在 Zod 4 中统一为 `error`。
-</Callout>
-
-错误映射函数接收一个上下文对象，你可以根据验证问题自定义错误信息。
+错误映射会接收一个上下文对象，你可以根据验证问题来自定义错误信息。
 
 ```ts
 z.string({
