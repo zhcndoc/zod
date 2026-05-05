@@ -325,6 +325,12 @@ describe("toJSONSchema", () => {
     // Dynamic catch values
     const dynamicCatchSchema = z.string().catch((ctx) => `${ctx.issues.length}`);
     expect(() => z.toJSONSchema(dynamicCatchSchema)).toThrow("Dynamic catch values are not supported in JSON Schema");
+    expect(z.toJSONSchema(dynamicCatchSchema, { unrepresentable: "any" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
   });
 
   test("string formats", () => {
@@ -2731,7 +2737,6 @@ test("input type", () => {
       "required": [
         "a",
         "d",
-        "f",
         "g",
       ],
       "type": "object",
@@ -2892,6 +2897,28 @@ test("use output type for preprocess", () => {
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "string",
+    }
+  `);
+});
+
+test("strip output-side examples from input JSON schema for codec", () => {
+  const codec = z
+    .codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) })
+    .meta({ examples: [42] });
+
+  expect(z.toJSONSchema(codec, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+  expect(z.toJSONSchema(codec, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "examples": [
+        42,
+      ],
+      "type": "number",
     }
   `);
 });

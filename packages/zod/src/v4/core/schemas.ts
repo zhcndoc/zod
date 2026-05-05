@@ -36,6 +36,11 @@ export interface ParsePayload<T = unknown> {
   issues: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
+  /** @internal Marks a value as a fallback that an outer wrapper (e.g.
+   * $ZodOptional) may override with its own interpretation when input was
+   * undefined. Set by $ZodCatch when catchValue substitutes and by every
+   * $ZodTransform invocation. */
+  fallback?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -3417,6 +3422,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.optin = "optional";
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
@@ -3427,6 +3433,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
+          payload.fallback = true;
           return payload;
         });
       }
@@ -3436,6 +3443,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
+      payload.fallback = true;
       return payload;
     };
   }
@@ -3468,7 +3476,7 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload, input: unknown) {
-  if (result.issues.length && input === undefined) {
+  if (input === undefined && (result.issues.length || result.fallback)) {
     return { issues: [], value: undefined };
   }
   return result;
@@ -3491,9 +3499,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 
     inst._zod.parse = (payload, ctx) => {
       if (def.innerType._zod.optin === "optional") {
+        const input = payload.value;
         const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, payload.value));
-        return handleOptionalResult(result, payload.value);
+        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
+        return handleOptionalResult(result, input);
       }
       if (payload.value === undefined) {
         return payload;
@@ -3886,7 +3895,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  inst._zod.optin = "optional";
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
@@ -3909,6 +3918,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
+          payload.fallback = true;
         }
 
         return payload;
@@ -3926,6 +3936,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
       });
 
       payload.issues = [];
+      payload.fallback = true;
     }
 
     return payload;
@@ -4030,7 +4041,7 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
 }
 
 ////////////////////////////////////////////
@@ -4117,6 +4128,35 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 
   return nextSchema._zod.run({ value, issues: left.issues }, ctx);
 }
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//////////                             //////////
+//////////      $ZodPreprocess         //////////
+//////////                             //////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
+  in: $ZodTransform;
+  out: B;
+}
+
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
+  def: $ZodPreprocessDef<B>;
+  optin: B["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
+}
+
+export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
+  _zod: $ZodPreprocessInternals<B>;
+}
+
+export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
+  "$ZodPreprocess",
+  (inst, def) => {
+    $ZodPipe.init(inst, def);
+  }
+);
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
