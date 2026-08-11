@@ -3,13 +3,19 @@ title: 给库作者的指南
 description: "为库作者提供的集成 Zod 的指南和最佳实践"
 ---
 
-本页主要面向在 Zod 之上构建工具的*库作者*。
+import { Callout } from "fumadocs-ui/components/callout";
+
+本页面主要面向正在基于 Zod 构建工具的*库作者*。
 
 > 如果您是库作者，且认为页面应包含额外指导，请提交 issue！
 
 ## 我需要依赖 Zod 吗？
 
-首先，确保你确实需要依赖 Zod。
+<Callout>
+Zod 3 在功能上已结束生命周期。它仍会接收安全修复和明确的错误修复，但 `zod@3.x` 将不再加入新功能。对于任何新库——或现有库的任何新主版本——请仅面向 Zod 4。有关双重支持模式（旨在帮助扩展现有库的维护者），请参阅[如何在支持 Zod 4 的同时支持 Zod 3？](#how-to-support-zod-3-alongside-zod-4)。
+</Callout>
+
+## 我需要依赖 Zod 吗？
 
 如果你在开发一个接受用户自定义 schema 作为黑盒验证的库，可能不必专门集成 Zod。可以考虑使用 [Standard Schema](https://standardschema.dev/)。这是 TypeScript 生态中大多数主流验证库实现的共享接口（参考[完整列表](https://standardschema.dev/#what-schema-libraries-implement-the-spec)），Zod 也在其中。
 
@@ -26,29 +32,51 @@ description: "为库作者提供的集成 Zod 的指南和最佳实践"
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0" // "zod/v4" 在 3.25.0+ 中可用
+    "zod": "^4.0.0"
   }
 }
 ```
 
-开发时，需要满足自己的 peer 依赖要求，所以也应将 `"zod"` 加入 `"devDependencies"`。
+在开发期间，你需要满足自身的 peer 依赖要求，因此也要将 `"zod"` 添加到 `"devDependencies"` 中。
 
 ```ts
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    // 通常，应以最新版本 Zod 进行开发
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^4.0.0"
   }
 }
 ```
 
-## 如何支持 Zod 4？
+如果你是在扩展现有库，并希望继续支持 Zod 3 用户，请参阅[如何同时支持 Zod 3 和 Zod 4？](#how-to-support-zod-3-alongside-zod-4)以了解更宽泛的 peer 依赖范围。
 
-要支持 Zod 4，将 `"zod"` 的 peer 依赖最低版本更新为 `^3.25.0 || ^4.0.0`。
+## 我应该从哪些子路径导入？
+
+从 `"zod/v4/core"` 子路径导入 Zod 4 核心包：
+
+```ts
+import * as z4 from "zod/v4/core";
+```
+
+可以将此子路径视为指向 Zod 4 的“永久链接”。即使在 `zod` 包未来发布主要版本后，它也将永久保留。另一个永久链接子路径是 `"zod/v3"`，仅当你[同时支持 Zod 3](#如何在-zod-4-旁支持-zod-3)时才需要使用它。
+
+通常不应从其他路径导入。Zod Core 库是一个共享库，为 Zod 4 Classic 和 Zod 4 Mini 提供底层支持。通常来说，实现特定于其中某一个版本的功能并不是一个好主意。不要从以下子路径导入：
+
+- `"zod"` — ❌ 在 3.x 版本中，此路径导出 Zod 3；在 4.x 版本中，此路径导出 Zod 4。请改用永久链接。
+- `"zod/v4"` 和 `"zod/v4/mini"` — ❌ 这些子路径分别是 Zod 4 Classic 和 Mini 的所在位置。如果你希望你的库同时适用于 Zod 和 Zod Mini，就应该基于 `"zod/v4/core"` 中定义的基类进行构建。如果引用 `"zod/v4"` 模块中的类，你的库将无法与 Zod Mini 一起使用，反之亦然。强烈不建议这样做。请改用 `"zod/v4/core"`，它导出了由 Zod Classic 和 Zod Mini 扩展的带 `$` 前缀的子类。Classic 和 Mini 子类的内部实现完全相同；它们的唯一区别在于实现了哪些辅助方法。
+
+如需全面了解这种版本控制方式，请参阅[《Zod 4 中的版本控制》](https://github.com/colinhacks/zod/issues/4371)。
+
+## 如何同时支持 Zod 3 和 Zod 4？
+
+<Callout>
+本节面向现有库的维护者，这些库中有 Zod 3 用户。对于新库（或现有库的新主版本），仅支持 `^4.0.0` —— Zod 3 实际上已经结束生命周期，不会再获得新功能。
+</Callout>
+
+如果你维护的库中有现有的 Zod 3 用户，可以在不放弃这些用户的情况下扩展支持 Zod 4。将对等依赖范围扩大到同时涵盖两个版本范围 —— `"zod/v4"` 子路径从 `3.25.0` 开始可用：
 
 ```json
 // package.json
@@ -60,32 +88,9 @@ description: "为库作者提供的集成 Zod 的指南和最佳实践"
 }
 ```
 
-从 `v3.25.0` 开始，Zod 4 的核心包提供了 `"zod/v4/core"` 子路径。完整版本策略请参阅 [Zod 4 的版本控制](https://github.com/colinhacks/zod/issues/4371)。
+这不需要发布库的新主版本。更新对等依赖会要求用户执行 `npm upgrade zod`，但 `zod@3.24` 和 `zod@3.25` 之间没有破坏性变更（实际上完全没有代码变更），因此添加 Zod 4 支持可以在次版本中发布。如果你的库本来就要发布主版本，那么发布一个移除 Zod 3 支持、并将对等依赖范围缩小到 `^4.0.0` 的主版本会是更简洁的选择。
 
-```ts
-import * as z4 from "zod/v4/core";
-```
-
-仅从这些子路径导入，可视作对应 Zod 版本的“永久链接”，且始终可用。
-
-- `"zod/v3"` 用于 Zod 3 ✅ 
-- `"zod/v4/core"` 用于 Zod 4 核心包 ✅
-
-通常不应从其他路径导入。Zod Core 库是支撑 Zod 4 Classic 和 Zod 4 Mini 的共享基础库。实现特定于某一版本的功能通常不可取。请勿从以下子路径导入：
-
-- `"zod"` — ❌ 在 3.x 版本导出 Zod 3，4.x 则导出 Zod 4。请改用永久链接。 
-- `"zod/v4"` 和 `"zod/v4/mini"` — ❌ 这些分别是 Zod 4 Classic 和 Mini 的主目录。如果想让库同时兼容 Zod 和 Zod Mini，应基于 `"zod/v4/core"` 定义的基类构建。引用 `"zod/v4"` 模块的类会导致库无法兼容 Zod Mini，反之亦然。极不推荐。请改用 `"zod/v4/core"`，它导出以 `$` 开头的子类，Zod Classic 和 Zod Mini 均继承自它们。Classic 与 Mini 子类的内部实现一致，仅在实现的辅助方法有所差异。
-
-
-## 是否需要发布新主版本？
-
-不必。支持 Zod 4 不需要新主版本（除非你决定放弃支持 Zod 3，不推荐）。
-
-你需要将 peer 依赖提升到 `^3.25.0`，用户执行 `npm upgrade zod`。不过从 `zod@3.24` 到 `zod@3.25`，Zod 3 没有任何破坏性变更，也不需修改代码。由于用户需升级并改代码，我不认为这是破坏性变更，不建议发布新主版本。
-
-## 如何同时支持 Zod 3 和 Zod 4？
-
-自 `v3.25.0` 起，包内包含 Zod 3 和 Zod 4 的副本，放在各自子路径，方便同时支持。
+从 `v3.25.0` 开始，`zod` 包在各自的子路径中同时包含 Zod 3 和 Zod 4 的副本，因此你可以并列导入两者：
 
 ```ts
 import * as z3 from "zod/v3";
@@ -115,7 +120,7 @@ if ("_zod" in schema) {
 
 ## 如何同时支持 Zod 和 Zod Mini？
 
-库代码仅应从 `"zod/v4/core"` 导入。该子包定义了 Zod 与 Zod Mini 共享的接口、类和工具。
+你的库代码应仅从 `"zod/v4/core"` 导入。此子包定义了 Zod 和 Zod Mini 共享的接口、类和工具。只要遵循这一规则，Zod 和 Zod Mini 都会自动正常工作。
 
 ```ts
 // 库代码
@@ -144,7 +149,7 @@ import * as zm from "zod/mini";
 acceptObjectSchema(zm.object({ name: zm.string() }))
 ```
 
-更多关于核心子库请访问 [Zod Core](/packages/core) 页面。
+更多关于核心子库的信息，请访问 [Zod Core](/packages/core) 页面。
 
 {/* ### 面向未来的保障
 

@@ -578,7 +578,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url 编码（无填充）
 <Accordions>
 <Accordion title="期望的长度和填充">
 
-| Algorithm / Encoding | `"hex"`  | `"base64"`  | `"base64url"`  |
+| 算法 / 编码 | `"hex"`  | `"base64"`  | `"base64url"`  |
 |-----------|-----------|--------------|-----------------|
 | `"md5"`   | 32        | 24 (22 + "==") | 22              |
 | `"sha1"`  | 40        | 28 (27 + "=")  | 27              |
@@ -945,7 +945,7 @@ strbool.parse("enabled")      // => true
 
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
-strbool.parse("no");          // => false
+strbool.parse("no");           // => false
 strbool.parse("off");         // => false
 strbool.parse("n");           // => false
 strbool.parse("disabled");    // => false
@@ -1055,7 +1055,7 @@ const nullishYoda = z.nullish(z.literal("yoda"));
 
 更多关于[nullish](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing)概念，请参阅 TypeScript 手册。
 
-## Unknown
+## 未知
 
 Zod 致力于与 TypeScript 类型系统一一对应，因此提供以下特殊类型的 API：
 
@@ -1065,7 +1065,7 @@ z.any(); // 推断类型：`any`
 z.unknown(); // 推断类型：`unknown`
 ```
 
-## Never
+## 永不存在
 
 没有任何值可以通过验证。
 
@@ -1101,7 +1101,7 @@ Dog.parse({ name: "Yeller" }); // ✅
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts z.object
+```ts
 const Dog = z.object({
   name: z.string(),
   age: z.optional(z.number())
@@ -1190,14 +1190,14 @@ DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-Dog.shape.name; // => string schema
-Dog.shape.age; // => number schema
+Dog.shape.name; // => 字符串模式
+Dog.shape.age; // => 数字模式
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-Dog.def.shape.name; // => string schema
-Dog.def.shape.age; // => number schema
+Dog.def.shape.name; // => 字符串模式
+Dog.def.shape.age; // => 数字模式
 ```
 </Tab>
 </Tabs>
@@ -1293,7 +1293,7 @@ const Base = z.object({
   b: z.string()
 }).refine(user => user.a === user.b);
 
-// Extended 继承了 Base 的细化
+// 扩展模式继承了 Base 的细化
 const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
@@ -1306,7 +1306,7 @@ const Base = z.object({
   b: z.string()
 }).check(z.refine(user => user.a === user.b));
 
-// Extended 继承了 Base 的细化
+// 扩展模式继承了 Base 的细化
 const Extended = z.safeExtend(Base, {
   a: z.string().min(10)
 });
@@ -1634,9 +1634,9 @@ z.array(z.string()).check(z.length(5)); // 必须恰好包含 5 项
 
 {/* 与 `.nonempty()` 不同，这些方法不改变推断类型。 */}
 
-## Tuple
+## 元组
 
-Tuples are typically fixed-length arrays, where each index specifies a different schema.
+元组通常是固定长度的数组，其中每个索引指定不同的结构。
 
 ```ts
 const MyTuple = z.tuple([
@@ -1649,26 +1649,26 @@ type MyTuple = z.infer<typeof MyTuple>;
 // [string, number, boolean]
 ```
 
-Add variadic ("rest") arguments:
+添加可变参数（“rest”）：
 
 ```ts
 const variadicTuple = z.tuple([z.string()], z.number());
 // => [string, ...number[]];
 ```
 
-## Union Types
+## 联合类型
 
-Union types (`A | B`) represent logical "or". Zod union schemas check inputs in order and return the first successfully validated option.
+联合类型（`A | B`）表示逻辑上的“或”。Zod 联合模式按顺序检查输入，并返回第一个验证成功的选项。
 
 ```ts
 const stringOrNumber = z.union([z.string(), z.number()]);
 // string | number
 
-stringOrNumber.parse("foo"); // pass
-stringOrNumber.parse(14);    // pass
+stringOrNumber.parse("foo"); // 通过
+stringOrNumber.parse(14);    // 通过
 ```
 
-Access the internal option schemas:
+访问内部的选项模式：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -1985,10 +1985,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // 多种 MIME 类型
 ```ts
 const fileSchema = z.file();
 
-fileSchema.check(z.minSize(10_000)); // minimum .size (bytes)
-fileSchema.check(z.maxSize(1_000_000)); // maximum .size (bytes)
-fileSchema.check(z.mime("image/png")); // MIME type
-fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
+fileSchema.check(z.minSize(10_000)); // 最小 .size（字节）
+fileSchema.check(z.maxSize(1_000_000)); // 最大 .size（字节）
+fileSchema.check(z.mime("image/png")); // MIME 类型
+fileSchema.check(z.mime(["image/png", "image/jpeg"])); // 多种 MIME 类型
 ```
 </Tab>
 </Tabs>
@@ -2773,7 +2773,7 @@ type Output = z.output<typeof trimmed>; // string
 
 当与 `react-hook-form` 之类的库集成时，这很有用，因为这些库会从 `z.input<>` 推导它们的表单值类型。
 
-## Defaults
+## 默认值
 
 为模式设置默认值：
 
@@ -2830,7 +2830,7 @@ schema.parse(undefined); // => 0
 有时定义*预故障值*（“预解析默认”）更实用。若输入为 `undefined`，将替代性地先解析预故障值，解析过程*不*短路。因此，预故障值必须赋值给模式的*输入类型*。
 
 ```ts
-z.string().transform(val => val.length).prefault("tuna");
+const schema = z.string().transform(val => val.length).prefault("tuna");
 schema.parse(undefined); // => 4
 ```
 
@@ -3041,7 +3041,7 @@ const jsonSchema = z.lazy(() => {
 
 ## 函数
 
-Zod 提供 `z.function()` 工具定义经过 Zod 验证的函数。避免验证码混入业务逻辑。
+Zod 提供 `z.function()` 工具，用于定义经过 Zod 验证的函数，避免验证逻辑混入业务逻辑。
 
 ```ts
 const MyFunction = z.function({
@@ -3053,7 +3053,7 @@ type MyFunction = z.infer<typeof MyFunction>;
 // (input: string) => number
 ```
 
-函数模式拥有 `.implement()` 方法，接受函数，返回自动验证输入输出的新函数。
+函数模式拥有 `.implement()` 方法，接受一个函数，并返回一个会自动验证输入和输出的新函数。
 
 ```ts
 const computeTrimmedLength = MyFunction.implement((input) => {
@@ -3065,22 +3065,21 @@ computeTrimmedLength("sandwich"); // => 8
 computeTrimmedLength(" asdf "); // => 4
 ```
 
-输入验证失败时抛 `ZodError`：
+输入验证失败时会抛出 `ZodError`：
 
 ```ts
 computeTrimmedLength(42); // 抛出 ZodError
 ```
 
-若只关心验证输入，可省略 `output` 字段。
+如果只关心验证输入，可以省略 `output` 字段。
 
 ```ts
 const MyFunction = z.function({
-  input: [z.string()], // 参数（必须是数组或 ZodTuple）
+  input: [z.string()], // 参数（必须为数组或 ZodTuple）
 });
 
 const computeTrimmedLength = MyFunction.implement((input) => input.trim.length);
 ```
-
 
 使用 `.implementAsync()` 方法创建一个异步函数。
 

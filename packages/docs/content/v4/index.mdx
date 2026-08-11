@@ -445,19 +445,19 @@ myRegistry.get(emailSchema);
 {/* > 与其他 Zod 方法不同，`.register()` *不是*不可变的，会返回原 schema。 */}
 
 ```ts
-emailSchema.register(myRegistry, { title: "Email address", description: "..." })
+emailSchema.register(myRegistry, { title: "电子邮箱地址", description: "..." })
 // => 返回 emailSchema
 ```
 
 ### 全局注册表
 
-Zod 还导出一个全局注册表 `z.globalRegistry`，支持一些常见 JSON Schema 兼容的元数据：
+Zod 还导出一个全局注册表 `z.globalRegistry`，支持一些常见的、与 JSON Schema 兼容的元数据：
 
 ```ts
 z.globalRegistry.add(z.string(), { 
   id: "email_address",
-  title: "Email address",
-  description: "Provide your email",
+  title: "电子邮箱地址",
+  description: "请输入您的电子邮箱",
   examples: ["naomie@example.com"],
   extraKey: "也允许额外属性"
 });
@@ -465,7 +465,7 @@ z.globalRegistry.add(z.string(), {
 
 ### `.meta()` 方法
 
-方便添加 schema 到 `z.globalRegistry`，可用 `.meta()` 方法。
+为了方便将模式添加到 `z.globalRegistry`，可以使用 `.meta()` 方法。
 
 {/* > 不同于 `.register()`，`.meta()` *是*不可变的，返回新实例（原 schema 的克隆）。 */}
 
@@ -652,8 +652,8 @@ z.prettifyError(myError);
 ```ts
 z.email();
 z.uuidv4();
+z.uuidv6();
 z.uuidv7();
-z.uuidv8();
 z.ipv4();
 z.ipv6();
 z.cidrv4();
@@ -752,9 +752,9 @@ strbool.parse("enabled")      // => true
 
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
-strbool.parse("no");          // => false
-strbool.parse("off");         // => false
-strbool.parse("n");           // => false
+strbool.parse("no");           // => false
+strbool.parse("off");          // => false
+strbool.parse("n");            // => false
 strbool.parse("disabled");    // => false
 
 strbool.parse(/* 其他任何值 */); // 抛出 ZodError<[{ code: "invalid_value" }]>
@@ -823,9 +823,9 @@ z.stringbool({
 + });
 ```
 
-## 升级的 `z.discriminatedUnion()`
+## 升级后的 `z.discriminatedUnion()`
 
-判别联合现在支持了先前不支持的多种 schema 类型，包括联合和管道（pipe）：
+判别联合现在支持了先前不支持的多种模式类型，包括联合和管道：
 
 ```ts
 const MyResult = z.discriminatedUnion("status", [
@@ -838,7 +838,7 @@ const MyResult = z.discriminatedUnion("status", [
 ]);
 ```
 
-更重要的是，判别联合现在支持*复合* — 可以在一个判别联合成员里再使用判别联合。
+更重要的是，判别联合现在支持*复合*——可以在一个判别联合成员里再使用判别联合。
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
