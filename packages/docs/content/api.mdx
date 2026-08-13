@@ -66,7 +66,7 @@ type BInput = z.input<typeof B>; // => number
   |--------------------------|----------------------------|
   | `z.coerce.string()`      | `String(value)`            |
   | `z.coerce.number()`      | `Number(value)`            |
-  | `z.coerce.boolean()`     | `Boolean(value)`           |
+  | `z.coerce.boolean()`     | `Boolean(value)`            |
   | `z.coerce.bigint()`      | `BigInt(value)`            |
   | `z.coerce.date()`        | `new Date(value)`          |
 
@@ -194,6 +194,7 @@ Zod 提供了一些内置的字符串验证和转换 API。执行常见字符串
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
+z.string().nonempty(); // alias for .min(1)
 z.string().regex(/^[a-z]+$/);
 z.string().startsWith("aaa");
 z.string().endsWith("zzz");
@@ -207,6 +208,7 @@ z.string().lowercase();
 z.string().check(z.maxLength(5));
 z.string().check(z.minLength(5));
 z.string().check(z.length(5));
+z.string().check(z.minLength(1)); // alias for .nonempty()
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));
 z.string().check(z.endsWith("zzz"));
@@ -946,7 +948,7 @@ strbool.parse("enabled")      // => true
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
 strbool.parse("no");           // => false
-strbool.parse("off");         // => false
+strbool.parse("off");          // => false
 strbool.parse("n");           // => false
 strbool.parse("disabled");    // => false
 
@@ -1210,13 +1212,13 @@ Dog.def.shape.age; // => 数字模式
 <Tab value="Zod">
 ```ts
 const keySchema = Dog.keyof();
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 const keySchema = z.keyof(Dog);
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 </Tabs>
@@ -1618,16 +1620,18 @@ Zod 实现了若干数组特定验证：
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-z.array(z.string()).min(5); // 至少包含 5 项
-z.array(z.string()).max(5); // 最多包含 5 项
-z.array(z.string()).length(5); // 恰好包含 5 项
+z.array(z.string()).nonempty(); // must contain at least 1 item
+z.array(z.string()).min(5); // must contain 5 or more items
+z.array(z.string()).max(5); // must contain 5 or fewer items
+z.array(z.string()).length(5); // must contain 5 items exactly
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-z.array(z.string()).check(z.minLength(5)); // 必须包含 5 项或更多
-z.array(z.string()).check(z.maxLength(5)); // 必须包含 5 项或更少
-z.array(z.string()).check(z.length(5)); // 必须恰好包含 5 项
+z.array(z.string()).check(z.minLength(1)); // alias for .nonempty()
+z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
+z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
+z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
 ```
 </Tab>
 </Tabs>
@@ -1934,7 +1938,28 @@ myMap.set("two", 2);
 StringNumberMap.parse(myMap);
 ```
 
-## Set 类型
+Map 模式可用以下实用方法进一步约束。
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+z.map(z.string(), z.number()).nonempty(); // must contain at least 1 item
+z.map(z.string(), z.number()).min(5); // must contain 5 or more items
+z.map(z.string(), z.number()).max(5); // must contain 5 or fewer items
+z.map(z.string(), z.number()).size(5); // must contain 5 items exactly
+```
+</Tab>
+<Tab value='Zod Mini'>
+```ts
+z.map(z.string(), z.number()).check(z.minSize(1)); // alias for .nonempty()
+z.map(z.string(), z.number()).check(z.minSize(5)); // must contain 5 or more items
+z.map(z.string(), z.number()).check(z.maxSize(5)); // must contain 5 or fewer items
+z.map(z.string(), z.number()).check(z.size(5)); // must contain 5 items exactly
+```
+</Tab>
+</Tabs>
+
+## 集合
 
 ```ts
 const NumberSet = z.set(z.number());
@@ -1951,16 +1976,18 @@ Set 模式可用以下方法进一步约束。
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-z.set(z.string()).min(5); // 至少 5 个元素
-z.set(z.string()).max(5); // 最多 5 个元素
-z.set(z.string()).size(5); // 恰好 5 个元素
+z.set(z.string()).nonempty(); // must contain at least 1 item
+z.set(z.string()).min(5); // must contain 5 or more items
+z.set(z.string()).max(5); // must contain 5 or fewer items
+z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 </Tab>
 <Tab value='Zod Mini'>
 ```ts
-z.set(z.string()).check(z.minSize(5)); // 至少 5 个元素
-z.set(z.string()).check(z.maxSize(5)); // 最多 5 个元素
-z.set(z.string()).check(z.size(5)); // 恰好 5 个元素
+z.set(z.string()).check(z.minSize(1)); // alias for .nonempty()
+z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
+z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
+z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
 ```
 </Tab>
 </Tabs>
@@ -2043,6 +2070,14 @@ TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
 ```
 
+这同样适用于内置类。
+
+```ts
+z.instanceof(RegExp);
+z.instanceof(URL);
+z.instanceof(Error);
+```
+
 ### 属性
 
 要验证类实例的特定属性是否符合 Zod 模式：
@@ -2113,6 +2148,29 @@ const myString = z.string().refine((val) => val.length > 8, {
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "太短了！" })
 );
+```
+</Tab>
+</Tabs>
+
+`error` 选项还接受一个接收该问题的函数：
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const myString = z.string().refine((val) => val.length > 8, {
+  error: (iss) => `Too short: "${iss.input}"`
+});
+
+myString.parse("OH NO"); // ❌ Too short: "OH NO"
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const myString = z.string().check(
+  z.refine((val) => val.length > 8, { error: (iss) => `Too short: "${iss.input}"` })
+);
+
+z.parse(myString, "OH NO"); // ❌ Too short: "OH NO"
 ```
 </Tab>
 </Tabs>
@@ -2363,7 +2421,7 @@ schema.parse({
 ```ts
 const schema = z
   .object({
-    password: z.string().min(8),
+    password: z.string().check(z.minLength(8)),
     confirmPassword: z.string(),
     anotherField: z.string(),
   })
@@ -2560,7 +2618,7 @@ z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
 const dateToString = z.invertCodec(stringToDate);
 
 z.decode(dateToString, new Date("2024-01-15")); // => string
-z.encode(dateToString, "2024-01-15T00:00:00.000Z"); // => Date
+z.encode(dateToString, "2024-01-15T10:30:00.000Z"); // => Date
 ```
 
 更多信息请参阅专门的 [Codecs](/codecs) 页面。该页面包含常用编解码器的实现，您可以直接复制/粘贴到项目中：
