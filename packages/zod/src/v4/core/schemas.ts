@@ -194,12 +194,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
-
+  const defChecks = inst._zod.def.checks;
   // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
+  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    ? [inst as any, ...(defChecks ?? [])]
+    : defChecks?.length
+      ? [...defChecks]
+      : [];
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -304,20 +305,28 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+  // Wrappers extend this by installing a richer factory over it; reading it
+  // eagerly would defeat the laziness.
+  util.installLazyProp(inst, "~standard", standardProps);
+});
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+const toStandardResult = (r: util.SafeParseResult<unknown>) =>
+  r.success ? { value: r.data } : { issues: r.error?.issues };
+
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
+        return toStandardResult(safeParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 
@@ -1004,6 +1013,57 @@ export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 });
 
+//////////////////////////////   ZodCreditCard   //////////////////////////////
+
+const CC_SANITIZE = /[- ]/g;
+
+/** Luhn checksum on a digit-only string. Adapted from valibot (MIT). */
+function isLuhnAlgo(digits: string): boolean {
+  let length = digits.length;
+  let bit = 1;
+  let sum = 0;
+  while (length) {
+    const value = +digits[--length]!;
+    bit ^= 1;
+    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
+  }
+  return sum % 10 === 0;
+}
+
+export function isValidCreditCard(input: string): boolean {
+  if (!regexes.creditCard.test(input)) return false;
+  return isLuhnAlgo(input.replace(CC_SANITIZE, ""));
+}
+
+export interface $ZodCreditCardDef extends $ZodStringFormatDef<"credit_card"> {}
+export interface $ZodCreditCardInternals extends $ZodStringFormatInternals<"credit_card"> {
+  def: $ZodCreditCardDef;
+}
+
+export interface $ZodCreditCard extends $ZodType {
+  _zod: $ZodCreditCardInternals;
+}
+
+export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "$ZodCreditCard",
+  (inst, def): void => {
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of
+    // `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    def.pattern ??= regexes.creditCard;
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (isValidCreditCard(payload.value)) return;
+      payload.issues.push({
+        code: "invalid_format",
+        format: "credit_card",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
 //////////////////////////////   ZodJWT   //////////////////////////////
 
 export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = null): boolean {
@@ -1136,7 +1196,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
         ? Number.isNaN(input)
           ? "NaN"
           : !Number.isFinite(input)
-            ? "Infinity"
+            ? String(input)
             : undefined
         : undefined;
 
@@ -4160,19 +4220,22 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
-  in: $ZodTransform;
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeDef<$ZodTransform<unknown, I>, B> {
+  in: $ZodTransform<unknown, I>;
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
-  def: $ZodPreprocessDef<B>;
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeInternals<$ZodTransform<unknown, I>, B> {
+  def: $ZodPreprocessDef<B, I>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
-  _zod: $ZodPreprocessInternals<B>;
+export interface $ZodPreprocess<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipe<$ZodTransform<unknown, I>, B> {
+  _zod: $ZodPreprocessInternals<B, I>;
 }
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
@@ -4448,7 +4511,9 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Defined, not assigned: the classic prototype exposes `_def` as a
+    // getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {
@@ -4748,6 +4813,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
+  | $ZodCreditCard
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>

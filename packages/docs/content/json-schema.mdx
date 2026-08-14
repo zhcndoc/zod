@@ -107,9 +107,17 @@ interface ToJSONSchemaParams {
   metadata?: $ZodRegistry<Record<string, any>>;
 
   /** 如何处理不可表示的类型。
-   * - `"throw"` — 默认。遇到不可表示类型时抛出错误
-   * - `"any"` — 不可表示类型转换为 `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"throw"` — 默认。不可表示的类型会抛出错误
+   * - `"any"` — 不可表示的类型会变为 `{}`
+   * - 函数 — 返回要使用的 JSON Schema，或 `"any"`/`"throw"` */
+  unrepresentable?:
+    | "throw"
+    | "any"
+    | ((ctx: {
+        zodSchema: $ZodTypes;
+        path: (string | number)[];
+        message: string;
+      }) => JSONSchema | "throw" | "any" | undefined);
 
   /** 如何处理循环。
    * - `"ref"` — 默认。循环使用 $defs 断开引用
@@ -203,6 +211,18 @@ z.toJSONSchema(schema);
 // => { type: "string", whatever: 1234 }
 ```
 
+元数据优先于 Zod 生成的关键字。
+
+```ts
+z.toJSONSchema(z.string().meta({ type: "number" }));
+// => { type: "number" }
+
+z.toJSONSchema(z.date().meta({ type: "string", format: "date-time" }), { unrepresentable: "any" });
+// => { type: "string", format: "date-time" }
+```
+
+要完全删除元数据，请传入一个空注册表：`z.toJSONSchema(schema, { metadata: z.registry() })`。要修改生成的 schema，请使用 [`override`](#override)。
+
 ### `unrepresentable`
 
 以下 API 在 JSON Schema 中无法表示。默认情况下，Zod 遇到它们会抛出错误。尝试将它们转换为 JSON Schema 是不合理的；你应该修改你的 schemas，因为它们在 JSON 中没有等价物。遇到任一类型都会抛出错误。
@@ -234,6 +254,31 @@ z.toJSONSchema(z.bigint());
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
 ```
+
+如果要逐个决定处理方式，请传入一个函数。每遇到一个不可表示的 schema，该函数就会被调用一次。返回要替代使用的 JSON Schema、`"any"` 或 `"throw"`（未返回任何内容时的默认值）。
+
+```ts
+z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
+  unrepresentable: ({ zodSchema }) =>
+    zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw",
+});
+// => 抛出错误（BigInt 无法在 JSON Schema 中表示）
+```
+
+处理函数还会接收 schema 的 `path` 以及 Zod 原本会抛出的 `message`，并且该函数抛出的任何错误都会继续向上传播，因此你可以用自己的措辞报告不可表示的类型。
+
+```ts
+z.toJSONSchema(schema, {
+  unrepresentable: ({ path, message }) => {
+    throw new Error(`${message} (at /${path.join("/")})`);
+  },
+});
+```
+
+两个 schema 可以共享同一个 `zodSchema`，但不一定共享同一个 `message` — 同一个字面量中的 `undefined` 成员和 `bigint` 成员都会以该字面量的形式传入 — 因此可以根据 `message` 分辨它们。
+
+为字面量返回 JSON Schema 会替换整个字面量，并删除其中可表示的成员：`z.literal(["a", 1n])` 会变成你返回的内容，而 `"a"` 会消失。改为返回 `"any"`，即可保留现有的逐值行为。
+
 ### `cycles`
 
 如何处理循环引用。当 `z.toJSONSchema()` 遍历 schema 发现循环时，会使用 `$ref` 来表示。
@@ -319,7 +364,7 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
-请注意，不可表示的类型会在调用此函数之前抛出一个 `Error`。如果你想为不可表示的类型定义自定义行为，你需要将 `unrepresentable: "any"` 与 `override` 一起设置。
+请注意，不可表示的类型会在调用此函数之前抛出 `Error`。要表示其中一种类型，请使用 [`unrepresentable`](#unrepresentable) — 其中的处理函数会替换该类型，同时不会禁用对其他类型的错误处理。将 `unrepresentable: "any"` 与 `override` 一起设置也有效，但会清除所有不可表示的类型。
 
 ```ts
 // 支持将 z.date() 表示为 ISO 日期时间字符串

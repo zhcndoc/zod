@@ -66,8 +66,8 @@ type BInput = z.input<typeof B>; // => number
   |--------------------------|----------------------------|
   | `z.coerce.string()`      | `String(value)`            |
   | `z.coerce.number()`      | `Number(value)`            |
-  | `z.coerce.boolean()`     | `Boolean(value)`            |
-  | `z.coerce.bigint()`      | `BigInt(value)`            |
+  | `z.coerce.boolean()`     | `Boolean(value)`           |
+  | `z.coerce.bigint()`      | `BigInt(value)`             |
   | `z.coerce.date()`        | `new Date(value)`          |
 
   使用 `z.coerce.boolean()` 进行布尔强制转换可能不会像您预期的那样工作。任何[真值](https://developer.mozilla.org/en-US/docs/Glossary/Truthy)都被强制转换为 `true`，而任何[假值](https://developer.mozilla.org/en-US/docs/Glossary/Falsy)都被强制转换为 `false`。
@@ -263,9 +263,10 @@ z.ulid();
 z.ipv4();
 z.ipv6();
 z.mac();
-z.cidrv4();        // IPv4 CIDR 块
-z.cidrv6();        // IPv6 CIDR 块
-z.hash("sha256");  // 或 "sha1", "sha384", "sha512", "md5"
+z.cidrv4();        // ipv4 CIDR block
+z.cidrv6();        // ipv6 CIDR block
+z.creditCard();    // credit card number (Luhn checksum)
+z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -381,7 +382,7 @@ schema.parse("http://example.com"); // ❌
   该配置限定协议为 `http`/`https`，并通过 `z.regexes.domain` 正则确保主机名为合法域名：
 
   ```ts
-  /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   ```
 </Callout>
 
@@ -548,7 +549,22 @@ const dashMac = z.mac({ delimiter: "-" });
 dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
-### JWT
+### 信用卡号
+
+验证卡号：12 到 19 位数字，并带有有效的 [Luhn](https://en.wikipedia.org/wiki/Luhn_algorithm) 校验和。不会识别发卡机构，因此接受任何卡组织的卡片。
+
+```ts
+const card = z.creditCard();
+card.parse("4111111111111111");     // ✅
+card.parse("4111 1111 1111 1111");  // ✅ single spaces
+card.parse("4111-1111-1111-1111");  // ✅ single hyphens
+card.parse("4111  1111 1111 1111"); // ❌ no repeated separators
+card.parse(" 4111111111111111");    // ❌ no surrounding whitespace
+card.parse("4111.1111.1111.1111");  // ❌ spaces and hyphens only
+card.parse("4111111111111112");     // ❌ failed checksum
+```
+
+### JWTs
 
 验证 [JSON Web Tokens](https://jwt.io/)。
 
@@ -1067,7 +1083,15 @@ z.any(); // 推断类型：`any`
 z.unknown(); // 推断类型：`unknown`
 ```
 
-## 永不存在
+作为对象属性时，它们的键是必需的，与 TypeScript 中的 `{ a: any }` 相匹配。
+
+```ts
+z.object({ a: z.any() }).parse({}); // ❌
+z.object({ a: z.any() }).parse({ a: undefined }); // ✅
+z.object({ a: z.any().optional() }).parse({}); // ✅
+```
+
+## Never
 
 没有任何值可以通过验证。
 

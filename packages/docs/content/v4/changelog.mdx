@@ -477,7 +477,17 @@ const mySchema = z.object({
 // Zod 4: { a: any; b: unknown };
 ```
 
-### 不推荐使用 `.merge()`
+从 `v4.4.0` 开始，该键在解析时也必须存在。Zod 4.0–4.3 即使缺少该键，也会接受该输入，尽管推断类型如上所示；要求该键存在是一次 soundness 修复。
+
+```ts
+mySchema.parse({}); // ❌ (✅ in v4.3 and earlier)
+mySchema.parse({ a: undefined, b: undefined }); // ✅
+
+// use .optional() for a key that may be absent
+z.object({ a: z.any().optional() }).parse({}); // ✅
+```
+
+### 废弃 `.merge()`
 
 `ZodObject` 上的 `.merge()` 方法已被不推荐使用，建议使用 `.extend()`。`.extend()` 方法提供相同的功能，避免了严格性继承的模糊性，并且在 TypeScript 中性能更好。
 
