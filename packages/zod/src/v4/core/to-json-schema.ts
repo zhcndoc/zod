@@ -122,6 +122,22 @@ export interface ToJSONSchemaContext {
   io: "input" | "output";
   counter: number;
   seen: Map<schemas.$ZodType, Seen>;
+  /** Registry conversions share one `seen` map across every emitted schema. These hold the
+   * `external` the whole-map passes below last ran for, so the passes are not repeated once per
+   * schema — and still re-run if the map grows or `external` is swapped. `sharedEmitDoneFor`
+   * covers both passes in `finalize`: the ref flattening and the `$defs` build.
+   *
+   * The passes are valid only while nothing they read has changed, so both are cleared in
+   * `process()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
+   * the `cycles` and `reused` they branch on.
+   *
+   * One case is deliberately not covered: an `override` callback that writes to
+   * `metadataRegistry` mid-conversion. It runs inside `finalize`, so a registry conversion has
+   * nowhere left to clear the guards, and later schemas keep the ids the first pass saw. That
+   * output was never coherent — before this, whether a shared subschema was inlined or extracted
+   * depended on which registry entry happened to be emitted when the callback fired. */
+  sharedDefsExtractedFor?: ToJSONSchemaContext["external"];
+  sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";
   reused: "ref" | "inline";
   external?:
@@ -157,6 +173,8 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     io: params?.io ?? "output",
     counter: 0,
     seen: new Map(),
+    sharedDefsExtractedFor: undefined,
+    sharedEmitDoneFor: undefined,
     cycles: params?.cycles ?? "ref",
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
@@ -210,6 +228,8 @@ export function process<T extends schemas.$ZodType>(
   // initialize
   const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
   ctx.seen.set(schema, result);
+  ctx.sharedDefsExtractedFor = undefined;
+  ctx.sharedEmitDoneFor = undefined;
 
   // custom method overrides default behavior
   const overrideSchema = schema._zod.toJSONSchema?.();
@@ -263,8 +283,7 @@ export function process<T extends schemas.$ZodType>(
   return _result.schema;
 }
 
-// Escape a reference token for use in a JSON Pointer fragment (RFC 6901):
-// `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
+// Escape a reference token for use in a JSON Pointer fragment (RFC 6901): `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
 function encodeJSONPointerSegment(segment: string): string {
   return segment.replace(/~/g, "~0").replace(/\//g, "~1");
 }
@@ -278,6 +297,9 @@ export function extractDefs<T extends schemas.$ZodType>(
   const root = ctx.seen.get(schema);
 
   if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+
+  // With `external` set, every registered schema resolves through the external branch of `makeURI`, so the root branch below produces the same ref the external branch would — this pass is identical whichever schema it is called with, and only needs to run once.
+  if (ctx.external && ctx.sharedDefsExtractedFor === ctx.external) return;
 
   // Track ids to detect duplicates across different schemas
   const idToSchema = new Map<string, schemas.$ZodType>();
@@ -294,12 +316,9 @@ export function extractDefs<T extends schemas.$ZodType>(
     }
   }
 
-  // returns a ref to the schema
-  // defId will be empty if the ref points to an external schema (or #)
+  // returns a ref to the schema defId will be empty if the ref points to an external schema (or #)
   const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
-    // comparing the seen objects because sometimes
-    // multiple schemas map to the same seen object.
-    // e.g. lazy
+    // comparing the seen objects because sometimes multiple schemas map to the same seen object. e.g. lazy
 
     // external is configured
     const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
@@ -318,19 +337,20 @@ export function extractDefs<T extends schemas.$ZodType>(
       return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id)}` };
     }
 
-    if (entry[1] === root) {
-      return { ref: "#" };
+    const uriPrefix = `#`;
+    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+
+    // an id-less root has nowhere to be extracted to, so it stays inline and self-references as `#`
+    if (entry[1] === root && !entry[1].schema.id) {
+      return { ref: uriPrefix };
     }
 
     // self-contained schema
-    const uriPrefix = `#`;
-    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
     return { defId, ref: defUriPrefix + encodeJSONPointerSegment(defId) };
   };
 
-  // stored cached version in `def` property
-  // remove all properties, set $ref
+  // stored cached version in `def` property remove all properties, set $ref
   const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
     // if the schema is already a reference, do not extract it
     if (entry[1].schema.$ref) {
@@ -340,8 +360,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const { ref, defId } = makeURI(entry);
 
     seen.def = { ...seen.schema };
-    // defId won't be set if the schema is a reference to an external schema
-    // or if the schema is the root schema
+    // defId won't be set if the schema is a reference to an external schema or if the schema is the root schema
     if (defId) seen.defId = defId;
     // wipe away all properties except $ref
     const schema = seen.schema;
@@ -409,6 +428,8 @@ export function extractDefs<T extends schemas.$ZodType>(
       }
     }
   }
+
+  if (ctx.external) ctx.sharedDefsExtractedFor = ctx.external;
 }
 
 export function finalize<T extends schemas.$ZodType>(
@@ -471,9 +492,7 @@ export function finalize<T extends schemas.$ZodType>(
       }
     }
 
-    // If parent was extracted (has $ref), propagate $ref to this schema
-    // This handles cases like: readonly().meta({id}).describe()
-    // where processor sets ref to innerType but parent should be referenced
+    // If parent was extracted (has $ref), propagate $ref to this schema. This handles cases like: readonly().meta({id}).describe() where processor sets ref to innerType but parent should be referenced
     const parent = zodSchema._zod.parent;
     if (parent && parent !== ref) {
       // Ensure parent is processed first so its def has inherited properties
@@ -501,8 +520,11 @@ export function finalize<T extends schemas.$ZodType>(
     });
   };
 
-  for (const entry of [...ctx.seen.entries()].reverse()) {
-    flattenRef(entry[0]);
+  // Flattening walks the whole map and clears each `ref` as it goes, so a second call over the same map is a no-op scan. Skip it outright once it has run for a registry conversion.
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
+    for (const entry of [...ctx.seen.entries()].reverse()) {
+      flattenRef(entry[0]);
+    }
   }
 
   const result: JSONSchema.BaseSchema = {};
@@ -524,24 +546,25 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  assignProps(result, root.def ?? root.schema);
+  // when the root was extracted into $defs, `root.schema` is the `$ref` wrapper and `root.def` is the body that now lives under $defs
+  assignProps(result, root.defId ? root.schema : (root.def ?? root.schema));
 
-  // The `id` in `.meta()` is a Zod-specific registration tag used to extract
-  // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
-  // from the output body where it would otherwise leak. The id is preserved
-  // implicitly via the $defs key (and via $ref paths).
+  // The `id` in `.meta()` is a Zod-specific registration tag used to extract schemas into $defs — it is not user-facing JSON Schema metadata. Strip it from the output body where it would otherwise leak. The id is preserved implicitly via the $defs key (and via $ref paths).
   const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
   if (rootMetaId !== undefined && result.id === rootMetaId) delete result.id;
 
-  // build defs object
+  // build defs object. With `external`, `defs` is the shared object every schema writes into, so the same entries are reassigned on every call. Without it, `defs` is fresh per call and must be rebuilt.
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
-  for (const entry of ctx.seen.entries()) {
-    const seen = entry[1];
-    if (seen.def && seen.defId) {
-      if (seen.def.id === seen.defId) delete seen.def.id;
-      assignProp(defs, seen.defId, seen.def);
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
+    for (const entry of ctx.seen.entries()) {
+      const seen = entry[1];
+      if (seen.def && seen.defId) {
+        if (seen.def.id === seen.defId) delete seen.def.id;
+        assignProp(defs, seen.defId, seen.def);
+      }
     }
   }
+  if (ctx.external) ctx.sharedEmitDoneFor = ctx.external;
 
   // set definitions in result
   if (ctx.external) {
@@ -556,9 +579,7 @@ export function finalize<T extends schemas.$ZodType>(
   }
 
   try {
-    // this "finalizes" this schema and ensures all cycles are removed
-    // each call to finalize() is functionally independent
-    // though the seen map is shared
+    // this "finalizes" this schema and ensures all cycles are removed each call to finalize() is functionally independent though the seen map is shared
     const finalized = JSON.parse(JSON.stringify(result));
     Object.defineProperty(finalized, "~standard", {
       value: {
@@ -604,7 +625,8 @@ function isTransforming(
     def.type === "nullable" ||
     def.type === "readonly" ||
     def.type === "default" ||
-    def.type === "prefault"
+    def.type === "prefault" ||
+    def.type === "catch"
   ) {
     return isTransforming(def.innerType, ctx);
   }

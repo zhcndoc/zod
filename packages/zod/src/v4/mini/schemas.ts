@@ -952,14 +952,15 @@ export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShap
   return util.safeExtend(schema, shape as any);
 }
 
-/** @deprecated Identical to `z.extend(A, B)` */
+/**
+ * @deprecated Use [`z.extend(A, B.shape)`](https://zod.dev/api?id=extend) instead.
+ */
+// @__NO_SIDE_EFFECTS__
 export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
-): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, T["_zod"]["config"]>;
-// @__NO_SIDE_EFFECTS__
-export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
-  return util.extend(schema, shape);
+): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, U["_zod"]["config"]> {
+  return util.merge(a, b) as any;
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -1002,6 +1003,30 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
 // @__NO_SIDE_EFFECTS__
 export function partial(schema: ZodMiniObject, mask?: object) {
   return util.partial(ZodMiniOptional, schema, mask);
+}
+
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject>(
+  schema: T
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: ZodMiniExactOptional<T["shape"][k]>;
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+  schema: T,
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: k extends keyof M ? ZodMiniExactOptional<T["shape"][k]> : T["shape"][k];
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial(schema: ZodMiniObject, mask?: object) {
+  return util.partial(ZodMiniExactOptional, schema, mask, "exactPartial");
 }
 
 export type RequiredInterfaceShape<
@@ -1609,7 +1634,7 @@ function _catch<T extends SomeType>(
   return new ZodMiniCatch({
     type: "catch",
     innerType: innerType as any as core.$ZodType,
-    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as (
+    catchValue: (typeof catchValue === "function" ? catchValue : core.util.constantCatch(catchValue)) as (
       ctx: core.$ZodCatchCtx
     ) => core.output<T>,
   }) as any;
@@ -1814,8 +1839,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-// ZodCustom
-// custom schema
+// ZodCustom custom schema
 // @__NO_SIDE_EFFECTS__
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,

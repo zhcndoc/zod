@@ -1,0 +1,106 @@
+---
+title: AOT 编译
+description: "针对高频验证路径的提前模式编译"
+---
+
+对于高频验证路径，Zod 可以提前将模式编译为专用验证器，结果和错误完全一致
+
+在包含 55 个模式的基准测试中，中位速度提升为 **2.4 倍**。速度提升取决于每次解析中模式执行的工作量，因为编译移除的是每个节点的分派和分配，而不是检查本身：
+
+| 模式 | 速度提升 |
+| ------ | ------- |
+| `z.array(z.string())`，100 个项目 | 约 14 倍 |
+| `z.array(z.object({…}))`，50 个项目 | 约 9 倍 |
+| 20 个键的对象 | 约 9 倍 |
+| 嵌套对象 | 约 4.5 倍 |
+| 可辨识联合 | 约 4 倍 |
+| 5 个键的对象 | 约 2.5 倍 |
+| `z.string().min(3).max(64).regex(…)` | 约 2.8 倍 |
+| 裸 `z.string()` | 无提升 |
+
+如果一个模式的全部内容只是一个 `typeof`，那么没有可移除的分派，因此编译不会带来任何收益。所有由这类模式构建的模式仍然可以受益——叶节点会被内联到其父级的编译代码中
+
+有两种启用方式
+
+## `z.compile()`
+
+立即编译单个模式，并返回一个已安装快速路径的克隆
+
+```ts
+import * as z from "zod";
+
+const Player = z.object({
+  username: z.string(),
+  xp: z.number(),
+});
+
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+CompiledPlayer.safeParse({ username: "billie", xp: 100 });
+```
+
+该克隆是一个常规的 Zod 模式——`.parse()`、`.safeParse()`、类型推断、Standard Schema 集成和组合都照常工作。原始模式不会改变
+
+需要注意的一点是：派生出*新*模式的方法（`.refine()`、`.extend()`、`.optional()`、`.meta()`、……）会返回未编译的模式。请编译最终模式，而不是中间模式：
+
+```ts
+// ❌ the .refine() result is not compiled
+const schema = z.compile(z.string()).refine((val) => val.length > 1);
+
+// ✅ compile last
+const schema2 = z.compile(z.string().refine((val) => val.length > 1));
+```
+
+## `import "zod/compile"`
+
+全局启用编译。在此导入*之后*构造的每个模式，都会在首次解析时自动编译
+
+```ts
+import "zod/compile"; // must come before modules that define schemas
+import * as z from "zod";
+
+const schema = z.object({ name: z.string() });
+schema.parse({ name: "ok" }); // compiled on first parse
+```
+
+模块求值顺序很重要：在该导入之前构造的模式不会受到影响。请将该导入放在应用程序入口点的顶部
+
+编译是延迟执行的（首次解析时），因此在构建器链中创建的中间模式不会产生额外开销
+
+## 错误一致性
+
+编译后的快速路径是一个成功路径验证器。当输入未通过验证，或需要快速路径不支持的任何功能时，Zod 会透明地回退到标准解析器，该解析器会生成与未编译模式完全相同的 `ZodError`。不存在单独的编译错误路径，因此不会出现两者逐渐不同步的情况
+
+有两个值得了解的后果：
+
+- 无效输入需要同时付出快速路径和回退路径的开销。如果你的工作负载主要由无效输入构成，编译不会带来帮助（也不会改变任何行为）
+- 对于无效输入，细化和转换可能会运行两次——一次在快速路径中，一次在回退路径中。对于有效输入，它们恰好运行一次，且不会超过两次
+
+## 不支持的模式
+
+编译是同步且仅向前的。如果模式无法完全建模，`z.compile()` 会抛出异常：
+
+- **`ZodCompileAsyncError`** —— 模式包含异步细化、转换或检查
+- **`ZodCompileUnsupportedError`** —— 模式使用了快速路径无法精确复现的构造：
+  - `z.xor()`，其恰好一个匹配的规则要求每个分支都因与标准解析器相同的原因而拒绝
+  - 带有自定义 `when` 条件的检查
+  - 递归模式，需要标准解析器来解析输入中的引用循环
+  - 强制转换（`z.coerce.*`），快速路径不会对其建模
+  - 使用*回调*作为参数的 `.catch()`。回调接收的是根据调用方错误映射最终确定的 issues，而编译代码无法看到这些内容。使用常量的 `.catch(value)` 可以正常编译
+
+在容器内部（对象、数组、元组、记录、交集），不支持的*子模式*不会阻止编译——子模式会使用标准解析器运行，而周围的结构仍保持编译状态
+
+在全局模式下，编译失败的模式会静默地继续使用标准解析器。行为没有差异——只有速度提升会丢失。因此，请避免在库中代表用户启用全局模式；将选择权留给应用程序
+
+编码操作（`z.encode()`、编解码器的 `"backward"` 方向）和异步解析始终使用标准解析器
+
+## 内容安全策略
+
+编译使用 `new Function`，而它在 CSP／禁止 `eval` 的环境中不可用。当设置了 `jitless` 时，全局模式会自动停用：
+
+```ts
+z.config({ jitless: true });
+```
+
+直接调用 `z.compile()` 会被视为显式选择启用；如果代码生成不可用，则会抛出 `ZodCompileUnsupportedError`

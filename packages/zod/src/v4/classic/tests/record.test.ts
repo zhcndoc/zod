@@ -561,24 +561,12 @@ test("partialRecord with z.literal([key, ...])", () => {
     {
       "error": [ZodError: [
       {
-        "code": "invalid_key",
-        "origin": "record",
-        "issues": [
-          {
-            "code": "invalid_value",
-            "values": [
-              "id",
-              "name",
-              "email"
-            ],
-            "path": [],
-            "message": "Invalid option: expected one of \\"id\\"|\\"name\\"|\\"email\\""
-          }
-        ],
-        "path": [
+        "code": "unrecognized_keys",
+        "keys": [
           "foo"
         ],
-        "message": "Invalid key in record"
+        "path": [],
+        "message": "Unrecognized key: \\"foo\\""
       }
     ]],
       "success": false,
@@ -629,6 +617,45 @@ test("looseRecord passes through non-matching keys", () => {
   expect(schema.parse({ S_name: "John", other: "value" })).toEqual({ S_name: "John", other: "value" });
   expect(schema.parse({ S_name: "John", count: 123 })).toEqual({ S_name: "John", count: 123 });
   expect(schema.parse({ other: "value" })).toEqual({ other: "value" });
+});
+
+test("looseRecord with closed key schema passes through unrecognized keys", () => {
+  const enumSchema = z.looseRecord(z.enum(["foo", "bar"]), z.any());
+  expect(enumSchema.parse({ foo: 123, bar: {}, baz: null })).toEqual({
+    foo: 123,
+    bar: {},
+    baz: null,
+  });
+
+  const literalSchema = z.looseRecord(z.literal(["foo", "bar"]), z.any());
+  expect(literalSchema.parse({ foo: 123, bar: {}, baz: null })).toEqual({
+    foo: 123,
+    bar: {},
+    baz: null,
+  });
+
+  // Recognized keys are still validated
+  const validated = z.looseRecord(z.enum(["foo", "bar"]), z.string());
+  expect(validated.parse({ foo: "ok", bar: "ok", baz: 123 })).toEqual({
+    foo: "ok",
+    bar: "ok",
+    baz: 123,
+  });
+  expect(() => validated.parse({ foo: 123 })).toThrow();
+});
+
+test("record with closed key schema still rejects unrecognized keys", () => {
+  const schema = z.record(z.enum(["foo", "bar"]), z.any());
+  expect(schema.safeParse({ foo: 123, bar: {}, baz: null }).success).toBe(false);
+});
+
+// __proto__ in input must not replace the prototype of the parsed object via the assignment setter on the result {}. https://github.com/colinhacks/zod/security/advisories/GHSA-r34p-xfmx-58wv
+test("looseRecord with closed key schema drops __proto__", () => {
+  const schema = z.looseRecord(z.enum(["foo", "bar"]), z.any());
+  const parsed = schema.parse(JSON.parse('{"foo":1,"bar":2,"__proto__":{"isAdmin":true}}'));
+  expect(Object.keys(parsed)).toEqual(["foo", "bar"]);
+  expect((parsed as any).isAdmin).toBeUndefined();
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
 });
 
 test("intersection of loose records", () => {
@@ -744,8 +771,7 @@ test("v3-compat single-arg form: z.record(valueType)", () => {
   expect(withMessage.keyType._zod.def.type).toEqual("string");
   expect(withMessage.valueType._zod.def.type).toEqual("number");
 
-  // toJSONSchema should produce a well-formed schema (regression: previously produced
-  // additionalProperties from undefined valueType, crashing process())
+  // toJSONSchema should produce a well-formed schema (regression: previously produced additionalProperties from undefined valueType, crashing process())
   const json = z.toJSONSchema(schema);
   expect(json).toMatchObject({
     type: "object",

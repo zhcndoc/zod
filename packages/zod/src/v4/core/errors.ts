@@ -101,6 +101,8 @@ interface $ZodIssueInvalidUnionMultipleMatch extends $ZodIssueBase {
   readonly input?: unknown;
   readonly discriminator?: string | undefined;
   readonly inclusive: false;
+  /** Indices of the options that matched */
+  readonly matches: number[];
 }
 
 export type $ZodIssueInvalidUnion = $ZodIssueInvalidUnionNoMatch | $ZodIssueInvalidUnionMultipleMatch;
@@ -200,6 +202,8 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
         readonly input: unknown;
         /** The schema or check that originated this issue. */
         readonly inst?: $ZodType | $ZodCheck;
+        /** The schema that owns the issue. Equal to `inst` when a schema originated the issue, and the schema the check was attached to when a check did. */
+        readonly schema?: $ZodType | undefined;
         /** If `true`, Zod will continue executing checks/refinements after this issue. */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
@@ -366,8 +370,7 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            // `_errors` is reserved by this legacy format, so merge a matching
-            // path segment into the current node instead of treating its array as a child.
+            // `_errors` is reserved by this legacy format, so merge a matching path segment into the current node instead of treating its array as a child.
             if (el === "_errors") {
               if (terminal) curr._errors.push(mapper(issue));
               i++;

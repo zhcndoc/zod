@@ -1,25 +1,27 @@
 # AGENTS.md
 
-此文件为 Claude Code (claude.ai/code) 在处理本仓库代码时提供指导。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 开发命令
+## Development Commands
 
-项目使用 pnpm workspace。主要命令：
+The project uses pnpm workspaces. Key commands:
 
-- `pnpm build` - 构建所有包（递归执行构建命令）
-- `pnpm vitest run` - 使用 Vitest 运行所有测试
-- `pnpm vitest run <path>` - 运行特定测试文件（例如 `packages/zod/src/v4/classic/tests/string.test.ts`）
-- `pnpm vitest run <path> -t "<pattern>"` - 运行文件内的特定测试（例如 `-t "MAC"`）
-- `pnpm vitest run --update` - 更新全部测试快照
-- `pnpm vitest run <path> --update` - 更新特定测试文件的快照
-- `pnpm test:watch` - 以监听模式运行测试
-- `pnpm vitest run --coverage` - 运行带覆盖率报告的测试
-- `pnpm dev` - 在源代码环境下通过 tsx 执行代码
-- `pnpm dev <file>` - 使用 tsx 和正确的解析条件执行 `<file>`。通常用于 `play.ts`。
-- `pnpm dev:play` - 快速别名，用于运行 play.ts 以进行试验
-- `pnpm lint` - 使用 biome 运行自动修复的代码检查器
-- `pnpm format` - 使用 biome 格式化代码
-- `pnpm fix` - 同时运行格式化和代码检查
+- `pnpm build` - Build all packages (runs recursive build command)
+- `pnpm vitest run` - Run all tests with Vitest. Includes the compile-mode project, which re-runs the zod tests with global AOT compilation enabled (see `wiki/compile.md`).
+- `pnpm vitest run <path>` - Run specific test file (e.g., `packages/zod/src/v4/classic/tests/string.test.ts`)
+- `pnpm vitest run <path> -t "<pattern>"` - Run specific test(s) within a file (e.g., `-t "MAC"`)
+- `pnpm vitest run --update` - Update all test snapshots
+- `pnpm vitest run <path> --update` - Update snapshots for specific test file
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm vitest run --coverage` - Run tests with coverage report
+- `pnpm test:compile` - Focused alias for just the compile-mode project. Already covered by `pnpm test`; use this when iterating on compile-related changes.
+- `pnpm dev` - Execute code with tsx under source conditions
+- `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
+- `pnpm dev:play` - Quick alias to run play.ts for experimentation
+- `pnpm check:comments` - Fail on stacked `//` comment lines (`--fix` joins them)
+- `pnpm lint` - Run biome linter with auto-fix
+- `pnpm format` - Format code with biome
+- `pnpm fix` - Run both format and lint
 
 ## 规则
 
@@ -32,8 +34,10 @@
 - Test both success and failure cases with edge cases
 - Keep added tests as minimal and dense as possible without sacrificing comprehensiveness; avoid redundant assertions or broad fixtures when a focused case proves the behavior.
 - No log statements (`console.log`, `debugger`) in tests or production code
+- Never stack prose across consecutive `//` lines. Lines have no maximum width here — the editor wraps for display — so a paragraph split across several `//` lines is just a hard-wrapped line, and hard wrapping breaks search, diffs and editing. Write one long `//` instead. `pnpm check:comments` enforces this in pre-commit and CI; `--fix` joins the offenders. Commented-out code, `@ts-`/`@__NO_SIDE_EFFECTS__`-style pragmas, bullet lists, and blocks separated by a bare `//` are exempt. When two adjacent comments describe two different statements, separate them with a blank line rather than joining them.
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
+- Never branch on specific schema types in shared code. No `def.type === "optional"` conditionals, no hardcoded lists of wrapper type names, no walks up the wrapper chain hunting for a particular type. Every schema type added later silently falls through such a check, and the list is wrong the moment someone writes a new wrapper. When a shared path needs to know something about a schema, express it as a structural property on the internals — `optin`/`optout`, `values`, `pattern`, `propValues` — and let each type declare its own answer. This is not negotiable in the parse paths; a PR that adds edge-case conditional logic keyed on schema types will be rejected regardless of how well it is tested.
 - Performance is critical - parameter reassignment is allowed for optimization
 - Any change to `packages/zod/src` must be weighed on **all three axes: runtime performance, memory consumption, and bundle size** — see "The three axes" below. A change that improves one and is only checked on that one is not finished.
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
@@ -97,6 +101,14 @@ git push origin main
 ```
 
 The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
+## Triaging issues and PRs
+
+Follow the `triage` skill at [`.claude/skills/triage/SKILL.md`](.claude/skills/triage/SKILL.md) whenever you're asked to investigate, triage, or form an opinion on an issue or PR. It is the single source of truth for the procedure. Claude and Codex both auto-discover it (Codex via the `.codex/skills` symlink); read it directly if your agent doesn't.
+
+For a draft **security advisory** — a GHSA id, the Security tab, a private vulnerability report — use the `security-advisory` skill at [`.claude/skills/security-advisory/SKILL.md`](.claude/skills/security-advisory/SKILL.md) instead. It shares the conventions above but reorders the work: the fix lands on `main` before any reporter comment is drafted, since the comment's whole value is the PR it links to.
+
+Write-ups live in the gitignored `.triage/` tree — one directory per ticket, `.triage/issues/NNNN/results.md` and `.triage/prs/NNNN/results.md`, with scratch files and repros alongside. When investigating a PR from its worktree, resolve the root repo first (`git worktree list | head -1`) and write results back there; a relative write lands in the worktree's own ignored `.triage/` where nobody will find it.
 
 ## Iterating on a contributor PR in a worktree
 

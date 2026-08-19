@@ -277,7 +277,21 @@ z.toJSONSchema(schema, {
 
 两个 schema 可以共享同一个 `zodSchema`，但不一定共享同一个 `message` — 同一个字面量中的 `undefined` 成员和 `bigint` 成员都会以该字面量的形式传入 — 因此可以根据 `message` 分辨它们。
 
-为字面量返回 JSON Schema 会替换整个字面量，并删除其中可表示的成员：`z.literal(["a", 1n])` 会变成你返回的内容，而 `"a"` 会消失。改为返回 `"any"`，即可保留现有的逐值行为。
+无法序列化为 JSON 的默认 *值* 会像 `.default()` schema 一样经过相同的处理函数。在 `"any"` 模式下，默认值会被丢弃，其余 schema 会照常生成；返回一个 JSON Schema 即可提供你自己的表示。
+
+```ts
+z.toJSONSchema(z.bigint().default(0n), {
+  unrepresentable: ({ zodSchema }) => {
+    const def = zodSchema._zod.def;
+    if (def.type === "bigint") return { type: "integer", format: "int64" };
+    if (def.type === "default") return { default: String(def.defaultValue) };
+    return "throw";
+  },
+});
+// => { type: "integer", format: "int64", default: "0" }
+```
+
+为字面量返回一个 JSON Schema 会替换整个字面量，并丢弃其中可表示的成员：`z.literal(["a", 1n])` 会变成你返回的内容，而 `"a"` 会被移除。返回 `"any"` 则会保留现有的按值处理行为。
 
 ### `cycles`
 

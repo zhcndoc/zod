@@ -18,23 +18,35 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
+// Marks a `_zod` prototype whose constructor has completed an instance: its lazily-derived internals are installed, so later constructions skip them.
+export const built: unique symbol = Symbol("zod_built");
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
+  // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
+  const zodProto: any = {};
+
+  // Flipped once this constructor has produced an instance; after that the prototype's lazily-derived internals are installed and there is nothing left to seal.
+  let sealed = false;
+
+  // Assigning the fields in the constructor body is what gives instances in-object slots; building the object literally and reparenting it costs a second allocation and a generic property copy.
+  function Internals(this: any, def: D) {
+    this.def = def;
+    this.constr = _;
+    this.traits = new Set();
+  }
+  Internals.prototype = zodProto;
+
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      _zodDesc.value = {
-        def,
-        constr: _,
-        traits: new Set(),
-      };
+      _zodDesc.value = new (Internals as any)(def);
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
-        // Cleared even on throw, so the shared descriptor never leaks one
-        // instance's internals into the next.
+        // Cleared even on throw, so the shared descriptor never leaks one instance's internals into the next.
         _zodDesc.value = undefined;
       }
     }
@@ -47,8 +59,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
-    // support prototype modifications; for-in avoids the array
-    // allocation of Object.keys on the (usually empty) prototype
+    // support prototype modifications; for-in avoids the array allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
     for (const k in proto) {
       if (!Object.prototype.hasOwnProperty.call(proto, k)) continue;
@@ -71,10 +82,19 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       for (const fn of deferred) {
         fn();
       }
-      // Released: initializers run once, and the list would otherwise be
-      // retained for the schema's lifetime.
+      // Released: initializers run once, and the list would otherwise be retained for the schema's lifetime.
       inst._zod.deferred = undefined;
     }
+
+    if (!sealed) {
+      sealed = true;
+      const zodProtoUsed = Object.getPrototypeOf(inst._zod);
+      if (!zodProtoUsed[built]) Object.defineProperty(zodProtoUsed, built, { value: true });
+    }
+
+    // Global post-processor hook. Internal: installed by `import "zod/compile"` to enable AOT compilation for every constructed schema. Runs last, once the instance is fully built and sealed, because it hands the instance to compile(). The post-processor is expected to be reentrancy-guarded by its own implementation.
+    const pp = (globalThis as GlobalThisWithConfig).__zod_globalConfig?.postProcessor;
+    if (pp) pp(inst);
     return inst;
   }
 
@@ -141,6 +161,13 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /**
+   * Internal: post-processor invoked on every freshly-constructed schema
+   * instance, after init and deferred fns run. Set by `import "zod/compile"`
+   * to install AOT compilation. Not part of the public API.
+   * @internal
+   */
+  postProcessor?: ((inst: any) => void) | undefined;
 }
 
 interface GlobalThisWithConfig {

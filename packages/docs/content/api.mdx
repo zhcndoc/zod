@@ -370,10 +370,13 @@ schema.parse("http://example.com"); // ❌
 ```
 
 <Callout>
-  **Web URL** — 在许多情况下，您可能只想验证 Web URL。推荐的模式如下：
+  **Web URLs** — 在许多情况下，您可能需要专门验证 Web URL。请使用 `z.httpUrl()`：
 
   ```ts
-  const httpUrl = z.url({
+  z.httpUrl();
+
+  // equivalent to
+  z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain
   });
@@ -386,7 +389,7 @@ schema.parse("http://example.com"); // ❌
   ```
 </Callout>
 
-要规范化 URL，请使用 `normalize` 标志。这将用 `new URL()` 返回的 [规范化 URL](https://chatgpt.com/share/6881547f-bebc-800f-9093-f5981e277c2c) 覆盖输入值。
+要规范化 URL，请使用 `normalize` 标志。这将用 `new URL()` 返回的[规范化 URL](https://chatgpt.com/share/6881547f-bebc-800f-9093-f5981e277c2c)覆盖输入值。
 
 ```ts
 new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
@@ -1022,7 +1025,33 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
-## 可空
+## 精确可选属性
+
+允许缺少键，但不允许显式传入 `undefined`，符合 TypeScript 的[`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes)：
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+z.exactOptional(z.string()); // or z.string().exactOptional()
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+z.exactOptional(z.string());
+```
+</Tab>
+</Tabs>
+
+```ts
+const User = z.object({ name: z.string().exactOptional() });
+// { name?: string }
+
+User.parse({}); // ✅
+User.parse({ name: "yoda" }); // ✅
+User.parse({ name: undefined }); // ❌
+```
+
+## 可空值
 
 使模式*可空*（即允许 `null` 输入）。
 
@@ -1430,6 +1459,40 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 </Tab>
 </Tabs>
 
+### `.exactPartial()`
+
+与 `.partial()` 相同，但它会将每个字段包装在 [`exactOptional()`](#exact-optionals) 中，而不是 `optional()`：
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts zod
+const PartialRecipe = Recipe.exactPartial();
+// { title?: string; description?: string | undefined; ingredients?: string[] }
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const PartialRecipe = z.exactPartial(Recipe);
+// { title?: string; description?: string | undefined; ingredients?: string[] }
+```
+</Tab>
+</Tabs>
+
+### `z.deepPartial()` [#deep-partial]
+
+`.partial()` 只处理顶层结构，而 `z.deepPartial()` 会递归处理树中的每个对象，包括数组、元组、联合类型、记录和包装器。
+
+```ts
+const Post = z.object({
+  title: z.string(),
+  author: z.object({ name: z.string(), email: z.string() }),
+});
+
+z.deepPartial(Post).parse({ author: {} }); // ✅
+```
+
+源模式永远不会被修改，结果仍然是一个 `ZodObject`，因此 `.shape` 和 `.extend()` 仍然有效。由于可选判别字段会破坏判别查找，[判别联合](#discriminated-unions)会降级为普通的 `z.union()`。与 `.partial()` 一样，如果对象带有自身的[细化](#refinements)，它会抛出错误。
+
 ### `.required()`
 
 Zod 提供了一个使部分或所有属性*必需*的 API，灵感来自 TypeScript 内置的 [`Required`](https://www.typescriptlang.org/docs/handbook/utility-types.html#requiredtype)。
@@ -1759,11 +1822,22 @@ const payment = z.xor([
 payment.parse({ type: "card", cardNumber: "1234" }); // ✅ 通过
 ```
 
-如果输入可以匹配多个选项，`z.xor()` 将会失败：
+如果输入可能匹配多个选项，`z.xor()` 将会失败。生成的问题包含 `inclusive: false`，以及一个 `matches` 数组，其中列出了匹配选项的索引：
 
 ```ts
 const overlapping = z.xor([z.string(), z.any()]);
-overlapping.parse("hello"); // ❌ 失败（同时匹配 string 和 any）
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+// ZodError: Invalid input: more than one option matched
+```
+
+对象选项比你想象中更容易发生重叠，因为 `z.object()` 会剥离未知键，而不是拒绝它们。下面，包含两个键的输入会匹配*两个*选项——第一个会剥离 `version`，第二个会保留它。在范围更窄的选项上使用 `z.strictObject()`（或 `.strict()`），即可使这些分支互斥：
+
+```ts
+const name = z.object({ name: z.string() });
+const version = name.extend({ version: z.string() });
+
+z.xor([name, version]).parse({ name: "zod", version: "4" });           // ❌ fails (matches both)
+z.xor([name.strict(), version]).parse({ name: "zod", version: "4" });  // ✅ passes
 ```
 
 ## 带分辨字段的联合
@@ -2686,6 +2760,18 @@ z.parse(stringToLength, "hello"); // => 5
 </Tab>
 </Tabs>
 
+### `z.input()` 和 `z.output()` [#input-output]
+
+类型级别 `z.input<T>` / `z.output<T>` 的运行时对应项：它们会将模式中的每个管道替换为其输入端或输出端。在对象、记录或映射中访问嵌套的 [codecs](/codecs) 时很有用，因为此时无法使用 `.in` / `.out`。
+
+```ts
+const Event = z.object({ name: z.string(), at: stringToDate });
+
+z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
+z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
+```
+
+只有 codecs 具有两个真正的端。对单向 [transform](#transforms) 使用 `z.output()` 时，会返回该 transform，而它不会验证任何内容。
 
 ## 转换（Transforms）
 

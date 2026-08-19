@@ -154,15 +154,30 @@ z.string({
 ```ts
 z.string({
   error: (iss) => {
-    iss.code; // 问题代码
-    iss.input; // 输入数据
-    iss.inst; // 产生该问题的模式/检查
-    iss.path; // 错误路径
+    iss.code; // the issue code
+    iss.input; // the input data
+    iss.inst; // the schema/check that originated this issue
+    iss.schema; // the schema that owns this issue
+    iss.path; // the path of the error
   },
 });
 ```
 
-根据你使用的 API，可能会有其他可用属性。可以使用 TypeScript 的自动补全探索这些属性。
+与 `iss.inst` 不同，`iss.schema` 始终是该模式，即使该 issue 是由某个检查引起的。使用它可以读取所属模式的[元数据](/metadata)。
+
+```ts
+z.config({
+  customError: (iss) => {
+    const meta = iss.schema && z.globalRegistry.get(iss.schema);
+    return `${meta?.title ?? "Field"} is invalid.`;
+  },
+});
+
+z.string().min(5).meta({ title: "Password" }).safeParse("abc");
+// => "Password is invalid."
+```
+
+根据你使用的 API，可能还有其他可用属性。使用 TypeScript 的自动补全功能来查看可用属性。
 
 ```ts
 z.string().min(5, {
@@ -323,7 +338,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-为了方便，所有语言包作为 `z.locales` 从 `"zod"` 导出。在某些打包器中，这可能无法进行摇树优化。
+为方便使用，所有语言包都以 `z.locales` 的形式从 `"zod"` 导出。Rollup 和 Webpack 会将其 tree-shake 为你实际使用的语言包。esbuild 无法做到这一点（[evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)）——使用 `import { z } from "zod"` 或 `import z from "zod"` 时，它会捆绑所有语言包，因此在此处更推荐使用 `import * as z from "zod"`。
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -350,10 +365,13 @@ z.config(z.locales.en());
 - `az` — 阿塞拜疆语
 - `be` — 白俄罗斯语
 - `bg` — 保加利亚语
+- `bn` — 孟加拉语
 - `ca` — 加泰罗尼亚语
+- `ckb` — 库尔德语（中部）
 - `cs` — 捷克语
 - `da` — 丹麦语
 - `de` — 德语
+- `el` — 希腊语
 - `en` — 英语
 - `eo` — 世界语
 - `es` — 西班牙语
@@ -362,6 +380,8 @@ z.config(z.locales.en());
 - `fr` — 法语
 - `frCA` — 加拿大法语
 - `he` — 希伯来语
+- `hi` — 印地语
+- `hr` — 克罗地亚语
 - `hu` — 匈牙利语
 - `hy` — 亚美尼亚语
 - `id` — 印度尼西亚语
@@ -370,22 +390,27 @@ z.config(z.locales.en());
 - `ja` — 日语
 - `ka` — 格鲁吉亚语
 - `km` — 高棉语
+- `kn` — 卡纳达语
 - `ko` — 韩语
 - `lt` — 立陶宛语
 - `mk` — 马其顿语
 - `ms` — 马来语
 - `nl` — 荷兰语
+- `nn` — 挪威尼诺斯克语
 - `no` — 挪威语
-- `ota` — 土耳其文
+- `ota` — 土耳其语
 - `ps` — 普什图语
 - `pl` — 波兰语
 - `pt` — 葡萄牙语
+- `ptBR` — 巴西葡萄牙语
 - `ro` — 罗马尼亚语
 - `ru` — 俄语
+- `sk` — 斯洛伐克语
 - `sl` — 斯洛文尼亚语
 - `sv` — 瑞典语
 - `ta` — 泰米尔语
 - `th` — 泰语
+- `tk` — 土库曼语
 - `tr` — 土耳其语
 - `uk` — 乌克兰语
 - `ur` — 乌尔都语
@@ -400,13 +425,20 @@ z.config(z.locales.en());
 
 下面是确定错误优先级的快速参考：如果定义了多个错误定制，哪个优先？按*从高到底*优先级排序：
 
-1. **模式级错误** — 任何“硬编码”到模式定义中的错误消息。
+1. **检查级错误** — 在失败的单个检查上定义的错误。
 
   ```ts
-  z.string("不是字符串！");
+  z.string().min(5, "Too short!");
   ```
 
-2. **单次解析错误** — 传入 `.parse()` 方法的自定义错误映射。
+2. **模式级错误** — 直接“硬编码”到模式定义中的任何错误消息。它涵盖由模式自身检查引发的 issues，因此当检查没有定义自己的错误时，它会作为回退。
+
+  ```ts
+  z.string("Invalid name").safeParse(12);          // => "Invalid name"
+  z.string("Invalid name").min(5).safeParse("ab"); // => "Invalid name"
+  ```
+
+3. **单次解析错误** — 传入 `.parse()` 方法的自定义错误映射。
 
   ```ts
   z.string().parse(12, {
@@ -414,7 +446,7 @@ z.config(z.locales.en());
   });
   ```
 
-3. **全局错误映射** — 传给 `z.config()` 的自定义错误映射。
+4. **全局错误映射** — 传入 `z.config()` 的自定义错误映射。
 
   ```ts
   z.config({
@@ -422,7 +454,7 @@ z.config(z.locales.en());
   });
   ```
 
-4. **语言包错误映射** — 传给 `z.config()` 的语言包自定义错误映射。
+5. **语言包错误映射** — 传入 `z.config()` 的自定义错误映射。
 
   ```ts
   z.config(z.locales.en());
