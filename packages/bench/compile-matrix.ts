@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import * as z from "zod";
-import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "zod/v4/core";
+import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "zod/v4/core";
 
 // Broad compiled-vs-runtime sweep across schema categories.
 //
@@ -111,15 +111,15 @@ add(
 );
 add(
   "collection",
-  "array<string> x100",
+  "array<string> x10",
   z.array(z.string()),
-  Array.from({ length: 100 }, (_, i) => `s${i}`)
+  Array.from({ length: 10 }, (_, i) => `s${i}`)
 );
 add(
   "collection",
-  "array<object> x50",
+  "array<object> x10",
   z.array(z.object({ id: z.number(), name: z.string() })),
-  Array.from({ length: 50 }, (_, i) => ({ id: i, name: `n${i}` }))
+  Array.from({ length: 10 }, (_, i) => ({ id: i, name: `n${i}` }))
 );
 add("collection", "tuple", z.tuple([z.string(), z.number(), z.boolean()]), ["a", 1, true]);
 add("collection", "set", z.set(z.number()), new Set([1, 2, 3, 4, 5]));
@@ -369,7 +369,8 @@ for (const c of selected) {
   let compiledSchema: z.ZodType | null = null;
   let status = "compiled";
   try {
-    compiledSchema = compile(c.schema);
+    // Strict: this table classifies refusals, so it wants the error rather than the silent uncompiled fallback.
+    compiledSchema = compile(c.schema, { strict: true });
   } catch (err) {
     status = err instanceof ZodCompileUnsupportedError ? "fallback" : `refused: ${(err as Error).name}`;
   }
@@ -392,7 +393,7 @@ for (const c of selected) {
   let rawFn: (() => void) | null = null;
   if (compiledSchema) {
     try {
-      const fp = compileFastpass(c.schema);
+      const fp = compileFn(c.schema);
       if (fp(c.input) === INVALID) status = "fallthrough";
       else
         rawFn = () => {

@@ -35,6 +35,7 @@ The project uses pnpm workspaces. Key commands:
 - Keep added tests as minimal and dense as possible without sacrificing comprehensiveness; avoid redundant assertions or broad fixtures when a focused case proves the behavior.
 - No log statements (`console.log`, `debugger`) in tests or production code
 - Never stack prose across consecutive `//` lines. Lines have no maximum width here — the editor wraps for display — so a paragraph split across several `//` lines is just a hard-wrapped line, and hard wrapping breaks search, diffs and editing. Write one long `//` instead. `pnpm check:comments` enforces this in pre-commit and CI; `--fix` joins the offenders. Commented-out code, `@ts-`/`@__NO_SIDE_EFFECTS__`-style pragmas, bullet lists, and blocks separated by a bare `//` are exempt. When two adjacent comments describe two different statements, separate them with a blank line rather than joining them.
+- Keep comments SHORT AND TIGHT — one lowercase sentence fragment, one clause, no trailing period. Never a capitalized full sentence, and never two of them. Extreme concision: say only what the code cannot say, and cut the setup sentence, the recap, and the same point restated in different words; a comment that needs three sentences usually means the code should be clearer. Identifiers keep their real casing (`Error`, `parse()`), only the prose is lowercase.
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
 - Never branch on specific schema types in shared code. No `def.type === "optional"` conditionals, no hardcoded lists of wrapper type names, no walks up the wrapper chain hunting for a particular type. Every schema type added later silently falls through such a check, and the list is wrong the moment someone writes a new wrapper. When a shared path needs to know something about a schema, express it as a structural property on the internals — `optin`/`optout`, `values`, `pattern`, `propValues` — and let each type declare its own answer. This is not negotiable in the parse paths; a PR that adds edge-case conditional logic keyed on schema types will be rejected regardless of how well it is tested.
@@ -44,6 +45,7 @@ The project uses pnpm workspaces. Key commands:
 - Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
+- Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
 - NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
 
 ## The three axes
@@ -82,11 +84,13 @@ If you touch that machinery, three things bite:
 
 Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
 
-Three files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+Five files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
 
 - `packages/zod/package.json` — `version`
 - `packages/zod/jsr.json` — `version`
 - `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
+- `packages/mini/package.json` — `version` (same x.y.z; `@zod/mini` ships in lockstep) and `peerDependencies.zod` (`^x.y.0`, the minor being released — bump it on every minor)
+- `packages/mini/jsr.json` — `version` and the `imports["zod/mini"]` range (`jsr:@zod/zod@^x.y.0/mini`, same rule)
 
 Procedure:
 
@@ -94,13 +98,39 @@ Procedure:
 # Make sure main is clean and up to date first.
 git checkout main && git pull
 
-# Bump all three files to the new x.y.z, then:
-git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts
+# Bump all five files to the new x.y.z (and the @zod/mini peer floor + JSR import range on a minor), then:
+git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json packages/mini/jsr.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
 ```
 
-The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` to npm and JSR last. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
+To publish `@zod/mini` at a version zod already shipped without it, dispatch the same workflow; it publishes only the scoped package, with the peer floor set to that minor:
+
+```bash
+gh workflow run release.yml -f mini_version=4.5.2
+```
+
+A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `npm dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
+
+Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
+
+## Format validators: spec compliance is not the bar
+
+Zod's format validators — `z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, and the rest — are named after specs but do not implement them. Each one matches the profile that real producers emit and real consumers accept, which is almost always far narrower than what the grammar permits. That narrowness is the product, not a gap in it.
+
+So **"the spec allows X, therefore Zod must accept X" is not an argument**, and a PR that widens a format regex on that basis alone will be closed. The question is never what the spec permits; it's whether accepting the wider form helps more people than rejecting it hurts. A form that shows up in real payloads and breaks real integrations is worth fixing. A form that only appears when someone reads the grammar and constructs a string from it is not — when one of those reaches a validator in production it's a bug or an attack, and rejecting it is the useful behavior.
+
+Three things make a widening request an automatic no:
+
+- **The spec permits the form only "by mutual agreement" of the two parties.** A general-purpose validator is never party to that agreement, so it can't honor the clause. ISO 8601 expanded years (`+010000-01-01T00:00:00.000Z`) are the canonical case: the standard also requires the parties to agree the digit count, and runtimes disagree — JavaScript emits six digits, Java's `Instant` emits five, Python rejects both. Declined in #6154.
+- **The wider form breaks the JSON Schema output.** `z.iso.datetime()` and `z.iso.date()` emit `format: "date-time"` and `format: "date"`, which mean RFC 3339 — four-digit years, no sign. Widening those regexes makes `z.toJSONSchema()` emit a pattern that conformant consumers reject.
+- **The cost lands on everyone.** These regexes live in `core/regexes.ts`, so every added alternation is bytes in every bundle including `zod/mini`, plus more backtracking on a hot parse path. Weigh it on all three axes above before you argue for it at all.
+
+For calibration on how narrow these already are: `z.iso.datetime()` rejects basic format (`20200101T061500Z`), week dates (`2020-W01-1`), ordinal dates (`2020-001`), comma decimal separators, and `24:00`. Every one of those is valid ISO 8601. None of them are going in either.
+
+Point anyone who genuinely needs a wider format at `z.string().regex()` or `z.string().refine()`. That escape hatch is the answer, not a wider default.
 
 ## Triaging issues and PRs
 
@@ -142,7 +172,7 @@ Notes:
 
 ## Commenting on issues and PRs
 
-When posting on a maintainer's behalf via `gh` (PR comments, issue comments, reviews), match the house tone. The register is authoritative and friendly — concise, not bubbly, not over-explaining, not effusive. Comments come from a maintainer handing down decisions, not negotiating them. Friendly does not mean deferential.
+When posting on a maintainer's behalf via `gh` (PR comments, issue comments, reviews), match the house tone. Load the `prose-writing` skill before you write any of it — it is the general copy guide, and this section layers on top of it. The register is authoritative and friendly — concise, not bubbly, not over-explaining, not effusive. Comments come from a maintainer handing down decisions, not negotiating them. Friendly does not mean deferential.
 
 - Exclamation points are fine in moderation, especially to soften a decline or close out a thread ("Thanks for looking into this!"). Don't stack them and don't sprinkle them through technical writeups.
 - Skip effusive praise: "Great work", "Awesome", "Thanks so much for this", "Thanks for the careful writeup", "you clearly read the RFC". A short flat-affect affirmation walks the line well — "Good investigation." or "Solid catch." with a period, no exclamation, no superlatives. Warmth otherwise comes from a short closer ("Thanks for looking into this, though 👍"), not a preamble that butters up the contributor before the decision.
@@ -153,7 +183,8 @@ When posting on a maintainer's behalf via `gh` (PR comments, issue comments, rev
 - Speak with authority. No hedging ("maybe", "I think perhaps", "if that's okay"), no apologizing for decisions, no asking permission to land changes the maintainer has already made. Decisions are stated as decisions.
 - Be direct when declining, but not curt. "out of scope", "behaving as intended", "this is more complicated than it looks" — firm, with a concrete reason. A friendly closer ("thanks for looking into this") is fine.
 - Cross-reference by number: `#4433`, `commit 2f8414bc`, `merged in #5718`. Concrete and verifiable.
-- Length matches substance. Default to 1–4 sentences. Go long only when the content earns it (root-cause writeups, benchmark results, pointing to a canonical thread).
+- Length matches substance, and substance is almost never as much as you think. Two or three sentences closes most threads. How long you spent investigating has nothing to do with how long the reply should be — a week of benchmarking still closes in three sentences. The `triage` skill works this through against a real decline.
+- No file paths, line numbers, or symbol names unless the reader has to open that file. They turn a two-line decision into a report, and nobody asked you to show your work. Say what the code does instead — "the parse context is per-call state now", not "`core/memoizer.ts:133` writes onto the context". The detail belongs in the `.triage/` write-up.
 - Pick the one or two strongest reasons and write them as prose. Resist enumerating every objection in a bullet list — even when each point is fair, it reads as piling on. The strongest argument plus a concrete escape hatch (e.g. "`z.email().max(254)` already does this") is usually enough.
 - Don't lift informal or coarse phrasing from external sources (blog posts, issues, comments) into the maintainer voice, even in quotes. Paraphrase the substance — quoted-in-context still reads as the maintainer talking.
 - Use prose with inline backticks for symbols. Reach for fenced code blocks only when showing non-trivial code is genuinely clearer than describing it.

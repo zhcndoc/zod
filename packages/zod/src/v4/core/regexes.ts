@@ -7,10 +7,13 @@ import * as util from "./util.js";
  */
 export const cuid: RegExp = /^[cC][0-9a-z]{6,}$/;
 export const cuid2: RegExp = /^[0-9a-z]+$/;
-export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
+export const ulid: RegExp = /^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;
 export const ksuid: RegExp = /^[A-Za-z0-9]{27}$/;
 export const nanoid: RegExp = /^[a-zA-Z0-9_-]{21}$/;
+export function nanoidOfLength(length: number): RegExp {
+  return new RegExp(`^[a-zA-Z0-9_-]{${length}}$`);
+}
 
 /** ISO 8601-1 duration regex. Does not support the 8601-2 extensions like negative durations or fractional/negative components. */
 export const duration: RegExp =
@@ -57,8 +60,8 @@ export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 
-// Single character class, not an alternation: the two properties overlap (U+1F9B0-U+1F9B3), so `(A|B)+` backtracks exponentially on a failed match.
-const _emoji: string = `^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
+// Single character class, not an alternation: the two properties overlap (U+1F9B0-U+1F9B3), so `(A|B)+` backtracks exponentially on a failed match. The leading lookahead then demands one anchor — a pictograph, a regional indicator, or the enclosing keycap — because `\p{Emoji_Component}` on its own covers ASCII digits, `#`, `*`, ZWJ, variation selectors and skin tone modifiers, none of which is an emoji without a base.
+const _emoji: string = `^(?=[\\s\\S]*[\\p{Extended_Pictographic}\\p{Regional_Indicator}\\u20E3])[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
 export function emoji(): RegExp {
   return new RegExp(_emoji, "u");
 }
@@ -78,7 +81,7 @@ export const cidrv6: RegExp =
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 export const base64: RegExp = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
-export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
+export const base64url: RegExp = /^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2,3})?$/;
 
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
 // export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
@@ -106,7 +109,7 @@ function anchor(source: string): RegExp {
 
 export const date: RegExp = /*@__PURE__*/ anchor(dateSource);
 
-function timeSource(args: { precision?: number | null | undefined }) {
+function timeSource(args: { precision?: number | null | undefined; seconds?: boolean }) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
   const regex =
     typeof args.precision === "number"
@@ -115,7 +118,9 @@ function timeSource(args: { precision?: number | null | undefined }) {
         : args.precision === 0
           ? `${hhmm}:[0-5]\\d`
           : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
-      : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+      : args.seconds
+        ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?`
+        : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 export function time(args: {
@@ -131,12 +136,13 @@ export function datetime(args: {
   offset?: boolean;
   local?: boolean;
 }): RegExp {
-  const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
-  if (args.local) opts.push("");
   // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
   if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
-  const timeRegex = `${time}(?:${opts.join("|")})`;
+
+  // RFC 3339 mandates seconds wherever the time carries a `Z` or an offset, so only the unqualified form `local` adds may omit them
+  const qualified = `${timeSource({ precision: args.precision, seconds: true })}(?:${opts.join("|")})`;
+  const timeRegex = args.local ? `${qualified}|${timeSource({ precision: args.precision })}` : qualified;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }

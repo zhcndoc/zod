@@ -1,12 +1,17 @@
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
-import type { Class } from "./util.js";
+import type { Class, ProtoOf } from "./util.js";
+import { members as installMembers } from "./util.js";
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 
 type ZodTrait = { _zod: { def: any; [k: string]: any } };
 export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
   new (def: D): T;
   init(inst: T, def: D): asserts inst is T;
+}
+
+export interface $constructorParams {
+  Parent?: typeof Class;
 }
 
 /** A special constant with type `never` */
@@ -18,19 +23,40 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
-// Marks a `_zod` prototype whose constructor has completed an instance: its lazily-derived internals are installed, so later constructions skip them.
-export const built: unique symbol = Symbol("zod_built");
+// null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
+let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
+
+// v8 captures a stack trace inside the Error constructor, which dominates a failed parse; costs only the frames, and parse() restores those. the constructor must RUN: Object.create is cheaper and passes instanceof, but Error.isError and util.types.isNativeError check an internal slot
+function newError(Definition: new () => any): any {
+  const E = _E;
+  if (E) {
+    const saved = E.stackTraceLimit;
+    if (typeof saved === "number") {
+      try {
+        E.stackTraceLimit = 0;
+      } catch {
+        _E = null;
+        return new Definition();
+      }
+      try {
+        return new Definition();
+      } finally {
+        E.stackTraceLimit = saved;
+      }
+    }
+  }
+  return new Definition();
+}
 
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
-  params?: { Parent?: typeof Class }
+  /** This trait's members, installed once on every prototype that composes it. They cannot be declared in the initializer above: that runs per instance, and the prototype is shared. */
+  proto?: ProtoOf<T>,
+  params?: $constructorParams
 ): $constructor<T, D> {
   // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
   const zodProto: any = {};
-
-  // Flipped once this constructor has produced an instance; after that the prototype's lazily-derived internals are installed and there is nothing left to seal.
-  let sealed = false;
 
   // Assigning the fields in the constructor body is what gives instances in-object slots; building the object literally and reparenting it costs a second allocation and a generic property copy.
   function Internals(this: any, def: D) {
@@ -39,6 +65,10 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     this.traits = new Set();
   }
   Internals.prototype = zodProto;
+
+  const protoMembers = proto;
+  // One trait's members land on every prototype whose chain composes it, so the answer is per prototype rather than per trait.
+  const initialized = protoMembers && new WeakSet<object>();
 
   function init(inst: T, def: D) {
     if (!inst._zod) {
@@ -59,6 +89,19 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
+    if (initialized) {
+      // `super(def)` from a user subclass gives `this` a prototype the subclass owns, and installing there would overwrite whatever the subclass declared. `constr` built the instance, so its prototype is the one below the subclass's that should carry the members. A receiver whose chain never reaches that prototype installs on its own, which for a plain object handed straight to `init` means `Object.prototype` — unchanged from before.
+      const own = Object.getPrototypeOf(inst);
+      const ctorProto = inst._zod.constr.prototype;
+      let up: object | null = own;
+      while (up && up !== ctorProto) up = Object.getPrototypeOf(up);
+      const target = up ?? own;
+      if (!initialized.has(target)) {
+        initialized.add(target);
+        installMembers(target, protoMembers!);
+      }
+    }
+
     // support prototype modifications; for-in avoids the array allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
     for (const k in proto) {
@@ -75,7 +118,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   Object.defineProperty(Definition, "name", { value: name });
 
   function _(this: any, def: D) {
-    const inst = params?.Parent ? new Definition() : this;
+    const inst = params?.Parent ? newError(Definition) : this;
     init(inst, def);
     const deferred = inst._zod.deferred;
     if (deferred) {
@@ -86,13 +129,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       inst._zod.deferred = undefined;
     }
 
-    if (!sealed) {
-      sealed = true;
-      const zodProtoUsed = Object.getPrototypeOf(inst._zod);
-      if (!zodProtoUsed[built]) Object.defineProperty(zodProtoUsed, built, { value: true });
-    }
-
-    // Global post-processor hook. Internal: installed by `import "zod/compile"` to enable AOT compilation for every constructed schema. Runs last, once the instance is fully built and sealed, because it hands the instance to compile(). The post-processor is expected to be reentrancy-guarded by its own implementation.
+    // Global post-processor hook. Internal: installed by `import "zod/compile"` to enable AOT compilation for every constructed schema. Runs last, once the instance is fully built, because it hands the instance to compile(). The post-processor is expected to be reentrancy-guarded by its own implementation.
     const pp = (globalThis as GlobalThisWithConfig).__zod_globalConfig?.postProcessor;
     if (pp) pp(inst);
     return inst;
@@ -161,6 +198,8 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /** Enables parsing input that contains reference cycles. Read when a schema is constructed. */
+  memoizer?: schemas.$ZodMemoizer | undefined;
   /**
    * Internal: post-processor invoked on every freshly-constructed schema
    * instance, after init and deferred fns run. Set by `import "zod/compile"`

@@ -1,4 +1,4 @@
-// Side-effect-only module: enables AOT compilation for every schema constructed after this import. The only operation is installing a post-processor on `globalConfig`. Bundlers preserve this import because the file is listed in `package.json`'s `sideEffects` array; nothing else in `zod` references it, so apps that don't `import "zod/compile"` drop the entire compiler.
+// Side-effect-only: installs the post-processor on `globalConfig`. Listed in `package.json`'s `sideEffects`, and nothing else references it, so apps that never import it drop the compiler.
 //
 // Usage:
 //
@@ -8,7 +8,7 @@
 //
 // Module evaluation order matters: schemas constructed in modules that evaluate before this import will not be compiled. Place this import in the app entry point, before any module that constructs schemas at top level.
 //
-// Failure handling: if `compile()` throws for a schema (async refinement, unsupported feature, etc.) the shim catches and permanently restores the runtime `_zod.run` for that schema. The schema continues to work via the regular runtime parser — no observable difference to the caller.
+// Failure handling: if the compiler refuses a schema (async refinement, unsupported feature, etc.) the shim permanently restores the runtime `_zod.run` for that schema. The schema continues to work via the regular runtime parser — no observable difference to the caller.
 
 import { compile } from "./v4/core/compile.js";
 import * as core from "./v4/core/index.js";
@@ -33,9 +33,12 @@ core.globalConfig.postProcessor = (inst: any) => {
         inst._zod.run = originalRun;
         return originalRun(payload, ctx);
       }
-      const compiled = compile(inst);
-      // Only the run wrapper is installed. Copying the compiled parse/ safeParse closures here would make their INVALID fallback re-enter this instance's methods — which now route through the compiled run — executing user callbacks a third time on invalid input. The method → wrapper path runs them exactly twice.
+      // Strict: the shim owns its own fallback below, and a non-strict compile would hand back `inst` — whose run is this shim — and reinstall it on itself.
+      const compiled = compile(inst, { strict: true });
+      // Only the run wrapper. Copying the compiled parse/safeParse closures would make their fallback re-enter this instance and run user callbacks a third time.
       inst._zod.run = compiled._zod.run;
+      inst._zod.bag.fallbackRun = compiled._zod.bag.fallbackRun;
+      inst._zod.bag.validator = compiled._zod.bag.validator;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;

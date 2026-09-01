@@ -1,6 +1,6 @@
 # Zod v4 中的可选性
 
-关于 Zod 解析如何处理“缺失”／`undefined` 输入的内部参考。反映 `main` 的当前状态。
+关于 Zod 的解析如何处理“缺失”／`undefined` 输入的参考。反映 `main` 的当前状态。
 
 系统已经积累了几个彼此正交的机制。本文档会给它们命名，说明哪些 schema 会设置什么，并梳理这些棘手的交互。
 
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | `_zod.optin` — `undefined`／`"optional"`／`"defaulted"` | catch、default、prefault、optional、transform | `$ZodObject`、`$ZodTuple`、`$ZodOptional`；以及 JSON Schema emitter，其中 `objectProcessor` 和 `tupleProcessor` 都读取**静态**值——见下文 | 三档阶梯：必需／允许缺失／允许缺失*并替缺失提供值* |
 | `_zod.optout === "optional"` | optional、exact-optional、输出侧 default 情况 | `$ZodObject`、`$ZodTuple` | “我的输出可能合法地是 `undefined`；在截短长度／省略 key 时，请将其视为缺失” |
+
 另外还有一个记录用标志：
 
 | 信号 | 由谁设置 | 被谁消费 | 含义 |
@@ -81,16 +82,20 @@ schema 的 `_zod` 上的静态和运行时声明。共有三档，每一档都�
 
 ```ts
 const isPresent = key in input;
-const isOptionalIn = propSchema._zod.optin === "optional";
+const isOptionalOut = optout === "optional";   // optin and optout both arrive raw
+
+if (!isPresent && isOptionalOut && optin === "optional") {
+  return; // absent slot, middle rung: contribute nothing at all — no issue, no key
+}
 
 if (result.issues.length) {
-  if (isOptionalIn && isOptionalOut && !isPresent) {
-    return; // 吞掉这个问题——schema 在缺失输入上不可能成功，但允许失败
+  if (optin !== undefined && isOptionalOut && !isPresent) {
+    return; // swallow the issue — schema can't possibly succeed on absent input but is allowed to fail
   }
   final.issues.push(...prefixed);
 }
 
-if (!isPresent && !isOptionalIn) {
+if (!isPresent && optin === undefined) {
   if (!result.issues.length) {
     final.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: [key] });
   }
@@ -104,7 +109,13 @@ if (result.value === undefined) {
 }
 ```
 
-`$ZodTuple` 对尾部的 tuple 槽位做类似处理。
+前置门控正是保持缺失 key 处于缺失状态的机制。这个阶梯表示，中间档允许缺失，*但不会在原位置提供任何内容*，因此属性 schema 对 `undefined` 产生的任何结果都是臆造出来的；赋值会与 schema 自己的声明相矛盾。`optout` 是门控的另一半：不是 output-optional 的 schema 必须保留这个 key，这就是为什么仅 optional-in 的 `z.string().catch("c")` 仍然会用 `"c"` 填充缺失 key。只有最高档会带着值到达赋值步骤。
+
+单靠包装器无法完成这个判断。`$ZodOptional` 在带值的情况下永远不会命中门控，因为除非 inner 是 `"defaulted"`，否则它会在 `undefined` 上短路；`$ZodExactOptional` 则刻意不会短路，因为委托给 inner 是让它拒绝显式存在的 `undefined` 的唯一方式。由于 `el._zod.run({ value: input[key], issues: [] }, ctx)` 不携带存在性信息，只有 `$ZodObject` 知道其中的区别，因此门控必须位于那里。
+
+`$ZodTuple` 对尾部 tuple 槽位执行相同的操作，此时“省略 key”变成了“截断尾部”。
+
+共有三条解析路径，门控必须出现在全部三条路径中，否则编译模式会产生分歧。解释执行路径是上面的 `handlePropertyResult`；`$ZodObjectJIT` 会针对中间档 key 生成 `if (<key>_present)`，而不是 `if (value !== undefined || <key>_present)`；`z.compile()` 会自行组装输出对象，因此 `compileObject` 使用 `dropsWhenAbsent`——`optin === "optional" && optout === "optional"`——来选择相同的条件，而 tuple compiler 则会截断，而不是运行缺失的中间档项目。
 
 `$ZodOptional`（独立包装器）会读取 *inner 的* `optin`，以决定是否在 `undefined` 输入上短路：
 
@@ -357,7 +368,24 @@ z.object({ a: z.unknown() }).parse({})
 z.object({ a: z.any() }).parse({})
 // → THROW  （同上）
 
-// === 静态类型 vs 运行时分歧 ===
+// === exactOptional (delegates instead of short-circuiting) ===
+
+z.object({ a: z.coerce.string().exactOptional() }).parse({})
+// → {}  (absent + middle rung: the object drops what coerce made of undefined)
+
+z.object({ a: z.coerce.string().exactOptional() }).parse({ a: undefined })
+// → { a: "undefined" }  (present: the inner runs and its answer stands)
+
+z.object({ a: z.string().exactOptional() }).parse({ a: undefined })
+// → THROW  (present: string rejects undefined, and the object surfaces it)
+
+z.object({ a: z.string().default("x").exactOptional() }).parse({})
+// → { a: "x" }  (top rung substitutes, so the gate doesn't fire)
+
+z.tuple([z.string(), z.coerce.string().exactOptional()]).parse(["x"])
+// → ["x"]  (the tuple analog: truncate rather than materialize)
+
+// === Static type vs runtime divergence ===
 
 z.input<typeof z.object({ a: z.string().catch("c") })>
 // → { a: string }   — 类型层面上 `a` 是必需的

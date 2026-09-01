@@ -14,13 +14,14 @@ type SchemaOfKind<K extends Kind> = [Extract<schemas.$ZodTypes, { _zod: { def: {
   ? AnyZod
   : Extract<schemas.$ZodTypes, { _zod: { def: { type: K } } }>;
 
-export type VisitFn = (node: AnyZod) => AnyZod;
-export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
+export type VisitFn = (node: AnyZod, rewritten: boolean) => AnyZod;
+export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>, rewritten: boolean) => AnyZod };
 
 /**
  * @internal Bottom-up rewrite of a schema tree. Unhandled kinds and unchanged branches keep their
  * identity. Returns `$ZodType`: a visitor can swap in a schema of any type, so callers declare
- * their own return type.
+ * their own return type. `rewritten` tells a handler whether the traversal replaced anything
+ * below the node it is looking at.
  */
 export function visit(schema: schemas.SomeType, fn: VisitFn): AnyZod;
 export function visit(schema: schemas.SomeType, handlers: VisitHandlers): AnyZod;
@@ -28,10 +29,12 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
   const fn: VisitFn =
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
-      : (node) => {
+      : (node, rewritten) => {
           // A union of handlers isn't callable with one argument; handler `K` only ever sees kind `K`.
-          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as ((n: AnyZod) => AnyZod) | undefined;
-          return h ? h(node) : node;
+          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as
+            | ((n: AnyZod, rewritten: boolean) => AnyZod)
+            | undefined;
+          return h ? h(node, rewritten) : node;
         };
 
   const cache = new Map<AnyZod, AnyZod | Resolving>();
@@ -47,7 +50,8 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
     }
     if (cached !== undefined) return cached;
     cache.set(s, RESOLVING);
-    const mapped = fn(mapInner(s));
+    const inner = mapInner(s);
+    const mapped = fn(inner, inner !== s);
     cache.set(s, mapped);
     return mapped;
   }
@@ -153,6 +157,17 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
         // Drop the memo, or it shadows the new getter forever.
         const { _cachedInner, ...rest } = def;
         return clone(s, { ...rest, getter: () => run(original()) });
+      }
+      case "properties": {
+        const oldShape = def.shape as Record<string | symbol, AnyZod>;
+        let changed = false;
+        const newShape: Record<string | symbol, AnyZod> = {};
+        for (const k of Reflect.ownKeys(oldShape)) {
+          const mapped = run(oldShape[k]!);
+          if (mapped !== oldShape[k]) changed = true;
+          newShape[k] = mapped;
+        }
+        return changed ? clone(s, { ...def, shape: newShape }) : s;
       }
       // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":

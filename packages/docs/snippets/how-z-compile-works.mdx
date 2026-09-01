@@ -1,0 +1,42 @@
+请看这个简单的 `Point` schema：
+
+```ts
+const Point = z.object({
+  x: z.number(),
+  y: z.number()
+});
+```
+
+这是为它生成的代码片段：
+
+```ts
+const isPoint = new Function("input", `
+  if (typeof input !== "object" || input === null) return false;
+  if (typeof input.x !== "number") return false;
+  if (typeof input.y !== "number") return false;
+  return true;
+`);
+
+isPoint({ x: 1, y: 2 }); // true
+isPoint({ x: "1" });     // false
+```
+
+对于绝大多数输入，生成的函数会使用 JavaScript 能够表达的最快逻辑来验证数据：直接执行 `typeof` 检查和属性读取，中间没有解释器介入。当它无法处理某个输入时，Zod 会回退到标准解析器。
+
+这是 Zod 为上面的 `Player` schema 生成的函数：
+
+```js
+if (typeof input !== "object" || input === null || Array.isArray(input)) return INVALID;
+const v0 = input["username"];
+if (typeof v0 !== "string") return INVALID;
+const v1 = input["bio"];
+if (typeof v1 !== "string") return INVALID;
+const v2 = input["xp"];
+if (typeof v2 !== "number" || !Number.isFinite(v2)) return INVALID;
+const v3 = { "username": v0, "bio": v1, "xp": v2 };
+return v3;
+```
+
+借助 `new Function()` 的能力，这一切会在运行时于进程内完成。无需集成到你的构建系统中。
+
+<Callout>编译后的 schema 只是对现有 schema 的纯增量增强。它附加了用于检查有效输入的预编译快速路径。检测到无效数据时，它会返回 `INVALID` 符号，以表示解析应回退到未编译的解析器。这在结构上避免了编译版本与未编译版本之间错误报告的细微偏差。</Callout>

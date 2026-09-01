@@ -4,19 +4,19 @@
   <p align="center">
   <a href="https://zod.dev">zod.dev</a>
   <br/>
-    TypeScript-first schema validation with static type inference
+    TypeScript 优先的模式验证与静态类型推断
   </p>
 </p>
 <p align="center">
-<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" /></a>
-<a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI 状态" /></a>
+<a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="由 Colin McDonnell 创建"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="许可证"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://github.com/colinhacks/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Website</a>
+  <a href="https://zod.dev">网站</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
@@ -30,53 +30,53 @@
 <br/><br/>
 
 <table align="center" style="justify-content:center;align-items:center;display:flex;"><td>
-  <p align="center">Zod 4 is now available!
+  <p align="center">Zod 4 现已发布！
   <br/>
-  <a target="_blank" rel="noopener noreferrer" href="https://zod.dev/v4">Read the announcement 👉</a></p></td>
+  <a target="_blank" rel="noopener noreferrer" href="https://zod.dev/v4">阅读公告 👉</a></p></td>
 </table>
 
 <br/>
 <br/>
 
-## Table of contents
+## 目录
 
-> These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
+> 本文档已翻译成[中文](./README_ZH.md)和[韩文](./README_KO.md)。
 
-- [Table of contents](#table-of-contents)
-- [Introduction](#introduction)
-- [Sponsors](#sponsors)
-  - [Ecosystem](#ecosystem)
-    - [Resources](#resources)
-    - [API libraries](#api-libraries)
-    - [Form integrations](#form-integrations)
-    - [Zod to X](#zod-to-x)
-    - [X to Zod](#x-to-zod)
-    - [Mocking](#mocking)
-    - [Powered by Zod](#powered-by-zod)
-    - [Utilities for Zod](#utilities-for-zod)
-- [Installation](#installation)
-  - [Requirements](#requirements)
-  - [From `npm`](#from-npm)
-- [Basic usage](#basic-usage)
-- [Primitives](#primitives)
-- [Coercion for primitives](#coercion-for-primitives)
-- [Literals](#literals)
-- [Strings](#strings)
-  - [Datetimes](#datetimes)
-  - [Dates](#dates)
-  - [Times](#times)
-  - [IP addresses](#ip-addresses)
-  - [IP ranges (CIDR)](#ip-ranges-cidr)
-- [Numbers](#numbers)
-- [BigInts](#bigints)
-- [NaNs](#nans)
-- [Booleans](#booleans)
-- [Dates](#dates-1)
-- [Zod enums](#zod-enums)
-- [Native enums](#native-enums)
-- [Optionals](#optionals)
-- [Nullables](#nullables)
-- [Objects](#objects)
+- [目录](#目录)
+- [简介](#简介)
+- [赞助商](#赞助商)
+  - [生态系统](#生态系统)
+    - [资源](#资源)
+    - [API 库](#api-库)
+    - [表单集成](#表单集成)
+    - [Zod 到 X](#zod-到-x)
+    - [X 到 Zod](#x-到-zod)
+    - [模拟](#模拟)
+    - [由 Zod 驱动](#由-zod-驱动)
+    - [Zod 工具](#zod-工具)
+- [安装](#安装)
+  - [要求](#要求)
+  - [从 `npm` 安装](#从-npm-安装)
+- [基本用法](#基本用法)
+- [原始类型](#原始类型)
+- [原始类型的强制转换](#原始类型的强制转换)
+- [字面量](#字面量)
+- [字符串](#字符串)
+  - [日期时间](#日期时间)
+  - [日期](#日期)
+  - [时间](#时间)
+  - [IP 地址](#ip-地址)
+  - [IP 范围（CIDR）](#ip-范围cidr)
+- [数字](#数字)
+- [BigInt](#bigint)
+- [NaN](#nan)
+- [布尔值](#布尔值)
+- [日期](#日期-1)
+- [Zod 枚举](#zod-枚举)
+- [原生枚举](#原生枚举)
+- [可选值](#可选值)
+- [可空值](#可空值)
+- [对象](#对象)
   - [`.shape`](#shape)
   - [`.keyof`](#keyof)
   - [`.extend`](#extend)
@@ -89,44 +89,44 @@
   - [`.strict`](#strict)
   - [`.strip`](#strip)
   - [`.catchall`](#catchall)
-- [Arrays](#arrays)
+- [数组](#数组)
   - [`.element`](#element)
   - [`.nonempty`](#nonempty)
   - [`.min/.max/.length`](#minmaxlength)
-- [Tuples](#tuples)
-- [Unions](#unions)
-- [Discriminated unions](#discriminated-unions)
-- [Records](#records)
-- [Maps](#maps)
-- [Sets](#sets)
-- [Intersections](#intersections)
-- [Recursive types](#recursive-types)
-  - [ZodType with ZodEffects](#zodtype-with-zodeffects)
-  - [JSON type](#json-type)
-  - [Cyclical objects](#cyclical-objects)
-- [Promises](#promises)
+- [元组](#元组)
+- [联合类型](#联合类型)
+- [判别联合类型](#判别联合类型)
+- [记录](#记录)
+- [映射](#映射)
+- [集合](#集合)
+- [交叉类型](#交叉类型)
+- [递归类型](#递归类型)
+  - [带有 ZodEffects 的 ZodType](#带有-zodeffects-的-zodtype)
+  - [JSON 类型](#json-类型)
+  - [循环对象](#循环对象)
+- [Promise](#promise)
 - [Instanceof](#instanceof)
-- [Functions](#functions)
-- [Preprocess](#preprocess)
-- [Custom schemas](#custom-schemas)
-- [Schema methods](#schema-methods)
+- [函数](#函数)
+- [预处理](#预处理)
+- [自定义模式](#自定义模式)
+- [模式方法](#模式方法)
   - [`.parse`](#parse)
   - [`.parseAsync`](#parseasync)
   - [`.safeParse`](#safeparse)
   - [`.safeParseAsync`](#safeparseasync)
   - [`.refine`](#refine)
-    - [Arguments](#arguments)
-    - [Customize error path](#customize-error-path)
-    - [Asynchronous refinements](#asynchronous-refinements)
-    - [Relationship to transforms](#relationship-to-transforms)
+    - [参数](#参数)
+    - [自定义错误路径](#自定义错误路径)
+    - [异步细化](#异步细化)
+    - [与转换的关系](#与转换的关系)
   - [`.superRefine`](#superrefine)
-    - [Abort early](#abort-early)
-    - [Type refinements](#type-refinements)
+    - [提前终止](#提前终止)
+    - [类型细化](#类型细化)
   - [`.transform`](#transform)
-    - [Chaining order](#chaining-order)
-    - [Validating during transform](#validating-during-transform)
-    - [Relationship to refinements](#relationship-to-refinements)
-    - [Async transforms](#async-transforms)
+    - [链式调用顺序](#链式调用顺序)
+    - [在转换期间进行验证](#在转换期间进行验证)
+    - [与细化的关系](#与细化的关系)
+    - [异步转换](#异步转换)
   - [`.default`](#default)
   - [`.describe`](#describe)
   - [`.catch`](#catch)
@@ -140,48 +140,48 @@
   - [`.brand`](#brand)
   - [`.readonly`](#readonly)
   - [`.pipe`](#pipe)
-- [Guides and concepts](#guides-and-concepts)
-  - [Type inference](#type-inference)
-  - [Writing generic functions](#writing-generic-functions)
-    - [Inferring the inferred type](#inferring-the-inferred-type)
-    - [Constraining allowable inputs](#constraining-allowable-inputs)
-  - [Error handling](#error-handling)
-  - [Error formatting](#error-formatting)
-- [Comparison](#comparison)
+- [指南与概念](#指南与概念)
+  - [类型推断](#类型推断)
+  - [编写泛型函数](#编写泛型函数)
+    - [推断推断出的类型](#推断推断出的类型)
+    - [约束允许的输入](#约束允许的输入)
+  - [错误处理](#错误处理)
+  - [错误格式化](#错误格式化)
+- [比较](#比较)
   - [Joi](#joi)
   - [Yup](#yup)
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
   - [Ow](#ow)
-- [Changelog](#changelog)
+- [变更日志](#变更日志)
 
 <br/>
 
-## Introduction
+## 简介
 
-Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
+Zod 是一个 TypeScript 优先的模式声明与验证库。我使用“模式”这个词来广泛指代任何数据类型，从简单的 `string` 到复杂的嵌套对象。
 
-Zod is designed to be as developer-friendly as possible. The goal is to eliminate duplicative type declarations. With Zod, you declare a validator _once_ and Zod will automatically infer the static TypeScript type. It's easy to compose simpler types into complex data structures.
+Zod 的设计目标是尽可能方便开发者使用。其目标是消除重复的类型声明。使用 Zod 时，你只需声明一次验证器，Zod 就会自动推断静态 TypeScript 类型。将更简单的类型组合成复杂的数据结构也很容易。
 
-Some other great aspects:
+其他一些优秀特性：
 
-- Zero dependencies
-- Works in Node.js and all modern browsers
-- Tiny: 8kb minified + zipped
-- Immutable: methods (e.g. `.optional()`) return a new instance
-- Concise, chainable interface
-- Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
-- Works with plain JavaScript too! You don't need to use TypeScript.
-
-<br/>
-
-## Sponsors
-
-Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
+- 零依赖
+- 支持 Node.js 和所有现代浏览器
+- 体积小：压缩并打包后仅 8kb
+- 不可变：方法（例如 `.optional()`）会返回新实例
+- 简洁、可链式调用的接口
+- 函数式方法：[解析，而不是验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
+- 同样支持普通 JavaScript！你不必使用 TypeScript
 
 <br/>
 
-<h3 align="center">Platinum</h3>
+## 赞助商
+
+我们感谢并鼓励任何级别的赞助。如果你使用 Zod 构建了付费产品，可以考虑[企业赞助层级](https://github.com/sponsors/colinhacks)。
+
+<br/>
+
+<h3 align="center">白金级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -195,7 +195,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      Cut code review time & bugs in half
+      将代码审查时间和漏洞减少一半
       <br/>
       <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
       </p>
@@ -206,7 +206,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Gold</h3>
+<h3 align="center">黄金级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -220,7 +220,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      The API platform for sending notifications
+      用于发送通知的 API 平台
       <br/>
       <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors" style="text-decoration:none;">courier.com</a>
       </p>
@@ -236,7 +236,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      Generate better SDKs for your APIs
+      为你的 API 生成更好的 SDK
       <br/>
       <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
       </p>
@@ -254,7 +254,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      Serverless Postgres — Ship faster
+      无服务器 Postgres — 更快交付
       <br/>
       <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
       </p>
@@ -270,7 +270,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      Build AI apps and workflows with <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>
+      使用 <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a> 构建 AI 应用和工作流
       <br/>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
       </p>
@@ -288,7 +288,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      Generate best-in-class SDKs
+      生成同类最佳的 SDK
       <br/>
       <a href="https://stainless.com" style="text-decoration:none;">stainless.com</a>
       </p>
@@ -304,7 +304,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />
-      SDKs & Terraform providers for your API
+      为你的 API 提供 SDK 和 Terraform provider
       <br/>
       <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
       </p>
@@ -315,7 +315,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Silver</h3>
+<h3 align="center">白银级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -398,7 +398,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Bronze</h3>
+<h3 align="center">青铜级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -491,129 +491,129 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
   </tr>
 </table> -->
 
-### Ecosystem
+### 生态系统
 
-There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
+越来越多的工具构建于 Zod 之上，或原生支持 Zod！如果你基于 Zod 构建了工具或库，请在 [Twitter](https://twitter.com/colinhacks) 上告诉我，或[发起讨论](https://github.com/colinhacks/zod/discussions)。我会将其添加到下面并发推文介绍。
 
-#### Resources
+#### 资源
 
-- [Total TypeScript Zod Tutorial](https://www.totaltypescript.com/tutorials/zod) by [@mattpocockuk](https://twitter.com/mattpocockuk)
-- [Fixing TypeScript's Blindspot: Runtime Typechecking](https://www.youtube.com/watch?v=rY_XqfSHock) by [@jherr](https://twitter.com/jherr)
+- [Total TypeScript Zod 教程](https://www.totaltypescript.com/tutorials/zod)，作者：[@mattpocockuk](https://twitter.com/mattpocockuk)
+- [修复 TypeScript 的盲点：运行时类型检查](https://www.youtube.com/watch?v=rY_XqfSHock)，作者：[@jherr](https://twitter.com/jherr)
 
-#### API libraries
+#### API 库
 
-- [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
-- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): Helper methods for using Zod in a NestJS project.
-- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
-- [`zhttp`](https://github.com/evertdespiegeleer/zhttp): An OpenAPI compatible, strictly typed http library with Zod input and response validation.
-- [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): Decouple your business logic from your framework using composable functions. With first-class type inference from end to end powered by Zod schemas.
-- [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
-- [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares.
-- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md): End-to-end typesafe JSON APIs with Zod and Express; a bit like tRPC, but simpler.
-- [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Create typesafe routes in Koa with I/O validation using Zod.
-- [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod-powered Socket.IO microframework with I/O validation and built-in AsyncAPI specs
-- [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): Client SDK code generator to convert OpenApi v3 specifications into TS endpoint caller functions with Zod types.
-- [`GQLoom`](https://github.com/modevol-com/gqloom): Weave GraphQL schema and resolvers using Zod.
-- [`oRPC`](https://github.com/unnoq/orpc): Typesafe APIs Made Simple
+- [`tRPC`](https://github.com/trpc/trpc)：无需 GraphQL 即可构建端到端类型安全的 API
+- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs)：在 NestJS 项目中使用 Zod 的辅助方法
+- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints)：契约优先、严格类型化的 Zod 端点。兼容 OpenAPI
+- [`zhttp`](https://github.com/evertdespiegeleer/zhttp)：兼容 OpenAPI、严格类型化的 HTTP 库，使用 Zod 验证输入和响应
+- [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/)：使用可组合函数将业务逻辑与框架解耦。由 Zod 模式提供端到端的一流类型推断
+- [`@zodios/core`](https://github.com/ecyrbe/zodios)：基于 axios 和 zod 的 TypeScript API 客户端，支持运行时和编译时验证
+- [`express-zod-api`](https://github.com/RobinTail/express-zod-api)：使用 I/O 模式验证和自定义中间件构建基于 Express 的 API
+- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md)：使用 Zod 和 Express 构建端到端类型安全的 JSON API；有点像 tRPC，但更简单
+- [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router)：在 Koa 中使用 Zod 进行 I/O 验证，创建类型安全的路由
+- [`zod-sockets`](https://github.com/RobinTail/zod-sockets)：由 Zod 驱动的 Socket.IO 微框架，支持 I/O 验证和内置 AsyncAPI 规范
+- [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen)：客户端 SDK 代码生成器，可将 OpenAPI v3 规范转换为带有 Zod 类型的 TS 端点调用函数
+- [`GQLoom`](https://github.com/modevol-com/gqloom)：使用 Zod 编织 GraphQL 模式和解析器
+- [`oRPC`](https://github.com/unnoq/orpc)：让类型安全的 API 变得简单
 
-#### Form integrations
+#### 表单集成
 
-- [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
-- [`TanStack Form`](https://github.com/TanStack/form): Headless, performant, and type-safe form state management for TS/JS, React, Vue, Angular, Solid, and Lit
-- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
-- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
-- [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
-- [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
-- [`conform`](https://conform.guide/api/zod/parseWithZod): A typesafe form validation library for progressive enhancement of HTML forms. Works with Remix and Next.js.
-- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
-- [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
-- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
-- [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
-- [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
-- [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
-- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod.
-- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Form library for Vue.js with Zod schema validation.
-- [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer): Auto-infer form fields from zod schema and render them with react-hook-form with E2E type safety.
-- [`antd-zod`](https://github.com/MrBr/antd-zod): Zod adapter for Ant Design form fields validation.
-- [`frrm`](https://github.com/schalkventer/frrm): Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.
+- [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod)：React Hook Form 的官方 Zod 解析器
+- [`TanStack Form`](https://github.com/TanStack/form)：面向 TS/JS、React、Vue、Angular、Solid 和 Lit 的无头、高性能、类型安全表单状态管理
+- [`zod-validation-error`](https://github.com/causaly/zod-validation-error)：从 `ZodError` 生成用户友好的错误消息
+- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter)：由社区维护的 Zod Formik 适配器
+- [`react-zorm`](https://github.com/esamattis/react-zorm)：使用 Zod 为 React 独立生成并验证 `<form>`
+- [`zodix`](https://github.com/rileytomasek/zodix)：Remix loaders 和 actions 中用于 FormData 与 URLSearchParams 的 Zod 工具
+- [`conform`](https://conform.guide/api/zod/parseWithZod)：用于渐进增强 HTML 表单的类型安全表单验证库。支持 Remix 和 Next.js
+- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper)：简化 Remix 应用中 Zod 与标准 URLSearchParams 和 FormData 的集成
+- [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod)：符合 Formik 规范的验证器库，简化 Zod 与 Formik 的使用
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n)：用于翻译 Zod 错误消息
+- [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms)：支持使用 Zod 进行验证的 SolidJS 模块化表单库
+- [`houseform`](https://github.com/crutchcorn/houseform/)：使用 Zod 进行验证的 React 表单库
+- [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms)：支持 Zod 验证的增强型 SvelteKit 表单库
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form)：基于 MobX 和 Zod、数据优先的表单构建器
+- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod)：使用 Zod 模式验证的 Vue.js 表单库
+- [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer)：从 zod 模式自动推断表单字段，并使用 react-hook-form 渲染，同时提供端到端类型安全
+- [`antd-zod`](https://github.com/MrBr/antd-zod)：用于 Ant Design 表单字段验证的 Zod 适配器
+- [`frrm`](https://github.com/schalkventer/frrm)：仅 0.5kb、基于 Zod 的小型 HTML 表单抽象，运行速度飞快
 
-#### Zod to X
+#### Zod 到 X
 
-- [`zod-to-ts`](https://github.com/sachinraja/zod-to-ts): Generate TypeScript definitions from Zod schemas.
-- [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema): Convert your Zod schemas into [JSON Schemas](https://json-schema.org/).
-- [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
-- [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
-- [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
-- [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
-- [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
-- [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
-- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod schemas.
-- [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
-- [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
-- [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
-- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas.
+- [`zod-to-ts`](https://github.com/sachinraja/zod-to-ts)：从 Zod 模式生成 TypeScript 定义
+- [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)：将 Zod 模式转换为 [JSON Schema](https://json-schema.org/)
+- [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi)：将 Zod 模式转换为 OpenAPI v3.x `SchemaObject`
+- [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check)：从 Zod 模式生成 `fast-check` 任意值
+- [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto)：从 Zod 模式生成 Nest.js DTO
+- [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod)：从 Zod 模式创建 Fastify 类型提供器
+- [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi)：从 Zod 生成完整的 OpenAPI（Swagger）文档，包括模式、端点和参数
+- [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod)：从 Zod 模式生成 NestJS GraphQL 模型类，并提供适用于 Zod 模式的 GraphQL 方法装饰器
+- [`zod-openapi`](https://github.com/samchungy/zod-openapi)：从 Zod 模式创建完整的 OpenAPI v3.x 文档
+- [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi)：用于 Zod 模式的 Fastify 类型提供器、验证、序列化以及 @fastify/swagger 支持
+- [`typeschema`](https://typeschema.com/)：通用模式验证适配器
+- [`zodex`](https://github.com/commonbaseapp/zodex)：zod 模式的（反）序列化
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation)：使用 Zod 验证 Convex 函数的参数和返回值，并创建 Convex 数据库模式
 
-#### X to Zod
+#### X 到 Zod
 
-- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
-- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping): Generate Zod from static types & JSON schema.
-- [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. [Live demo](https://StefanTerdell.github.io/json-schema-to-zod-react/).
-- [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. [Live demo](https://rsinohara.github.io/json-to-zod-react/).
-- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema.
-- [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
-- [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
-- [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
-- [`drizzle-zod`](https://orm.drizzle.team/docs/zod): Emit Zod schemas from your Drizzle schema.
-- [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
-- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
-- [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
-- [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod): Generate Zod Schemas from [Sanity Schemas](https://www.sanity.io/docs/schema-types).
-- [`java-to-zod`](https://github.com/ivangreene/java-to-zod): Convert POJOs to Zod schemas
-- [`Orval`](https://github.com/anymaniax/orval): Generate Zod schemas from OpenAPI schemas
-- [`Kubb`](https://github.com/kubb-labs/kubb): Generate SDKs and Zod schemas from your OpenAPI schemas
-- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Generate Zod schemas from Convex validators.
+- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod)：将 TypeScript 定义转换为 Zod 模式
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping)：从静态类型和 JSON schema 生成 Zod
+- [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod)：将你的 [JSON Schema](https://json-schema.org/) 转换为 Zod 模式。[在线演示](https://StefanTerdell.github.io/json-schema-to-zod-react/)
+- [`json-to-zod`](https://github.com/rsinohara/json-to-zod)：将 JSON 对象转换为 Zod 模式。[在线演示](https://rsinohara.github.io/json-to-zod-react/)
+- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema)：GraphQL Code Generator 插件，可从 GraphQL 模式生成表单验证模式
+- [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma)：从 Prisma 模式生成 Zod 模式
+- [`Supervillain`](https://github.com/Southclaws/supervillain)：从 Go 结构体生成 Zod 模式
+- [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator)：从 Prisma 模式生成 Zod 模式
+- [`drizzle-zod`](https://orm.drizzle.team/docs/zod)：从 Drizzle 模式生成 Zod 模式
+- [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator)：使用 Zod 生成完整实现的 tRPC 路由器及其验证模式
+- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) 从 Prisma 模型创建 Zod 类型
+- [`quicktype`](https://app.quicktype.io/)：将 JSON 对象和 JSON 模式转换为 Zod 模式
+- [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod)：从 [Sanity 模式](https://www.sanity.io/docs/schema-types)生成 Zod 模式
+- [`java-to-zod`](https://github.com/ivangreene/java-to-zod)：将 POJO 转换为 Zod 模式
+- [`Orval`](https://github.com/anymaniax/orval)：从 OpenAPI 模式生成 Zod 模式
+- [`Kubb`](https://github.com/kubb-labs/kubb)：从 OpenAPI 模式生成 SDK 和 Zod 模式
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation)：从 Convex 验证器生成 Zod 模式
 
-#### Mocking
+#### 模拟
 
-- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
-- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
-- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture): Use your zod schemas to automate the generation of non-relevant test fixtures in a deterministic way.
-- [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
-- [`zodock`](https://github.com/ItMaga/zodock) Generate mock data based on Zod schemas.
-- [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker) Generates mock data from Zod schemas. Powered by [@faker-js/faker](https://github.com/faker-js/faker) and [randexp.js](https://github.com/fent/randexp.js)
+- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock)：从 Zod 模式生成模拟数据。由 [faker.js](https://github.com/faker-js/faker) 驱动
+- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking)：从 Zod 模式生成模拟数据
+- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture)：使用 zod 模式以确定性的方式自动生成非相关测试 fixture
+- [`zocker`](https://zocker.sigrist.dev)：从你的模式生成合理的模拟数据
+- [`zodock`](https://github.com/ItMaga/zodock) 基于 Zod 模式生成模拟数据
+- [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker) 从 Zod 模式生成模拟数据。由 [@faker-js/faker](https://github.com/faker-js/faker) 和 [randexp.js](https://github.com/fent/randexp.js) 驱动
 
-#### Powered by Zod
+#### 由 Zod 驱动
 
-- [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
-- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
-- [`schemql`](https://github.com/a2lix/schemql): Enhances your SQL workflow by combining raw SQL with targeted type safety and schema validation.
-- [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
-- [`pastel`](https://github.com/vadimdemedes/pastel): Create CLI applications with react, zod, and ink.
-- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
-- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
-- [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
-- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading environment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
-- [`zod-struct`](https://codeberg.org/reesericci/zod-struct): Create runtime-checked structs with Zod.
-- [`zod-csv`](https://github.com/bartoszgolebiowski/zod-csv): Validation helpers for zod for parsing CSV data.
-- [`fullproduct.dev`](https://fullproduct.dev?identity=freelancers&v=z3): Universal Expo + Next.js App Starter that uses Zod schemas as the single source of truth to keep generated MDX docs, GraphQL, database models, forms, and fetcher functions in sync.
+- [`freerstore`](https://github.com/JacobWeisenburger/freerstore)：Firestore 成本优化器
+- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference)：具有强大 Zod 集成的 Node.js Postgres 客户端
+- [`schemql`](https://github.com/a2lix/schemql)：通过将原始 SQL 与针对性的类型安全和模式验证相结合，增强 SQL 工作流
+- [`soly`](https://github.com/mdbetancourt/soly)：使用 zod 创建 CLI 应用
+- [`pastel`](https://github.com/vadimdemedes/pastel)：使用 react、zod 和 ink 创建 CLI 应用
+- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx)：使用基于 xlsx 的资源验证器和 Zod 模式
+- [`znv`](https://github.com/lostfictions/znv)：使用 Zod 模式为 Node.js 提供类型安全的环境变量解析和验证
+- [`zod-config`](https://github.com/alexmarqs/zod-config)：通过灵活的适配器从多个来源加载配置，并使用 Zod 确保类型安全
+- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme)：安全加载环境变量的插件，使用模式验证；通过虚拟模块实现简单易用，通过智能提示实现类型安全，并提供更好的开发体验 🔥 🚀 👷。由 Zod 驱动
+- [`zod-struct`](https://codeberg.org/reesericci/zod-struct)：使用 Zod 创建运行时检查的结构体
+- [`zod-csv`](https://github.com/bartoszgolebiowski/zod-csv)：用于解析 CSV 数据的 zod 验证辅助工具
+- [`fullproduct.dev`](https://fullproduct.dev?identity=freelancers&v=z3)：通用 Expo + Next.js 应用启动器，使用 Zod 模式作为唯一事实来源，使生成的 MDX 文档、GraphQL、数据库模型、表单和 fetcher 函数保持同步
 
-#### Utilities for Zod
+#### Zod 工具
 
-- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
-- [`zod-playground`](https://github.com/marilari88/zod-playground): A tool for learning and testing Zod schema validation functionalities. [Link](https://zod-playground.vercel.app/).
-- [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
-- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
-- [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
-- [`zod-ir`](https://github.com/Reza-kh80/zod-ir): Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with **smart metadata extraction** (Bank Names, Logos). Zero dependencies.
+- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz)：与框架无关的 Zod 工具
+- [`zod-playground`](https://github.com/marilari88/zod-playground)：用于学习和测试 Zod 模式验证功能的工具。[链接](https://zod-playground.vercel.app/)
+- [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox)：用于测试 zod 模式的受控环境。[在线演示](https://zod-sandbox.vercel.app/)
+- [`zod-dev`](https://github.com/schalkventer/zod-dev)：有条件地禁用生产环境中的 Zod 运行时解析
+- [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator)：将 Zod 的吞吐量提升至约 100 倍
+- [`zod-ir`](https://github.com/Reza-kh80/zod-ir)：全面验证伊朗数据结构（国家代码、银行卡、Sheba、加密货币等），并支持**智能元数据提取**（银行名称、Logo）。零依赖
 
 <br/>
 
-## Installation
+## 安装
 
-### Requirements
+### 要求
 
-- TypeScript 4.5+!
-- You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+- TypeScript 4.5+！
+- 必须在 `tsconfig.json` 中启用 `strict` 模式。这是所有 TypeScript 项目的最佳实践
 
   ```ts
   // tsconfig.json
@@ -626,7 +626,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### From `npm`
+### 从 `npm` 安装
 
 ```sh
 npm install zod       # npm
@@ -636,23 +636,13 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-Zod also publishes a canary version on every commit. To install the canary:
-
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
-> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
+> 本 README 的其余部分假设你使用 npm，并直接从 `"zod"` 包导入。
 
 <br/>
 
-## Basic usage
+## 基本用法
 
-Creating a simple string schema
+创建一个简单的字符串模式
 
 ```ts
 import { z } from "zod";
@@ -669,7 +659,7 @@ mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-Creating an object schema
+创建对象模式
 
 ```ts
 import { z } from "zod";
@@ -687,7 +677,7 @@ type User = z.infer<typeof User>;
 
 <br/>
 
-## Primitives
+## 原始类型
 
 ```ts
 import { z } from "zod";
@@ -717,9 +707,9 @@ z.never();
 
 <br/>
 
-## Coercion for primitives
+## 原始类型的强制转换
 
-Zod now provides a more convenient way to coerce primitive values.
+Zod 现在提供了更方便的原始值强制转换方式。
 
 ```ts
 const schema = z.coerce.string();
@@ -727,7 +717,7 @@ schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+在解析步骤中，输入会经过 `String()` 函数。该函数是 JavaScript 内置的、用于将数据强制转换为字符串的函数。
 
 ```ts
 schema.parse(12); // => "12"
@@ -736,15 +726,15 @@ schema.parse(undefined); // => "undefined"
 schema.parse(null); // => "null"
 ```
 
-The returned schema is a normal `ZodString` instance so you can use all string methods.
+返回的模式是一个普通的 `ZodString` 实例，因此你可以使用所有字符串方法。
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-**How coercion works**
+**强制转换的工作方式**
 
-All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
+所有原始类型都支持强制转换。Zod 使用内置构造函数对所有输入进行强制转换：`String(input)`、`Number(input)`、`new Date(input)` 等。
 
 ```ts
 z.coerce.string(); // String(input)
@@ -754,7 +744,7 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
-**Note** — Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
+**注意** — 使用 `z.coerce.boolean()` 进行布尔值强制转换时，结果可能与你预期不同。任何[真值](https://developer.mozilla.org/en-US/docs/Glossary/Truthy)都会被强制转换为 `true`，任何[假值](https://developer.mozilla.org/en-US/docs/Glossary/Falsy)都会被强制转换为 `false`。
 
 ```ts
 const schema = z.coerce.boolean(); // Boolean(input)
@@ -771,13 +761,13 @@ schema.parse(undefined); // => false
 schema.parse(null); // => false
 ```
 
-For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+如需更好地控制强制转换逻辑，可以考虑使用 [`z.preprocess`](#preprocess) 或 [`z.pipe()`](#pipe)。
 
 <br/>
 
-## Literals
+## 字面量
 
-Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
+字面量 schema 表示一种[字面量类型](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)，例如 `"hello world"` 或 `5`。
 
 ```ts
 const tuna = z.literal("tuna");
@@ -792,13 +782,13 @@ const terrific = z.literal(terrificSymbol);
 tuna.value; // "tuna"
 ```
 
-> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
+> 目前 Zod 不支持 Date 字面量。如果你有此功能的使用场景，请提交 issue。
 
 <br/>
 
-## Strings
+## 字符串
 
-Zod includes a handful of string-specific validations.
+Zod 包含一些针对字符串的专用验证。
 
 ```ts
 // validations
@@ -833,9 +823,9 @@ z.string().duration(); // ISO 8601 duration
 z.string().base64();
 ```
 
-> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
+> 查看 [validator.js](https://github.com/validatorjs/validator.js)，其中包含许多其他实用的字符串验证函数，可以与[细化](#refine)结合使用。
 
-You can customize some common error messages when creating a string schema.
+创建字符串 schema 时，可以自定义一些常见的错误消息。
 
 ```ts
 const name = z.string({
@@ -844,7 +834,7 @@ const name = z.string({
 });
 ```
 
-When using validation methods, you can pass in an additional argument to provide a custom error message.
+使用验证方法时，可以传入额外的参数来提供自定义错误消息。
 
 ```ts
 z.string().min(5, { message: "Must be 5 or more characters long" });
@@ -864,11 +854,11 @@ z.string().ip({ message: "Invalid IP address" });
 z.string().cidr({ message: "Invalid CIDR" });
 ```
 
-### Datetimes
+### 日期时间
 
-As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
+如你所见，Zod 字符串包含一些与日期／时间相关的验证。这些验证基于正则表达式，因此不如完整的日期／时间库严格。不过，它们非常适合验证用户输入。
 
-The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision. Seconds may be omitted if precision is not set.
+`z.string().datetime()` 方法强制使用 ISO 8601；默认不允许时区偏移，并支持任意的小数秒精度。如果未设置精度，可以省略秒。
 
 ```ts
 const datetime = z.string().datetime();
@@ -880,7 +870,7 @@ datetime.parse("2020-01-01T00:00Z"); // pass (hours and minutes only)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
 ```
 
-Timezone offsets can be allowed by setting the `offset` option to `true`.
+将 `offset` 选项设置为 `true`，即可允许时区偏移。
 
 ```ts
 const datetime = z.string().datetime({ offset: true });
@@ -893,7 +883,7 @@ datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
-Allow unqualified (timezone-less) datetimes with the `local` flag.
+使用 `local` 标志允许无限定的（不带时区的）日期时间。
 
 ```ts
 const schema = z.string().datetime({ local: true });
@@ -901,7 +891,7 @@ schema.parse("2020-01-01T00:00:00"); // pass
 schema.parse("2020-01-01T00:00"); // pass
 ```
 
-You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
+你还可以进一步限制允许的 `precision`。默认支持任意的小数秒精度（但该部分可选）。
 
 ```ts
 const datetime = z.string().datetime({ precision: 3 });
@@ -912,11 +902,11 @@ datetime.parse("2020-01-01T00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
-### Dates
+### 日期
 
-> Added in Zod 3.23
+> 在 Zod 3.23 中新增
 
-The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
+`z.string().date()` 方法验证格式为 `YYYY-MM-DD` 的字符串。
 
 ```ts
 const date = z.string().date();
@@ -926,11 +916,11 @@ date.parse("2020-1-1"); // fail
 date.parse("2020-01-32"); // fail
 ```
 
-### Times
+### 时间
 
-> Added in Zod 3.23
+> 在 Zod 3.23 中新增
 
-The `z.string().time()` method validates strings in the format `HH:MM` or `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+`z.string().time()` 方法验证格式为 `HH:MM` 或 `HH:MM:SS[.s+]` 的字符串。秒可以包含任意的小数精度。不允许任何形式的时区偏移。
 
 ```ts
 const time = z.string().time();
@@ -944,7 +934,7 @@ time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
 time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
 ```
 
-You can set the `precision` option to constrain the allowable decimal precision.
+你可以设置 `precision` 选项来限制允许的小数精度。
 
 ```ts
 const time = z.string().time({ precision: 3 });
@@ -955,9 +945,9 @@ time.parse("00:00:00"); // fail
 time.parse("00:00"); // fail
 ```
 
-### IP addresses
+### IP 地址
 
-By default `.ip()` allows both IPv4 and IPv6.
+默认情况下，`.ip()` 同时允许 IPv4 和 IPv6。
 
 ```ts
 const ip = z.string().ip();
@@ -967,10 +957,10 @@ ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
 ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
 
 ip.parse("256.1.1.1"); // fail
-ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 ```
 
-You can additionally set the IP `version`.
+你还可以设置 IP `version`。
 
 ```ts
 const ipv4 = z.string().ip({ version: "v4" });
@@ -980,9 +970,9 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
 
-### IP ranges (CIDR)
+### IP 范围（CIDR）
 
-Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
+验证使用 [CIDR 表示法](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)指定的 IP 地址范围。默认情况下，`.cidr()` 同时允许 IPv4 和 IPv6。
 
 ```ts
 const cidr = z.string().cidr();
@@ -990,7 +980,7 @@ cidr.parse("192.168.0.0/24"); // pass
 cidr.parse("2001:db8::/32"); // pass
 ```
 
-You can specify a version with the `version` parameter.
+你可以通过 `version` 参数指定版本。
 
 ```ts
 const ipv4Cidr = z.string().cidr({ version: "v4" });
@@ -1002,9 +992,9 @@ ipv6Cidr.parse("192.168.1.1"); // fail
 
 <br/>
 
-## Numbers
+## 数字
 
-You can customize certain error messages when creating a number schema.
+创建数字 schema 时，可以自定义某些错误消息。
 
 ```ts
 const age = z.number({
@@ -1013,7 +1003,7 @@ const age = z.number({
 });
 ```
 
-Zod includes a handful of number-specific validations.
+Zod 包含一些针对数字的专用验证。
 
 ```ts
 z.number().gt(5);
@@ -1034,7 +1024,7 @@ z.number().finite(); // value must be finite, not Infinity or -Infinity
 z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
 ```
 
-Optionally, you can pass in a second argument to provide a custom error message.
+你还可以传入第二个参数来提供自定义错误消息。
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
@@ -1042,9 +1032,9 @@ z.number().lte(5, { message: "this👏is👏too👏big" });
 
 <br/>
 
-## BigInts
+## BigInt
 
-Zod includes a handful of bigint-specific validations.
+Zod 包含一些针对 bigint 的专用验证。
 
 ```ts
 z.bigint().gt(5n);
@@ -1062,9 +1052,9 @@ z.bigint().multipleOf(5n); // Evenly divisible by 5n.
 
 <br/>
 
-## NaNs
+## NaN
 
-You can customize certain error messages when creating a nan schema.
+创建 nan schema 时，可以自定义某些错误消息。
 
 ```ts
 const isNaN = z.nan({
@@ -1075,9 +1065,9 @@ const isNaN = z.nan({
 
 <br/>
 
-## Booleans
+## 布尔值
 
-You can customize certain error messages when creating a boolean schema.
+创建布尔值 schema 时，可以自定义某些错误消息。
 
 ```ts
 const isActive = z.boolean({
@@ -1088,16 +1078,16 @@ const isActive = z.boolean({
 
 <br/>
 
-## Dates
+## 日期
 
-Use z.date() to validate `Date` instances.
+使用 z.date() 验证 `Date` 实例。
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-You can customize certain error messages when creating a date schema.
+创建日期 schema 时，可以自定义某些错误消息。
 
 ```ts
 const myDateSchema = z.date({
@@ -1106,16 +1096,16 @@ const myDateSchema = z.date({
 });
 ```
 
-Zod provides a handful of date-specific validations.
+Zod 提供了一些针对日期的专用验证。
 
 ```ts
 z.date().min(new Date("1900-01-01"), { message: "Too old" });
 z.date().max(new Date(), { message: "Too young!" });
 ```
 
-**Coercion to Date**
+**转换为 Date**
 
-Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
+从 [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20) 开始，使用 [`z.coerce.date()`](#coercion-for-primitives) 将输入传递给 `new Date(input)`。
 
 ```ts
 const dateSchema = z.coerce.date();
@@ -1133,11 +1123,11 @@ console.log(dateSchema.safeParse("2023-13-10").success); // false
 console.log(dateSchema.safeParse("0000-00-00").success); // false
 ```
 
-For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
+对于较旧版本的 zod，请使用 [`z.preprocess`](#preprocess)，具体请参阅[此讨论串中的说明](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276)。
 
 <br/>
 
-## Zod enums
+## Zod 枚举
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -1145,14 +1135,14 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-`z.enum` is a Zod-native way to declare a schema with a fixed set of allowable _string_ values. Pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+`z.enum` 是一种原生于 Zod 的方式，用于声明包含固定可用_字符串_值集合的 schema。将值数组直接传入 `z.enum()`。或者，使用 `as const` 将枚举值定义为字符串元组。详情请参阅 [const 断言文档](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions)。
 
 ```ts
 const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed, since Zod isn't able to infer the exact values of each element.
+以下方式不被允许，因为 Zod 无法推断每个元素的确切值。
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
@@ -1161,7 +1151,7 @@ const FishEnum = z.enum(fish);
 
 **`.enum`**
 
-To get autocompletion with a Zod enum, use the `.enum` property of your schema:
+若要在 Zod 枚举中获得自动补全，请使用 schema 的 `.enum` 属性：
 
 ```ts
 FishEnum.enum.Salmon; // => autocompletes
@@ -1176,7 +1166,7 @@ FishEnum.enum;
 */
 ```
 
-You can also retrieve the list of options as a tuple with the `.options` property:
+你还可以通过 `.options` 属性将选项列表作为元组获取：
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
@@ -1184,7 +1174,7 @@ FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 
 **`.exclude/.extract()`**
 
-You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
+你可以使用 `.exclude` 和 `.extract` 方法创建 Zod 枚举的子集。
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -1194,11 +1184,11 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 
 <br/>
 
-## Native enums
+## 原生枚举
 
-Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()`.
+Zod 枚举是定义和验证枚举的推荐方式。但如果你需要针对第三方库中的枚举进行验证（或者不想重写已有枚举），可以使用 `z.nativeEnum()`。
 
-**Numeric enums**
+**数字枚举**
 
 ```ts
 enum Fruits {
@@ -1216,7 +1206,7 @@ FruitEnum.parse(1); // passes
 FruitEnum.parse(3); // fails
 ```
 
-**String enums**
+**字符串枚举**
 
 ```ts
 enum Fruits {
@@ -1236,9 +1226,9 @@ FruitEnum.parse(0); // passes
 FruitEnum.parse("Cantaloupe"); // fails
 ```
 
-**Const enums**
+**Const 枚举**
 
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
+`.nativeEnum()` 函数同样适用于 `as const` 对象。⚠️ `as const` 要求 TypeScript 3.4+！
 
 ```ts
 const Fruits = {
@@ -1256,7 +1246,7 @@ FruitEnum.parse(3); // passes
 FruitEnum.parse("Cantaloupe"); // fails
 ```
 
-You can access the underlying object with the `.enum` property:
+你可以通过 `.enum` 属性访问底层对象：
 
 ```ts
 FruitEnum.enum.Apple; // "apple"
@@ -1264,9 +1254,9 @@ FruitEnum.enum.Apple; // "apple"
 
 <br/>
 
-## Optionals
+## 可选类型
 
-You can make any schema optional with `z.optional()`. This wraps the schema in a `ZodOptional` instance and returns the result.
+你可以使用 `z.optional()` 将任意 schema 设为可选。它会将 schema 包装在一个 `ZodOptional` 实例中，并返回结果。
 
 ```ts
 const schema = z.optional(z.string());
@@ -1275,7 +1265,7 @@ schema.parse(undefined); // => returns undefined
 type A = z.infer<typeof schema>; // string | undefined
 ```
 
-For convenience, you can also call the `.optional()` method on an existing schema.
+为方便起见，你也可以在现有 schema 上调用 `.optional()` 方法。
 
 ```ts
 const user = z.object({
@@ -1284,7 +1274,7 @@ const user = z.object({
 type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
-You can extract the wrapped schema from a `ZodOptional` instance with `.unwrap()`.
+你可以通过 `.unwrap()` 从 `ZodOptional` 实例中提取被包装的 schema。
 
 ```ts
 const stringSchema = z.string();
@@ -1294,9 +1284,9 @@ optionalString.unwrap() === stringSchema; // true
 
 <br/>
 
-## Nullables
+## 可空类型
 
-Similarly, you can create nullable types with `z.nullable()`.
+同样，你可以使用 `z.nullable()` 创建可空类型。
 
 ```ts
 const nullableString = z.nullable(z.string());
@@ -1304,14 +1294,14 @@ nullableString.parse("asdf"); // => "asdf"
 nullableString.parse(null); // => null
 ```
 
-Or use the `.nullable()` method.
+或者使用 `.nullable()` 方法。
 
 ```ts
 const E = z.string().nullable(); // equivalent to nullableString
 type E = z.infer<typeof E>; // string | null
 ```
 
-Extract the inner schema with `.unwrap()`.
+使用 `.unwrap()` 提取内部 schema。
 
 ```ts
 const stringSchema = z.string();
@@ -1321,7 +1311,7 @@ nullableString.unwrap() === stringSchema; // true
 
 <br/>
 
-## Objects
+## 对象
 
 ```ts
 // all properties are required by default
@@ -1342,7 +1332,7 @@ type Dog = {
 
 ### `.shape`
 
-Use `.shape` to access the schemas for a particular key.
+使用 `.shape` 访问特定键对应的 schema。
 
 ```ts
 Dog.shape.name; // => string schema
@@ -1351,7 +1341,7 @@ Dog.shape.age; // => number schema
 
 ### `.keyof`
 
-Use `.keyof` to create a `ZodEnum` schema from the keys of an object schema.
+使用 `.keyof` 根据对象 schema 的键创建一个 `ZodEnum` schema。
 
 ```ts
 const keySchema = Dog.keyof();
@@ -1360,7 +1350,7 @@ keySchema; // ZodEnum<["name", "age"]>
 
 ### `.extend`
 
-You can add additional fields to an object schema with the `.extend` method.
+你可以使用 `.extend` 方法向对象 schema 添加其他字段。
 
 ```ts
 const DogWithBreed = Dog.extend({
@@ -1368,11 +1358,11 @@ const DogWithBreed = Dog.extend({
 });
 ```
 
-You can use `.extend` to overwrite fields! Be careful with this power!
+你可以使用 `.extend` 覆盖字段！请谨慎使用这一能力！
 
 ### `.merge`
 
-Equivalent to `A.extend(B.shape)`.
+等价于 `A.extend(B.shape)`。
 
 ```ts
 const BaseTeacher = z.object({ students: z.array(z.string()) });
@@ -1382,11 +1372,11 @@ const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
-> If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B.
+> 如果两个 schema 共享键，B 的属性会覆盖 A 的属性。返回的 schema 还会继承 B 的 `"unknownKeys"` 策略（strip／strict／passthrough）以及 catchall schema。
 
 ### `.pick/.omit`
 
-Inspired by TypeScript's built-in `Pick` and `Omit` utility types, all Zod object schemas have `.pick` and `.omit` methods that return a modified version. Consider this Recipe schema:
+受 TypeScript 内置 `Pick` 和 `Omit` 工具类型的启发，所有 Zod 对象 schema 都有 `.pick` 和 `.omit` 方法，可以返回一个修改后的版本。考虑以下 Recipe schema：
 
 ```ts
 const Recipe = z.object({
@@ -1396,7 +1386,7 @@ const Recipe = z.object({
 });
 ```
 
-To only keep certain keys, use `.pick` .
+若只保留特定的键，请使用 `.pick`。
 
 ```ts
 const JustTheName = Recipe.pick({ name: true });
@@ -1404,7 +1394,7 @@ type JustTheName = z.infer<typeof JustTheName>;
 // => { name: string }
 ```
 
-To remove certain keys, use `.omit` .
+若要移除特定的键，请使用 `.omit`。
 
 ```ts
 const NoIDRecipe = Recipe.omit({ id: true });
@@ -1415,9 +1405,9 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype), the `.partial` method makes all properties optional.
+受内置 TypeScript 工具类型 [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype) 的启发，`.partial` 方法会将所有属性设为可选。
 
-Starting from this object:
+从以下对象开始：
 
 ```ts
 const user = z.object({
@@ -1427,14 +1417,14 @@ const user = z.object({
 // { email: string; username: string }
 ```
 
-We can create a partial version:
+我们可以创建一个 partial 版本：
 
 ```ts
 const partialUser = user.partial();
 // { email?: string | undefined; username?: string | undefined }
 ```
 
-You can also specify which properties to make optional:
+你还可以指定要设为可选的属性：
 
 ```ts
 const optionalEmail = user.partial({
@@ -1450,7 +1440,7 @@ const optionalEmail = user.partial({
 
 ### `.deepPartial`
 
-The `.partial` method is shallow — it only applies one level deep. There is also a "deep" version:
+`.partial` 方法是浅层的——它只应用于一层。还有一个“深层”版本：
 
 ```ts
 const user = z.object({
@@ -1476,13 +1466,13 @@ const deepPartialUser = user.deepPartial();
 */
 ```
 
-> Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
+> 重要限制：深层 partial 只适用于由对象、数组和元组构成的层级结构。
 
 ### `.required`
 
-Contrary to the `.partial` method, the `.required` method makes all properties required.
+与 `.partial` 方法相反，`.required` 方法会将所有属性设为必需。
 
-Starting from this object:
+从以下对象开始：
 
 ```ts
 const user = z
@@ -1494,14 +1484,14 @@ const user = z
 // { email?: string | undefined; username?: string | undefined }
 ```
 
-We can create a required version:
+我们可以创建一个 required 版本：
 
 ```ts
 const requiredUser = user.required();
 // { email: string; username: string }
 ```
 
-You can also specify which properties to make required:
+你还可以指定要设为必需的属性：
 
 ```ts
 const requiredEmail = user.required({
@@ -1517,7 +1507,7 @@ const requiredEmail = user.required({
 
 ### `.passthrough`
 
-By default Zod object schemas strip out unrecognized keys during parsing.
+默认情况下，Zod 对象 schema 在解析过程中会移除无法识别的键。
 
 ```ts
 const person = z.object({
@@ -1532,7 +1522,7 @@ person.parse({
 // extraKey has been stripped
 ```
 
-Instead, if you want to pass through unknown keys, use `.passthrough()` .
+相反，如果你希望保留未知键，请使用 `.passthrough()`。
 
 ```ts
 person.passthrough().parse({
@@ -1544,7 +1534,7 @@ person.passthrough().parse({
 
 ### `.strict`
 
-By default Zod object schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
+默认情况下，Zod 对象 schema 在解析过程中会移除无法识别的键。你可以使用 `.strict()` 来_禁止_未知键。如果输入中存在任何未知键，Zod 将抛出错误。
 
 ```ts
 const person = z
@@ -1562,11 +1552,11 @@ person.parse({
 
 ### `.strip`
 
-You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
+你可以使用 `.strip` 方法将对象 schema 重置为默认行为（移除无法识别的键）。
 
 ### `.catchall`
 
-You can pass a "catchall" schema into an object schema. All unknown keys will be validated against it.
+你可以将一个“catchall” schema 传入对象 schema。所有未知键都会根据它进行验证。
 
 ```ts
 const person = z
@@ -1587,11 +1577,11 @@ person.parse({
 // => throws ZodError
 ```
 
-Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
+使用 `.catchall()` 后，`.passthrough()`、`.strip()` 或 `.strict()` 都不再需要。现在所有键都会被视为“已知”。
 
 <br/>
 
-## Arrays
+## 数组
 
 ```ts
 const stringArray = z.array(z.string());
@@ -1600,7 +1590,7 @@ const stringArray = z.array(z.string());
 const stringArray = z.string().array();
 ```
 
-Be careful with the `.array()` method. It returns a new `ZodArray` instance. This means the _order_ in which you call methods matters. For instance:
+使用 `.array()` 方法时要小心。它会返回一个新的 `ZodArray` 实例。这意味着调用方法的_顺序_很重要。例如：
 
 ```ts
 z.string().optional().array(); // (string | undefined)[]
@@ -1609,7 +1599,7 @@ z.string().array().optional(); // string[] | undefined
 
 ### `.element`
 
-Use `.element` to access the schema for an element of the array.
+使用 `.element` 访问数组元素对应的 schema。
 
 ```ts
 stringArray.element; // => string schema
@@ -1617,7 +1607,7 @@ stringArray.element; // => string schema
 
 ### `.nonempty`
 
-If you want to ensure that an array contains at least one element, use `.nonempty()`.
+如果你希望确保数组至少包含一个元素，请使用 `.nonempty()`。
 
 ```ts
 const nonEmptyStrings = z.string().array().nonempty();
@@ -1628,7 +1618,7 @@ nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
 nonEmptyStrings.parse(["Ariana Grande"]); // passes
 ```
 
-You can optionally specify a custom error message:
+你可以选择指定自定义错误消息：
 
 ```ts
 // optional custom error message
@@ -1645,13 +1635,13 @@ z.string().array().max(5); // must contain 5 or fewer items
 z.string().array().length(5); // must contain 5 items exactly
 ```
 
-Unlike `.nonempty()` these methods do not change the inferred type.
+与 `.nonempty()` 不同，这些方法不会改变推断出的类型。
 
 <br/>
 
-## Tuples
+## 元组
 
-Unlike arrays, tuples have a fixed number of elements and each element can have a different type.
+与数组不同，元组具有固定数量的元素，并且每个元素可以拥有不同的类型。
 
 ```ts
 const athleteSchema = z.tuple([
@@ -1666,7 +1656,7 @@ type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
-A variadic ("rest") argument can be added with the `.rest` method.
+可以使用 `.rest` 方法添加可变参数（“剩余”）参数。
 
 ```ts
 const variadicTuple = z.tuple([z.string()]).rest(z.number());
@@ -1676,9 +1666,9 @@ const result = variadicTuple.parse(["hello", 1, 2, 3]);
 
 <br/>
 
-## Unions
+## 联合
 
-Zod includes a built-in `z.union` method for composing "OR" types.
+Zod 提供了内置的 `z.union` 方法，用于组合“或”类型。
 
 ```ts
 const stringOrNumber = z.union([z.string(), z.number()]);
@@ -1687,19 +1677,19 @@ stringOrNumber.parse("foo"); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-Zod will test the input against each of the "options" in order and return the first value that validates successfully.
+Zod 会按顺序使用每个“选项”测试输入，并返回第一个成功验证的值。
 
-For convenience, you can also use the [`.or` method](#or):
+为方便起见，你也可以使用[`.or` 方法](#or)：
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
 ```
 
-**Optional string validation:**
+**可选字符串验证：**
 
-To validate an optional form input, you can union the desired string validation with an empty string [literal](#literals).
+若要验证可选的表单输入，可以将所需的字符串验证与空字符串[字面量](#literals)进行联合。
 
-This example validates an input that is optional but needs to contain a [valid URL](#strings):
+以下示例验证一个可选输入，但该输入必须包含一个[有效 URL](#strings)：
 
 ```ts
 const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);
@@ -1713,9 +1703,9 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 <br/>
 
-## Discriminated unions
+## 可辨识联合
 
-A discriminated union is a union of object schemas that all share a particular key.
+可辨识联合是由多个对象 schema 组成的联合，并且这些 schema 都共享某个特定键。
 
 ```ts
 type MyUnion =
@@ -1723,9 +1713,9 @@ type MyUnion =
   | { status: "failed"; error: Error };
 ```
 
-Such unions can be represented with the `z.discriminatedUnion` method. This enables faster evaluation, because Zod can check the _discriminator key_ (`status` in the example above) to determine which schema should be used to parse the input. This makes parsing more efficient and lets Zod report friendlier errors.
+这样的联合可以使用 `z.discriminatedUnion` 方法表示。这可以实现更快的求值，因为 Zod 可以检查_辨识键_（上例中的 `status`），以确定应该使用哪个 schema 来解析输入。这使解析更加高效，也让 Zod 能够报告更友好的错误。
 
-With the basic union method, the input is tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing against it, and showing only the issues related to this "option".
+使用基本的联合方法时，输入会针对每个给定的“选项”进行测试；如果无效，zod 错误中会显示所有“选项”的问题。另一方面，可辨识联合只选择一个“选项”进行测试，并且只显示与该“选项”相关的问题。
 
 ```ts
 const myUnion = z.discriminatedUnion("status", [
@@ -1736,13 +1726,13 @@ const myUnion = z.discriminatedUnion("status", [
 myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
-You can extract a reference to the array of schemas with the `.options` property.
+你可以通过 `.options` 属性提取 schema 数组的引用。
 
 ```ts
 myUnion.options; // [ZodObject<...>, ZodObject<...>]
 ```
 
-To merge two or more discriminated unions, use `.options` with destructuring.
+若要合并两个或更多可辨识联合，请结合解构使用 `.options`。
 
 ```ts
 const A = z.discriminatedUnion("status", [
@@ -1757,9 +1747,9 @@ const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 
 <br/>
 
-## Records
+## Record
 
-Record schemas are used to validate types such as `Record<string, number>`. This is particularly useful for storing or caching items by ID.
+Record schema 用于验证诸如 `Record<string, number>` 的类型。这对于按 ID 存储或缓存条目尤其有用。
 
 <!-- If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
@@ -1778,7 +1768,7 @@ type UserStore = z.infer<typeof UserStore>;
 // => Record<string, { name: string }>
 ```
 
-The schema and inferred type can be used like so:
+schema 和推断出的类型可以这样使用：
 
 ```ts
 const userStore: UserStore = {};
@@ -1792,11 +1782,11 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError
 ```
 
-**A note on numerical keys**
+**关于数字键的说明**
 
-While `z.record(keyType, valueType)` is able to accept numerical key types and TypeScript's built-in Record type is `Record<KeyType, ValueType>`, it's hard to represent the TypeScript type `Record<number, any>` in Zod.
+虽然 `z.record(keyType, valueType)` 能够接受数字键类型，且 TypeScript 内置的 Record 类型是 `Record<KeyType, ValueType>`，但很难在 Zod 中表示 TypeScript 类型 `Record<number, any>`。
 
-As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
+事实证明，TypeScript 围绕 `[k: number]` 的行为有些不直观：
 
 ```ts
 const testMap: { [k: number]: string } = {
@@ -1809,11 +1799,11 @@ for (const key in testMap) {
 // prints: `1: string`
 ```
 
-As you can see, JavaScript automatically casts all object keys to strings under the hood. Since Zod is trying to bridge the gap between static and runtime types, it doesn't make sense to provide a way of creating a record schema with numerical keys, since there's no such thing as a numerical key in runtime JavaScript.
+如你所见，JavaScript 会在底层自动将所有对象键转换为字符串。由于 Zod 试图弥合静态类型与运行时类型之间的差距，因此没有必要提供创建数字键 Record schema 的方式，因为在运行时 JavaScript 中不存在数字键。
 
 <br/>
 
-## Maps
+## Map
 
 ```ts
 const stringNumberMap = z.map(z.string(), z.number());
@@ -1824,7 +1814,7 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 
 <br/>
 
-## Sets
+## Set
 
 ```ts
 const numberSet = z.set(z.number());
@@ -1832,7 +1822,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set schemas can be further constrained with the following utility methods.
+Set schema 还可以使用以下工具方法进一步限制。
 
 ```ts
 z.set(z.string()).nonempty(); // must contain at least one item
@@ -1843,9 +1833,9 @@ z.set(z.string()).size(5); // must contain 5 items exactly
 
 <br/>
 
-## Intersections
+## 交集
 
-Intersections are useful for creating "logical AND" types. This is useful for intersecting two object types.
+交集适合创建“逻辑与”类型。这对于交集两个对象类型很有用。
 
 ```ts
 const Person = z.object({
@@ -1862,7 +1852,7 @@ const EmployedPerson = z.intersection(Person, Employee);
 const EmployedPerson = Person.and(Employee);
 ```
 
-Though in many cases, it is recommended to use `A.merge(B)` to merge two objects. The `.merge` method returns a new `ZodObject` instance, whereas `A.and(B)` returns a less useful `ZodIntersection` instance that lacks common object methods like `pick` and `omit`.
+不过在许多情况下，建议使用 `A.merge(B)` 来合并两个对象。`.merge` 方法会返回一个新的 `ZodObject` 实例，而 `A.and(B)` 返回的是不太实用的 `ZodIntersection` 实例，后者缺少 `pick` 和 `omit` 等常见对象方法。
 
 ```ts
 const a = z.union([z.number(), z.string()]);
@@ -1893,9 +1883,9 @@ type Teacher = z.infer<typeof Teacher>;
 
 <br/>
 
-## Recursive types
+## 递归类型
 
-You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
+你可以在 Zod 中定义递归 schema，但由于 TypeScript 的限制，其类型无法被静态推断。相反，你需要手动定义类型，并将其作为“类型提示”提供给 Zod。
 
 ```ts
 const baseCategorySchema = z.object({
@@ -1926,16 +1916,16 @@ categorySchema.parse({
 }); // passes
 ```
 
-Thanks to [crasite](https://github.com/crasite) for this example.
+感谢 [crasite](https://github.com/crasite) 提供此示例。
 
-### ZodType with ZodEffects
+### 包含 ZodEffects 的 ZodType
 
-When using `z.ZodType` with `z.ZodEffects` (
-[`.refine`](https://github.com/colinhacks/zod#refine),
-[`.transform`](https://github.com/colinhacks/zod#transform),
-[`preprocess`](https://github.com/colinhacks/zod#preprocess),
-etc...
-), you will need to define the input and output types of the schema. `z.ZodType<Output, z.ZodTypeDef, Input>`
+当 `z.ZodType` 与 `z.ZodEffects`（
+[`.refine`](https://github.com/colinhacks/zod#refine)、
+[`.transform`](https://github.com/colinhacks/zod#transform)、
+[`preprocess`](https://github.com/colinhacks/zod#preprocess)、
+等等……
+）一起使用时，你需要定义 schema 的输入和输出类型。`z.ZodType<Output, z.ZodTypeDef, Input>`
 
 ```ts
 const isValidId = (id: string): id is `${string}/${string}` =>
@@ -1958,11 +1948,11 @@ const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend({
 });
 ```
 
-Thanks to [marcus13371337](https://github.com/marcus13371337) and [JoelBeeldi](https://github.com/JoelBeeldi) for this example.
+感谢 [marcus13371337](https://github.com/marcus13371337) 和 [JoelBeeldi](https://github.com/JoelBeeldi) 提供此示例。
 
-### JSON type
+### JSON 类型
 
-If you want to validate any JSON value, you can use the snippet below.
+如果你希望验证任意 JSON 值，可以使用下面的代码片段。
 
 ```ts
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
@@ -1975,26 +1965,26 @@ const jsonSchema: z.ZodType<Json> = z.lazy(() =>
 jsonSchema.parse(data);
 ```
 
-Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
+感谢 [ggoodman](https://github.com/ggoodman) 提出这一建议。
 
-### Cyclical objects
+### 循环对象
 
-Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop in some cases.
+尽管支持递归 schema，但将循环数据传入 Zod 在某些情况下会导致无限循环。
 
-> To detect cyclical objects before they cause problems, consider [this approach](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b).
+> 为了在循环对象造成问题之前检测它们，可以考虑[此方法](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b)。
 
 <br/>
 
-## Promises
+## Promise
 
 ```ts
 const numberPromise = z.promise(z.number());
 ```
 
-"Parsing" works a little differently with promise schemas. Validation happens in two parts:
+使用 Promise schema 时，“解析”的工作方式略有不同。验证分为两部分：
 
-1. Zod synchronously checks that the input is an instance of Promise (i.e. an object with `.then` and `.catch` methods.).
-2. Zod uses `.then` to attach an additional validation step onto the existing Promise. You'll have to use `.catch` on the returned Promise to handle validation failures.
+1. Zod 会同步检查输入是否为 Promise 的实例（即一个具有 `.then` 和 `.catch` 方法的对象。）。
+2. Zod 使用 `.then` 将额外的验证步骤附加到现有 Promise 上。你必须在返回的 Promise 上使用 `.catch` 来处理验证失败。
 
 ```ts
 numberPromise.parse("tuna");
@@ -2020,7 +2010,7 @@ When "parsing" a promise, Zod checks that the passed value is an object with `.t
 
 ## Instanceof
 
-You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.
+你可以使用 `z.instanceof` 检查输入是否为某个类的实例。这对于根据第三方库导出的类验证输入很有用。
 
 ```ts
 class Test {
@@ -2036,11 +2026,11 @@ TestSchema.parse(blob); // throws
 
 <br/>
 
-## Functions
+## 函数
 
-Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
+Zod 还允许你定义“函数 schema”。这使得验证函数的输入和输出变得简单，同时无需将验证代码与“业务逻辑”混在一起。
 
-You can create a function schema with `z.function(args, returnType)` .
+你可以使用 `z.function(args, returnType)` 创建函数 schema。
 
 ```ts
 const myFunction = z.function();
@@ -2049,7 +2039,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => ()=>unknown
 ```
 
-Define inputs and outputs.
+定义输入和输出。
 
 ```ts
 const myFunction = z
@@ -2073,7 +2063,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ``` -->
 
-Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
+函数 schema 具有 `.implement()` 方法，该方法接受一个函数，并返回一个会自动验证其输入和输出的新函数。
 
 ```ts
 const trimmedLength = z
@@ -2089,9 +2079,9 @@ trimmedLength("sandwich"); // => 8
 trimmedLength(" asdf "); // => 4
 ```
 
-If you only care about validating inputs, just don't call the `.returns()` method. The output type will be inferred from the implementation.
+如果你只关心验证输入，就不要调用 `.returns()` 方法。输出类型将根据实现进行推断。
 
-> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning functions actually return undefined.)
+> 如果函数不返回任何内容，可以使用特殊的 `z.void()` 选项。这会让 Zod 正确推断返回 void 的函数类型。（返回 void 的函数实际上会返回 undefined。）
 
 ```ts
 const myFunction = z
@@ -2104,7 +2094,7 @@ const myFunction = z
 myFunction; // (arg: string)=>number[]
 ```
 
-Extract the input and output schemas from a function schema.
+从函数 schema 中提取输入和输出 schema。
 
 ```ts
 myFunction.parameters();
@@ -2123,23 +2113,23 @@ myFunction.returnType();
 
 ## Preprocess
 
-> Zod now supports primitive coercion without the need for `.preprocess()`. See the [coercion docs](#coercion-for-primitives) for more information.
+> Zod 现在支持原始类型强制转换，无需使用 `.preprocess()`。详情请参阅[强制转换文档](#coercion-for-primitives)。
 
-Typically Zod operates under a "parse then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
+通常，Zod 遵循“先解析，再转换”的范式。Zod 会先验证输入，然后将其传递给一系列转换函数。（有关转换的更多信息，请阅读[`.transform` 文档](#transform)。）
 
-But sometimes you want to apply some transform to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
+但有时你希望在解析发生_之前_对输入应用某种转换。一个常见的使用场景是：类型强制转换。Zod 通过 `z.preprocess()` 提供了这一能力。
 
 ```ts
 const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
-This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+这会返回一个 `ZodEffects` 实例。`ZodEffects` 是一个包装类，包含与预处理、细化和转换有关的全部逻辑。
 
 <br/>
 
-## Custom schemas
+## 自定义 schema
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+你可以使用 `z.custom()` 为任意 TypeScript 类型创建 Zod schema。这对于创建 Zod 默认不支持的类型 schema 很有用，例如模板字符串字面量。
 
 ```ts
 const px = z.custom<`${number}px`>((val) => {
@@ -2152,13 +2142,13 @@ px.parse("42px"); // "42px"
 px.parse("42vw"); // throws;
 ```
 
-If you don't provide a validation function, Zod will allow any value. This can be dangerous!
+如果不提供验证函数，Zod 将允许任何值。这可能会带来危险！
 
 ```ts
 z.custom<{ arg: string }>(); // performs no validation
 ```
 
-You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+你可以通过传入第二个参数自定义错误消息和其他选项。此参数的工作方式与[`.refine`](#refine) 的 params 参数相同。
 
 ```ts
 z.custom<...>((val) => ..., "custom error message");
@@ -2166,17 +2156,17 @@ z.custom<...>((val) => ..., "custom error message");
 
 <br/>
 
-## Schema methods
+## Schema 方法
 
-All Zod schemas contain certain methods.
+所有 Zod schema 都包含一些方法。
 
 ### `.parse`
 
 `.parse(data: unknown): T`
 
-Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+给定任意 Zod schema，你可以调用其 `.parse` 方法来检查 `data` 是否有效。如果有效，则会返回一个具有完整类型信息的值！否则会抛出错误。
 
-> IMPORTANT: The value returned by `.parse` is a _deep clone_ of the variable you passed in.
+> 重要：`.parse` 返回的值是你传入变量的_深拷贝_。
 
 ```ts
 const stringSchema = z.string();
@@ -2189,7 +2179,7 @@ stringSchema.parse(12); // throws error
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`.
+如果使用异步[细化](#refine)或[转换](#transform)（稍后会详细介绍），则需要使用 `.parseAsync`
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length <= 8);
@@ -2202,7 +2192,7 @@ await stringSchema.parseAsync("hello world"); // => throws error
 
 `.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-If you don't want Zod to throw errors when validation fails, use `.safeParse`. This method returns an object containing either the successfully parsed data or a ZodError instance containing detailed information about the validation problems.
+如果不希望 Zod 在验证失败时抛出错误，请使用 `.safeParse`。此方法返回一个对象，其中包含成功解析的数据，或包含验证问题详细信息的 ZodError 实例
 
 ```ts
 stringSchema.safeParse(12);
@@ -2212,7 +2202,7 @@ stringSchema.safeParse("billie");
 // => { success: true; data: 'billie' }
 ```
 
-The result is a _discriminated union_, so you can handle errors very conveniently:
+结果是一个_可辨识联合_，因此可以非常方便地处理错误：
 
 ```ts
 const result = stringSchema.safeParse("billie");
@@ -2227,15 +2217,15 @@ if (!result.success) {
 
 ### `.safeParseAsync`
 
-> Alias: `.spa`
+> 别名：`.spa`
 
-An asynchronous version of `safeParse`.
+`safeParse` 的异步版本
 
 ```ts
 await stringSchema.safeParseAsync("billie");
 ```
 
-For convenience, this has been aliased to `.spa`:
+为方便起见，它被设置了别名 `.spa`：
 
 ```ts
 await stringSchema.spa("billie");
@@ -2245,11 +2235,11 @@ await stringSchema.spa("billie");
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
-Zod lets you provide custom validation logic via _refinements_. (For advanced features like creating multiple issues and customizing error codes, see [`.superRefine`](#superrefine).)
+Zod 允许通过_细化_提供自定义验证逻辑。（有关创建多个问题和自定义错误代码等高级功能，请参阅[`.superRefine`](#superrefine)）
 
-Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an integer or that a string is a valid email address.
+Zod 的设计目标是尽可能贴近 TypeScript。但有许多所谓的“细化类型”是你可能希望检查的，却无法在 TypeScript 的类型系统中表示。例如：检查一个数字是否为整数，或一个字符串是否为有效的电子邮件地址
 
-For example, you can define a custom validation check on _any_ Zod schema with `.refine` :
+例如，你可以使用 `.refine` 在_任意_ Zod schema 上定义自定义验证检查：
 
 ```ts
 const myString = z.string().refine((val) => val.length <= 255, {
@@ -2257,14 +2247,14 @@ const myString = z.string().refine((val) => val.length <= 255, {
 });
 ```
 
-> ⚠️ Refinement functions should not throw. Instead they should return a falsy value to signal failure.
+> ⚠️ 细化函数不应抛出错误。相反，它们应返回一个假值来表示失败
 
-#### Arguments
+#### 参数
 
-As you can see, `.refine` takes two arguments.
+如你所见，`.refine` 接受两个参数
 
-1. The first is the validation function. This function takes one input (of type `T` — the inferred type of the schema) and returns `any`. Any truthy value will pass validation. (Prior to zod@1.6.2 the validation function had to return a boolean.)
-2. The second argument accepts some options. You can use this to customize certain error-handling behavior:
+1. 第一个是验证函数。此函数接收一个输入（类型为 `T`——schema 的推断类型），并返回 `any`。任何真值都会通过验证。（在 zod@1.6.2 之前，验证函数必须返回布尔值。）
+2. 第二个参数接受一些选项。你可以使用它来自定义某些错误处理行为：
 
 ```ts
 type RefineParams = {
@@ -2280,7 +2270,7 @@ type RefineParams = {
 };
 ```
 
-For advanced cases, the second argument can also be a function that returns `RefineParams`.
+对于高级场景，第二个参数也可以是一个返回 `RefineParams` 的函数
 
 ```ts
 const longString = z.string().refine(
@@ -2289,7 +2279,7 @@ const longString = z.string().refine(
 );
 ```
 
-#### Customize error path
+#### 自定义错误路径
 
 ```ts
 const passwordForm = z
@@ -2305,7 +2295,7 @@ const passwordForm = z
 passwordForm.parse({ password: "asdf", confirm: "qwer" });
 ```
 
-Because you provided a `path` parameter, the resulting error will be:
+由于提供了 `path` 参数，生成的错误将是：
 
 ```ts
 ZodError {
@@ -2317,9 +2307,9 @@ ZodError {
 }
 ```
 
-#### Asynchronous refinements
+#### 异步细化
 
-Refinements can also be async:
+细化也可以是异步的：
 
 ```ts
 const userId = z.string().refine(async (id) => {
@@ -2328,11 +2318,11 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️ If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+> ⚠️ 如果使用异步细化，则必须使用 `.parseAsync` 方法解析数据！否则 Zod 将抛出错误
 
-#### Relationship to transforms
+#### 与转换的关系
 
-Transforms and refinements can be interleaved:
+转换和细化可以交错使用：
 
 ```ts
 z.string()
@@ -2340,7 +2330,7 @@ z.string()
   .refine((val) => val > 25);
 ```
 
-<!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
+<!-- 注意，`path` 被设置为 `["confirm"]`，因此你可以轻松地将此错误显示在“确认密码”文本框下方
 
 ```ts
 const allForms = z.object({ passwordForm }).parse({
@@ -2351,7 +2341,7 @@ const allForms = z.object({ passwordForm }).parse({
 });
 ```
 
-would result in
+结果将是
 
 ```
 
@@ -2366,7 +2356,7 @@ ZodError {
 
 ### `.superRefine`
 
-The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
+`.refine` 方法实际上是一个更灵活（也更冗长）的方法 `superRefine` 的语法糖。下面是一个示例：
 
 ```ts
 const Strings = z.array(z.string()).superRefine((val, ctx) => {
@@ -2389,13 +2379,13 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 });
 ```
 
-You can add as many issues as you like. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
+你可以添加任意数量的问题。如果函数执行期间没有调用 `ctx.addIssue`，验证就会通过
 
-Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` it's possible to throw issues of any `ZodIssueCode`. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
+通常，细化总是使用 `ZodIssueCode.custom` 错误代码创建问题，但使用 `superRefine` 可以抛出任意 `ZodIssueCode` 的问题。每种问题代码都在错误处理指南中进行了详细说明：[ERROR_HANDLING.md](ERROR_HANDLING.md)
 
-#### Abort early
+#### 提前中止
 
-By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue` and return `z.NEVER`.
+默认情况下，即使细化检查失败，解析也会继续进行。例如，如果串联了多个细化，它们都会被执行。不过，有时可能希望_提前中止_，以防止执行后续细化。为此，请将 `fatal` 标志传递给 `ctx.addIssue`，并返回 `z.NEVER`
 
 ```ts
 const schema = z.number().superRefine((val, ctx) => {
@@ -2418,9 +2408,9 @@ const schema = z.number().superRefine((val, ctx) => {
 });
 ```
 
-#### Type refinements
+#### 类型细化
 
-If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `.superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
+如果向 `.refine()` 或 `.superRefine()` 提供[类型谓词](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)，则生成的类型会缩小为谓词的类型。当混合使用多个串联的细化和转换时，这非常有用：
 
 ```ts
 const schema = z
@@ -2443,11 +2433,11 @@ const schema = z
   .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
 ```
 
-> ⚠️ You **must** use `ctx.addIssue()` instead of returning a boolean value to indicate whether the validation passes. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
+> ⚠️ **必须**使用 `ctx.addIssue()`，而不是返回布尔值，来表示验证是否通过。如果函数执行期间没有调用 `ctx.addIssue`，验证就会通过
 
 ### `.transform`
 
-To transform data after parsing, use the `transform` method.
+要在解析后转换数据，请使用 `transform` 方法
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
@@ -2455,9 +2445,9 @@ const stringToNumber = z.string().transform((val) => val.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-#### Chaining order
+#### 链接顺序
 
-Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
+请注意，上面的 `stringToNumber` 是 `ZodEffects` 子类的实例，而不是 `ZodString` 的实例。如果想使用 `ZodString` 的内置方法（例如 `.email()`），必须在任何转换之前应用这些方法
 
 ```ts
 const emailToDomain = z
@@ -2468,11 +2458,11 @@ const emailToDomain = z
 emailToDomain.parse("colinhacks@example.com"); // => example.com
 ```
 
-#### Validating during transform
+#### 在转换期间进行验证
 
-The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
+`.transform` 方法可以同时验证和转换值。这通常比串联使用 `transform` 和 `refine` 更简单，也更不重复
 
-As with `.superRefine`, the transform function receives a `ctx` object with an `addIssue` method that can be used to register validation issues.
+与 `.superRefine` 一样，转换函数接收一个带有 `addIssue` 方法的 `ctx` 对象，可用于注册验证问题
 
 ```ts
 const numberInString = z.string().transform((val, ctx) => {
@@ -2493,9 +2483,9 @@ const numberInString = z.string().transform((val, ctx) => {
 });
 ```
 
-#### Relationship to refinements
+#### 与细化的关系
 
-Transforms and refinements can be interleaved. These will be executed in the order they are declared.
+转换和细化可以交错使用。它们将按照声明顺序执行
 
 ```ts
 const nameToGreeting = z
@@ -2506,9 +2496,9 @@ const nameToGreeting = z
   .refine((val) => val.indexOf("!") === -1);
 ```
 
-#### Async transforms
+#### 异步转换
 
-Transforms can also be async.
+转换也可以是异步的
 
 ```ts
 const IdToUser = z
@@ -2519,11 +2509,11 @@ const IdToUser = z
   });
 ```
 
-> ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+> ⚠️ 如果 schema 包含异步转换，则必须使用 .parseAsync() 或 .safeParseAsync() 解析数据。否则 Zod 将抛出错误
 
 ### `.default`
 
-You can use transforms to implement the concept of "default values" in Zod.
+你可以使用转换在 Zod 中实现“默认值”的概念
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
@@ -2531,7 +2521,7 @@ const stringWithDefault = z.string().default("tuna");
 stringWithDefault.parse(undefined); // => "tuna"
 ```
 
-Optionally, you can pass a function into `.default` that will be re-executed whenever a default value needs to be generated:
+你也可以选择将一个函数传递给 `.default`，每当需要生成默认值时，该函数都会重新执行：
 
 ```ts
 const numberWithRandomDefault = z.number().default(Math.random);
@@ -2541,14 +2531,14 @@ numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
 numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 ```
 
-Conceptually, this is how Zod processes default values:
+从概念上讲，这就是 Zod 处理默认值的方式：
 
-1. If the input is `undefined`, the default value is substituted
-2. Then the data is parsed using the base schema. Your default value will be parsed by the schema (including any potential transforms).
+1. 如果输入是 `undefined`，则替换为默认值
+2. 然后使用基础 schema 解析数据。你的默认值也会由 schema 解析（包括任何可能的转换）
 
 ### `.describe`
 
-Use `.describe()` to add a `description` property to the resulting schema.
+使用 `.describe()` 为生成的 schema 添加 `description` 属性
 
 ```ts
 const documentedString = z
@@ -2557,11 +2547,11 @@ const documentedString = z
 documentedString.description; // A useful bit of text…
 ```
 
-This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
+例如，使用 [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema) 这样的库在 JSON Schema 中记录字段时，这会很有用
 
 ### `.catch`
 
-Use `.catch()` to provide a "catch value" to be returned in the event of a parsing error.
+使用 `.catch()` 提供一个“捕获值”，在解析错误发生时返回该值
 
 ```ts
 const numberWithCatch = z.number().catch(42);
@@ -2570,7 +2560,7 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated. A `ctx` object containing the caught error will be passed into this function.
+你也可以选择将一个函数传递给 `.catch`，每当需要生成默认值时，该函数都会重新执行。一个包含捕获错误的 `ctx` 对象会被传递给此函数
 
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
@@ -2583,14 +2573,14 @@ numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
 numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
-Conceptually, this is how Zod processes "catch values":
+从概念上讲，这就是 Zod 处理“捕获值”的方式：
 
-1. The data is parsed using the base schema
-2. If the parsing fails, the "catch value" is returned
+1. 使用基础 schema 解析数据
+2. 如果解析失败，则返回“捕获值”
 
 ### `.optional`
 
-A convenience method that returns an optional version of a schema.
+返回 schema 可选版本的便捷方法
 
 ```ts
 const optionalString = z.string().optional(); // string | undefined
@@ -2601,7 +2591,7 @@ z.optional(z.string());
 
 ### `.nullable`
 
-A convenience method that returns a nullable version of a schema.
+返回 schema 可空版本的便捷方法
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
@@ -2612,7 +2602,7 @@ z.nullable(z.string());
 
 ### `.nullish`
 
-A convenience method that returns a "nullish" version of a schema. Nullish schemas will accept both `undefined` and `null`. Read more about the concept of "nullish" [in the TypeScript 3.7 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing).
+返回 schema “nullish”版本的便捷方法。Nullish schema 将同时接受 `undefined` 和 `null`。有关“nullish”概念的更多信息，请参阅 [TypeScript 3.7 发布说明](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing)
 
 ```ts
 const nullishString = z.string().nullish(); // string | null | undefined
@@ -2623,7 +2613,7 @@ z.string().nullable().optional();
 
 ### `.array`
 
-A convenience method that returns an array schema for the given type:
+为给定类型返回数组 schema 的便捷方法：
 
 ```ts
 const stringArray = z.string().array(); // string[]
@@ -2634,7 +2624,7 @@ z.array(z.string());
 
 ### `.promise`
 
-A convenience method for promise types:
+用于 Promise 类型的便捷方法：
 
 ```ts
 const stringPromise = z.string().promise(); // Promise<string>
@@ -2645,7 +2635,7 @@ z.promise(z.string());
 
 ### `.or`
 
-A convenience method for [union types](#unions).
+用于[联合类型](#unions)的便捷方法
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
@@ -2656,7 +2646,7 @@ z.union([z.string(), z.number()]);
 
 ### `.and`
 
-A convenience method for creating intersection types.
+用于创建交叉类型的便捷方法
 
 ```ts
 const nameAndAge = z
@@ -2671,7 +2661,7 @@ z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 
 `.brand<T>() => ZodBranded<this, B>`
 
-TypeScript's type system is structural, which means that any two types that are structurally equivalent are considered the same.
+TypeScript 的类型系统是结构化的，这意味着任何两个结构等价的类型都会被视为相同类型
 
 ```ts
 type Cat = { name: string };
@@ -2682,7 +2672,7 @@ const fido: Dog = { name: "fido" };
 petCat(fido); // works fine
 ```
 
-In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with _branded types_ (AKA _opaque types_).
+在某些情况下，可能希望在 TypeScript 中模拟_名义类型_。例如，你可能希望编写一个只接受经过 Zod 验证的输入的函数。这可以通过_品牌类型_（也称为_不透明类型_）实现
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
@@ -2698,7 +2688,7 @@ petCat(simba);
 petCat({ name: "fido" });
 ```
 
-Under the hood, this works by attaching a "brand" to the inferred type using an intersection type. This way, plain/unbranded data structures are no longer assignable to the inferred type of the schema.
+在底层，此功能通过使用交叉类型为推断类型附加“品牌”来实现。这样一来，普通／无品牌的数据结构就不能再赋值给 schema 的推断类型
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
@@ -2706,13 +2696,13 @@ type Cat = z.infer<typeof Cat>;
 // {name: string} & {[symbol]: "Cat"}
 ```
 
-Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+请注意，品牌类型不会影响 `.parse` 的运行时结果。这是一个仅限静态类型的构造
 
 ### `.readonly`
 
 `.readonly() => ZodReadonly<this>`
 
-This method returns a `ZodReadonly` schema instance that parses the input using the base schema, then calls `Object.freeze()` on the result. The inferred type is also marked as `readonly`.
+此方法返回一个 `ZodReadonly` schema 实例，该实例使用基础 schema 解析输入，然后对结果调用 `Object.freeze()`。推断出的类型也会被标记为 `readonly`
 
 ```ts
 const schema = z.object({ name: z.string() }).readonly();
@@ -2723,7 +2713,7 @@ const result = schema.parse({ name: "fido" });
 result.name = "simba"; // error
 ```
 
-The inferred type uses TypeScript's built-in readonly types when relevant.
+在适用的情况下，推断类型会使用 TypeScript 内置的 readonly 类型
 
 ```ts
 z.array(z.string()).readonly();
@@ -2741,7 +2731,7 @@ z.set(z.string()).readonly();
 
 ### `.pipe`
 
-Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+Schema 可以串联成验证“管道”。它对于轻松验证 `.transform()` 的结果很有用：
 
 ```ts
 z.string()
@@ -2749,15 +2739,15 @@ z.string()
   .pipe(z.number().min(5));
 ```
 
-The `.pipe()` method returns a `ZodPipeline` instance.
+`.pipe()` 方法返回一个 `ZodPipeline` 实例
 
 <br/>
 
-## Guides and concepts
+## 指南和概念
 
-### Type inference
+### 类型推断
 
-You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>` .
+你可以使用 `z.infer<typeof mySchema>` 提取任意 schema 的 TypeScript 类型
 
 ```ts
 const A = z.string();
@@ -2767,11 +2757,11 @@ const u: A = 12; // TypeError
 const u: A = "asdf"; // compiles
 ```
 
-**What about transforms?**
+**转换怎么办？**
 
-In reality each Zod schema internally tracks **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
+实际上，每个 Zod schema 在内部都会跟踪**两种**类型：输入类型和输出类型。对于大多数 schema（例如 `z.string()`），这两者是相同的。但当加入转换后，这两个值可能会出现差异。例如，`z.string().transform(val => val.length)` 的输入类型是 `string`，输出类型是 `number`
 
-You can separately extract the input and output types like so:
+你可以像下面这样分别提取输入类型和输出类型：
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
@@ -2784,11 +2774,11 @@ type output = z.output<typeof stringToNumber>; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-### Writing generic functions
+### 编写泛型函数
 
-With TypeScript generics, you can write reusable functions that accept Zod schemas as parameters. This enables you to create custom validation logic, schema transformations, and more, while maintaining type safety and inference.
+借助 TypeScript 泛型，你可以编写接受 Zod schema 作为参数的可复用函数。这使你能够创建自定义验证逻辑、schema 转换等，同时保持类型安全和类型推断能力
 
-When attempting to write a function that accepts a Zod schema as an input, it's tempting to try something like this:
+当尝试编写一个接受 Zod schema 作为输入的函数时，很容易想到这样写：
 
 ```ts
 function inferSchema<T>(schema: z.ZodType<T>) {
@@ -2796,16 +2786,16 @@ function inferSchema<T>(schema: z.ZodType<T>) {
 }
 ```
 
-This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `ZodType`.
+这种方式是不正确的，并且限制了 TypeScript 正确推断参数的能力。无论传入什么，`schema` 的类型都会是 `ZodType` 的实例
 
 ```ts
 inferSchema(z.string());
 // => ZodType<string>
 ```
 
-This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
+这种方式会丢失类型信息，具体来说，是丢失输入实际所属的_子类_（此处为 `ZodString`）。这意味着你无法在 `inferSchema` 的结果上调用 `.min()` 等字符串专用方法
 
-A better approach is to infer _the schema as a whole_ instead of merely its inferred type. You can do this with a utility type called `z.ZodTypeAny`.
+更好的方式是推断_整个 schema_，而不仅仅是它的推断类型。你可以使用名为 `z.ZodTypeAny` 的工具类型来实现这一点
 
 ```ts
 function inferSchema<T extends z.ZodTypeAny>(schema: T) {
@@ -2816,13 +2806,13 @@ inferSchema(z.string());
 // => ZodString
 ```
 
-> `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
+> `ZodTypeAny` 只是 `ZodType<any, any, any>` 的简写，这是一种足够宽泛、能够匹配任何 Zod schema 的类型
 
-The Result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
+现在，结果具备完整且正确的类型，类型系统也能够推断出 schema 的具体子类
 
-#### Inferring the inferred type
+#### 推断推断类型
 
-If you follow the best practice of using `z.ZodTypeAny` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
+如果遵循最佳实践，将 `z.ZodTypeAny` 用作 schema 的泛型参数，可能会遇到解析数据被标记为 `any` 而不是 schema 的推断类型的问题
 
 ```ts
 function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
@@ -2833,7 +2823,7 @@ parseData("sup", z.string());
 // => any
 ```
 
-Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAny` instead of the inferred type. You can fix this with a type cast using `z.infer`.
+由于 TypeScript 推断的工作方式，它会将 `schema` 视为 `ZodTypeAny`，而不是推断出的类型。你可以使用 `z.infer` 进行类型断言来修复此问题
 
 ```ts
 function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
@@ -2845,9 +2835,9 @@ parseData("sup", z.string());
 // => string
 ```
 
-#### Constraining allowable inputs
+#### 限制允许的输入
 
-The `ZodType` class has three generic parameters.
+`ZodType` 类有三个泛型参数
 
 ```ts
 class ZodType<
@@ -2857,7 +2847,7 @@ class ZodType<
 > { ... }
 ```
 
-By constraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
+通过在泛型输入中约束这些参数，可以限制函数允许接受的 schema：
 
 ```ts
 function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
@@ -2871,9 +2861,9 @@ makeSchemaOptional(z.number());
 // Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
 ```
 
-### Error handling
+### 错误处理
 
-Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
+Zod 提供了一个名为 `ZodError` 的 Error 子类。ZodError 包含一个 `issues` 数组，其中包含验证问题的详细信息
 
 ```ts
 const result = z
@@ -2896,13 +2886,13 @@ if (!result.success) {
 }
 ```
 
-> For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
+> 有关可能的错误代码以及如何自定义错误消息的详细信息，请参阅专门的错误处理指南：[ERROR_HANDLING.md](ERROR_HANDLING.md)
 
-Zod's error reporting emphasizes _completeness_ and _correctness_. If you are looking to present a useful error message to the end user, you should either override Zod's error messages using an error map (described in detail in the Error Handling guide) or use a third-party library like [`zod-validation-error`](https://github.com/causaly/zod-validation-error)
+Zod 的错误报告强调_完整性_和_正确性_。如果想向最终用户呈现有用的错误消息，则应使用错误映射覆盖 Zod 的错误消息（错误处理指南中对此有详细介绍），或使用 [`zod-validation-error`](https://github.com/causaly/zod-validation-error) 等第三方库
 
-### Error formatting
+### 错误格式化
 
-You can use the `.format()` method to convert this error into a nested object.
+你可以使用 `.format()` 方法将此错误转换为嵌套对象
 
 ```ts
 const result = z
@@ -2924,86 +2914,86 @@ if (!result.success) {
 
 <br/>
 
-## Comparison
+## 对比
 
-There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
+还有一些其他广泛使用的验证库，但它们都有一些设计限制，导致开发者体验不够理想
 
-<!-- The table below summarizes the feature differences. Below the table there are more involved discussions of certain alternatives, where necessary. -->
+<!-- 下表总结了功能差异。表格下方还会在必要时更深入地讨论某些替代方案。 -->
 
-<!-- | Feature                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
+<!-- | 功能                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
 | ---------------------------------------------------------------------------------------------------------------------- | :-----------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: | :-------------------------------------------------------------: |
-| <abbr title='Any ability to extract a TypeScript type from a validator instance counts.'>Type inference</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
-| <abbr title="Yup's inferred types are incorrect in certain cases, see discussion below.">Correct type inference</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <abbr title='从验证器实例中提取任何 TypeScript 类型的能力都算作支持。'>类型推断</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <abbr title="Yup 的推断类型在某些情况下不正确，详见下文讨论。">正确的类型推断</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
 
-<abbr title="number, string, boolean, null, undefined">Primitive Types</abbr>
-<abbr title="Includes any checks beyond 'Is this a string?', e.g. min/max length, isEmail, isURL, case checking, etc.">String Validation</abbr>
-<abbr title="Includes any checks beyond 'Is this a number?', e.g. min/max, isPositive, integer vs float, etc.">Number Validation</abbr>
-Dates
+<abbr title="number、string、boolean、null、undefined">原始类型</abbr>
+<abbr title="包括超出“这是字符串吗？”之外的所有检查，例如最小／最大长度、isEmail、isURL、大小写检查等。">字符串验证</abbr>
+<abbr title="包括超出“这是数字吗？”之外的所有检查，例如最小／最大值、isPositive、整数与浮点数等。">数字验证</abbr>
+日期
 
-Primitive Literals
-Object Literals
-Tuple Literals
-Objects
-Arrays
-Non-empty arrays
-Unions
-Optionals
-Nullable
-Enums
-Enum Autocomplete
-Intersections
-Object Merging
-Tuples
-Recursive Types
-Function Schemas
+原始字面量
+对象字面量
+元组字面量
+对象
+数组
+非空数组
+联合类型
+可选类型
+可空类型
+枚举
+枚举自动补全
+交叉类型
+对象合并
+元组
+递归类型
+函数 schema
 
-<abbr title="For instance, Yup allows custom error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
-Immutable instances
-Type Guards
-Validity Checking
-Casting
-Default Values
-Rich Errors
-Branded -->
+<abbr title="例如，Yup 允许使用 yup.number().min(5, 'Number must be more than 5!') 这样的语法自定义错误消息">验证消息</abbr>
+不可变实例
+类型守卫
+有效性检查
+类型转换
+默认值
+丰富的错误信息
+品牌 -->
 
-<!-- - Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+<!-- - 缺少对象方法：（pick、omit、partial、deepPartial、merge、extend）
 
-* Missing nonempty arrays with proper typing (`[T, ...T[]]`)
-* Missing lazy/recursive types
-* Missing promise schemas
-* Missing function schemas
-* Missing union & intersection schemas
-* Missing support for parsing cyclical data (maybe)
-* Missing error customization -->
+* 缺少具备正确类型的非空数组（`[T, ...T[]]`）
+* 缺少惰性／递归类型
+* 缺少 Promise schema
+* 缺少函数 schema
+* 缺少联合与交叉 schema
+* 缺少对解析循环数据的支持（可能）
+* 缺少错误自定义 -->
 
 ### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static type inference 😕
+不支持静态类型推断 😕
 
 ### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
-Yup is a full-featured library that was implemented first in vanilla JS, and later rewritten in TypeScript.
+Yup 是一个功能完整的库，最初使用原生 JS 实现，之后又使用 TypeScript 重写
 
-- Supports casting and transforms
-- All object fields are optional by default
-<!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->
-- Missing promise schemas
-- Missing function schemas
-- Missing union & intersection schemas
+- 支持类型转换和转换函数
+- 默认情况下所有对象字段都是可选的
+<!-- - 缺少具备正确类型的非空数组（`[T, ...T[]]`） -->
+- 缺少 Promise schema
+- 缺少函数 schema
+- 缺少联合与交叉 schema
 
-<!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
+<!-- ¹Yup 对 `required` 一词有着奇怪的解释。它不是表示“非 undefined”，而是表示“非空”。因此，`yup.string().required()` 不接受空字符串，`yup.array(yup.string()).required()` 也不接受空数组。相反，在 Zod 数组中有专门的 `.nonempty()` 方法来表示这一点，也可以使用自定义细化来实现。 -->
 
 ### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
-io-ts is an excellent library by gcanti. The API of io-ts heavily inspired the design of Zod.
+io-ts 是 gcanti 编写的优秀库。io-ts 的 API 深刻影响了 Zod 的设计
 
-In our experience, io-ts prioritizes functional programming purity over developer experience in many cases. This is a valid and admirable design goal, but it makes io-ts particularly hard to integrate into an existing codebase with a more procedural or object-oriented bias. For instance, consider how to define an object with optional properties in io-ts:
+根据我们的经验，io-ts 在许多情况下更重视函数式编程的纯粹性，而不是开发者体验。这是一个合理且令人钦佩的设计目标，但它使 io-ts 很难集成到更偏向过程式或面向对象的现有代码库中。例如，考虑如何在 io-ts 中定义带有可选属性的对象：
 
 ```ts
 import * as t from "io-ts";
@@ -3013,7 +3003,7 @@ const A = t.type({
 });
 
 const B = t.partial({
-  bar: t.number,
+  bar: t.number(),
 });
 
 const C = t.intersection([A, B]);
@@ -3022,9 +3012,9 @@ type C = t.TypeOf<typeof C>;
 // returns { foo: string; bar?: number | undefined }
 ```
 
-You must define the required and optional props in separate object validators, pass the optionals through `t.partial` (which marks all properties as optional), then combine them with `t.intersection` .
+你必须在单独的对象验证器中定义必需属性和可选属性，通过 `t.partial` 传递可选属性（它会将所有属性标记为可选），然后使用 `t.intersection` 将它们组合起来
 
-Consider the equivalent in Zod:
+下面是 Zod 中的等效写法：
 
 ```ts
 const C = z.object({
@@ -3036,42 +3026,42 @@ type C = z.infer<typeof C>;
 // returns { foo: string; bar?: number | undefined }
 ```
 
-This more declarative API makes schema definitions vastly more concise.
+这种更加声明式的 API 使 schema 定义简洁得多
 
-`io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts and the `fp-ts` nomenclature to use the library.
+`io-ts` 还要求使用 gcanti 的函数式编程库 `fp-ts` 来解析结果和处理错误。对于希望让代码库严格保持函数式风格的开发者来说，这也是另一个优秀的资源。但依赖 `fp-ts` 必然会带来大量认知负担；开发者必须熟悉函数式编程概念和 `fp-ts` 的术语，才能使用该库
 
-- Supports codecs with serialization & deserialization transforms
-- Supports branded types
-- Supports advanced functional programming, higher-kinded types, `fp-ts` compatibility
-- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
-- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
-- Missing promise schemas
-- Missing function schemas
+- 支持带有序列化和反序列化转换的 codec
+- 支持品牌类型
+- 支持高级函数式编程、高阶类型以及 `fp-ts` 兼容性
+- 缺少对象方法：（pick、omit、partial、deepPartial、merge、extend）
+- 缺少具备正确类型的非空数组（`[T, ...T[]]`）
+- 缺少 Promise schema
+- 缺少函数 schema
 
 ### Runtypes
 
 [https://github.com/runtypes/runtypes](https://github.com/runtypes/runtypes)
 
-Runtypes is focused on ergonomics, with good type inference support.
+Runtypes 专注于易用性，并且对类型推断提供了良好支持
 
-- Supports "pattern matching": computed properties that distribute over unions
-- Supports branded types
-- Supports template literals
-- Supports conformance to predefined static types
-- Missing object methods: (deepPartial, merge)
-- Missing promise schemas
-- Missing error customization
+- 支持“模式匹配”：可以分发到联合类型中的计算属性
+- 支持品牌类型
+- 支持模板字面量
+- 支持符合预定义的静态类型
+- 缺少对象方法：（deepPartial、merge）
+- 缺少 Promise schema
+- 缺少错误自定义
 
 ### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
-Ow is focused on function input validation. It's a library that makes it easy to express complicated assert statements, but it doesn't let you parse untyped data. They support a much wider variety of types; Zod has a nearly one-to-one mapping with TypeScript's type system, whereas ow lets you validate several highly-specific types out of the box (e.g. `int32Array` , see full list in their README).
+Ow 专注于函数输入验证。它让表达复杂的断言语句变得容易，但不允许你解析无类型数据。它们支持更多种类的类型；Zod 几乎与 TypeScript 的类型系统一一对应，而 ow 则允许你直接验证多种高度特定的类型（例如 `int32Array`，完整列表请参阅其 README）
 
-If you want to validate function inputs, use function schemas in Zod! It's a much simpler approach that lets you reuse a function type declaration without repeating yourself (namely, copy-pasting a bunch of ow assertions at the beginning of every function). Also Zod lets you validate your return types as well, so you can be sure there won't be any unexpected data passed downstream.
+如果想验证函数输入，请使用 Zod 中的函数 schema！这是一种更加简单的方法，可以让你复用函数类型声明而无需重复自己（也就是不必在每个函数开头复制粘贴一堆 ow 断言）。此外，Zod 还允许你验证返回类型，因此可以确保不会有意外数据传递到下游
 
 <br/>
 
-## Changelog
+## 更新日志
 
-View the changelog at [CHANGELOG.md](CHANGELOG.md)
+请在 [CHANGELOG.md](CHANGELOG.md) 中查看更新日志。

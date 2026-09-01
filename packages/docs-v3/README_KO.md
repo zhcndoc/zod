@@ -1,23 +1,23 @@
 <p align="center">
-  <img src="logo.svg" width="200px" align="center" alt="Zod 로고" />
+  <img src="logo.svg" width="200px" align="center" alt="Zod 徽标" />
   <h1 align="center">Zod</h1>
   <p align="center">
     ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
     <br/>
-    정적 타입 추론을 지원하는 TypeScript 기반 스키마 검증 라이브러리
+    支持静态类型推断的 TypeScript 模式验证库
   </p>
 </p>
 <br/>
 <p align="center">
-<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI 상태" /></a>
-<a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="라이선스"></a>
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI 状态" /></a>
+<a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="由 Colin McDonnell 创建"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="许可证"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-<a href="https://github.com/colinhacks/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="스타"></a>
+<a href="https://github.com/colinhacks/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="星标"></a>
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">문서</a>
+  <a href="https://zod.dev">文档</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -25,7 +25,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://deno.land/x/zod">deno</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/colinhacks/zod/issues/new">이슈</a>
+  <a href="https://github.com/colinhacks/zod/issues/new">问题</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -36,54 +36,54 @@
 <br/>
 <br/>
 
-<!-- <p><strong>공지 ✨</strong> Zod가 <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS 펠로우십을 받았습니다!<br/>공지 포스트 읽기 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
+<!-- <p><strong>公告 ✨</strong> Zod 获得了 <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship！<br/>阅读公告文章 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
 
-![clerk 공지](https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad)
+![clerk 公告](https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad)
 
 <br/>
 
-## 목차
+## 目录
 
-> 이 문서는 [중국어](./README_ZH.md)로도 번역되었습니다.
+> 本文档也已翻译成[中文](./README_ZH.md)
 
 - [Zod](#zod)
-  - [목차](#목차)
-  - [소개](#소개)
-  - [스폰서](#스폰서)
-    - [생태계](#생태계)
-      - [리소스](#리소스)
-      - [API 라이브러리](#api-라이브러리)
-      - [폼 통합 라이브러리](#폼-통합-라이브러리)
-      - [Zod를 활용한 다양한 도구들](#zod를-활용한-다양한-도구들)
+  - [目录](#목차)
+  - [介绍](#소개)
+  - [赞助商](#스폰서)
+    - [生态系统](#생태계)
+      - [资源](#리소스)
+      - [API 库](#api-라이브러리)
+      - [表单集成库](#폼-통합-라이브러리)
+      - [使用 Zod 的各种工具](#zod를-활용한-다양한-도구들)
       - [X to Zod](#x-to-zod)
-      - [목킹(Mocking)](#목킹mocking)
-      - [Zod로 구동되는 프로젝트들](#zod로-구동되는-프로젝트들)
-      - [Zod 유틸리티 모음](#zod-유틸리티-모음)
-  - [설치](#설치)
-    - [요구사항](#요구사항)
-    - [`npm`에서 설치하기](#npm에서-설치하기)
-  - [기본 사용법](#기본-사용법)
-    - [간단한 문자열 스키마 생성하기](#간단한-문자열-스키마-생성하기)
-    - [객체 스키마 생성하기](#객체-스키마-생성하기)
-  - [기본 타입(Primitives)](#기본-타입primitives)
-  - [기본 타입 강제 변환(Coercion)](#기본-타입-강제-변환coercion)
-  - [리터럴(Literals)](#리터럴literals)
-  - [문자열](#문자열)
-    - [날짜와 시간](#날짜와-시간)
-    - [날짜](#날짜)
-    - [시간 형식 검증](#시간-형식-검증)
-    - [IP 주소](#ip-주소)
-    - [IP 범위 (CIDR)](#ip-범위-cidr)
-  - [숫자](#숫자)
+      - [模拟（Mocking）](#목킹mocking)
+      - [由 Zod 驱动的项目](#zod로-구동되는-프로젝트들)
+      - [Zod 实用工具集合](#zod-유틸리티-모음)
+  - [安装](#설치)
+    - [要求](#요구사항)
+    - [从 `npm` 安装](#npm에서-설치하기)
+  - [基本用法](#기본-사용법)
+    - [创建简单的字符串模式](#간단한-문자열-스키마-생성하기)
+    - [创建对象模式](#객체-스키마-생성하기)
+  - [基本类型（Primitives）](#기본-타입primitives)
+  - [基本类型强制转换（Coercion）](#기본-타입-강제-변환coercion)
+  - [字面量（Literals）](#리터럴literals)
+  - [字符串](#문자열)
+    - [日期和时间](#날짜와-시간)
+    - [日期](#날짜)
+    - [时间格式验证](#시간-형식-검증)
+    - [IP 地址](#ip-주소)
+    - [IP 范围（CIDR）](#ip-범위-cidr)
+  - [数字](#숫자)
   - [BigInts](#bigints)
-  - [NaN (Not a Number)](#nan-not-a-number)
-  - [불리언(Booleans)](#불리언booleans)
-  - [날짜](#날짜)
-  - [Zod 열거형(enum)](#zod-열거형enum)
-  - [네이티브 열거형(Native Enums)](#네이티브-열거형native-enums)
-  - [옵셔널(Optional)](#옵셔널optional)
-  - [Nullable 타입](#nullable-타입)
-  - [객체](#객체)
+  - [NaN（Not a Number）](#nan-not-a-number)
+  - [布尔值（Booleans）](#불리언booleans)
+  - [日期](#날짜)
+  - [Zod 枚举（enum）](#zod-열거형enum)
+  - [原生枚举（Native Enums）](#네이티브-열거형native-enums)
+  - [可选（Optional）](#옵셔널optional)
+  - [Nullable 类型](#nullable-타입)
+  - [对象](#객체)
     - [`.shape`](#shape)
     - [`.keyof`](#keyof)
     - [`.extend`](#extend)
@@ -94,46 +94,46 @@
     - [`.required`](#required)
     - [`.passthrough`](#passthrough)
     - [`.strict`](#strict)
-    - [`.strip` 메서드](#strip-메서드)
+    - [`.strip` 方法](#strip-메서드)
     - [`.catchall`](#catchall)
-  - [배열](#배열)
+  - [数组](#배열)
     - [`.element`](#element)
     - [`.nonempty`](#nonempty)
     - [`.min` / `.max` / `.length`](#min--max--length)
-  - [튜플(Tuples)](#튜플tuples)
-  - [유니온 타입](#유니온-타입)
-  - [구별된 유니온(Discriminated Unions)](#구별된-유니온discriminated-unions)
-  - [레코드(Records)](#레코드records)
-  - [맵(Map)](#맵map)
-  - [Set(집합)](#set집합)
-  - [교차 타입(Intersections)](#교차-타입intersections)
-  - [재귀 타입](#재귀-타입)
-    - [ZodType과 ZodEffects 함께 사용하기](#zodtype과-zodeffects-함께-사용하기)
-    - [JSON 타입 검증](#json-타입-검증)
-    - [순환 객체](#순환-객체)
+  - [元组（Tuples）](#튜플tuples)
+  - [联合类型](#유니온-타입)
+  - [可辨识联合（Discriminated Unions）](#구별된-유니온discriminated-unions)
+  - [记录（Records）](#레코드records)
+  - [映射（Map）](#맵map)
+  - [Set（集合）](#set집합)
+  - [交叉类型（Intersections）](#교차-타입intersections)
+  - [递归类型](#재귀-타입)
+    - [结合使用 ZodType 和 ZodEffects](#zodtype과-zodeffects-함께-사용하기)
+    - [验证 JSON 类型](#json-타입-검증)
+    - [循环对象](#순환-객체)
   - [Promise](#promise)
   - [Instanceof](#instanceof)
-  - [함수](#함수)
-  - [전처리(Preprocess)](#전처리preprocess)
-  - [커스텀 스키마](#커스텀-스키마)
-  - [스키마 메서드](#스키마-메서드)
+  - [函数](#함수)
+  - [预处理（Preprocess）](#전처리preprocess)
+  - [自定义模式](#커스텀-스키마)
+  - [模式方法](#스키마-메서드)
     - [`.parse`](#parse)
     - [`.parseAsync`](#parseasync)
     - [`.safeParse`](#safeparse)
     - [`.safeParseAsync`](#safeparseasync)
     - [`.refine`](#refine)
-      - [인자](#인자)
-      - [에러 경로 커스텀하기](#에러-경로-커스텀하기)
-      - [비동기 정제(Refinements)](#비동기-정제refinements)
-      - [transform과 refine의 관계](#transform과-refine의-관계)
+      - [参数](#인자)
+      - [自定义错误路径](#에러-경로-커스텀하기)
+      - [异步细化（Refinements）](#비동기-정제refinements)
+      - [transform 与 refine 的关系](#transform과-refine의-관계)
     - [`.superRefine`](#superrefine)
-      - [조기 중단](#조기-중단)
-      - [타입 정제](#타입-정제)
+      - [提前中止](#조기-중단)
+      - [类型细化](#타입-정제)
     - [`.transform`](#transform)
-      - [체이닝 순서](#체이닝-순서)
-      - [변환 중에 유효성 검사하기](#변환-중에-유효성-검사하기)
-      - [변환과 정제의 관계](#변환과-정제의-관계)
-      - [비동기 변환(Async Transforms)](#비동기-변환async-transforms)
+      - [链式调用顺序](#체이닝-순서)
+      - [在转换过程中进行验证](#변환-중에-유효성-검사하기)
+      - [转换与细化的关系](#변환과-정제의-관계)
+      - [异步转换（Async Transforms）](#비동기-변환async-transforms)
     - [`.default`](#default)
     - [`.describe`](#describe)
     - [`.catch`](#catch)
@@ -147,44 +147,44 @@
     - [`.brand`](#brand)
     - [`.readonly`](#readonly)
     - [`.pipe`](#pipe)
-      - [`.pipe()`를 사용하여 `z.coerce`의 일반적인 문제를 해결할 수 있습니다.](#pipe를-사용하여-zcoerce의-일반적인-문제를-해결할-수-있습니다)
-  - [Guides and concepts](#guides-and-concepts)
-    - [타입 추론](#타입-추론)
-    - [제네릭 함수 작성하기](#제네릭-함수-작성하기)
-      - [추론된 타입 유추하기](#추론된-타입-유추하기)
-      - [허용 가능한 입력 제한하기](#허용-가능한-입력-제한하기)
-    - [에러 처리](#에러-처리)
-    - [에러 포맷팅](#에러-포맷팅)
-  - [비교](#비교)
+      - [使用 `.pipe()` 解决 `z.coerce` 的常见问题](#pipe를-사용하여-zcoerce의-일반적인-문제를-해결할-수-있습니다)
+  - [指南和概念](#guides-and-concepts)
+    - [类型推断](#타입-추론)
+    - [编写泛型函数](#제네릭-함수-작성하기)
+      - [推断推导出的类型](#추론된-타입-유추하기)
+      - [限制可接受的输入](#허용-가능한-입력-제한하기)
+    - [错误处理](#에러-처리)
+    - [错误格式化](#에러-포맷팅)
+  - [比较](#비교)
     - [Joi](#joi)
     - [Yup](#yup)
     - [io-ts](#io-ts)
     - [Runtypes](#runtypes)
     - [Ow](#ow)
-  - [변경 내역](#변경-내역)
+  - [变更记录](#변경-내역)
 
-## 소개
+## 介绍
 
-Zod는 TypeScript를 우선으로 하는 스키마 선언 및 검증 라이브러리입니다. 여기서 "스키마"라는 용어는 단순한 `string`부터 복잡한 중첩 객체까지 모든 데이터 타입을 포괄적으로 의미합니다.
+Zod 是一个 TypeScript 优先的模式声明与验证库。其中，“模式”一词泛指所有数据类型，从简单的 `string` 到复杂的嵌套对象。
 
-Zod는 개발자 친화적으로 설계되었습니다. 목표는 중복된 타입 선언을 없애는 것입니다. Zod를 사용하면 검증기를 **한 번만** 선언하면, Zod가 자동으로 정적 TypeScript 타입을 추론합니다. 간단한 타입을 복잡한 데이터 구조로 합성하기도 쉽습니다.
+Zod 的设计注重开发者体验。其目标是消除重复的类型声明。使用 Zod 时，只需**一次**声明验证器，Zod 就会自动推断静态 TypeScript 类型。将简单类型合成为复杂数据结构也非常容易。
 
-Zod의 주요 특징은 다음과 같습니다:
+Zod 的主要特点如下：
 
-- **의존성 없음**: 외부 라이브러리에 의존하지 않습니다.
-- **범용성**: Node.js와 모든 최신 브라우저에서 동작합니다.
-- **경량화**: 압축 후 8KB로 매우 작습니다.
-- **불변성**: `.optional()`과 같은 메서드는 새로운 인스턴스를 반환합니다.
-- **간결한 체인 인터페이스**: 메서드 체이닝을 통해 코드를 간결하게 작성할 수 있습니다.
-- **함수형 접근**: ["검증하지 말고 파싱하라"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) 철학을 따릅니다.
-- **JavaScript 지원**: TypeScript를 사용하지 않아도 됩니다. 일반 JavaScript에서도 동작합니다.
+- **零依赖**：不依赖外部库
+- **通用性**：可在 Node.js 和所有现代浏览器中运行
+- **轻量化**：压缩后仅 8KB，非常小
+- **不可变性**：`.optional()` 等方法会返回新的实例
+- **简洁的链式接口**：通过方法链可以编写简洁的代码
+- **函数式方法**：遵循["不要验证，而要解析"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)的理念
+- **支持 JavaScript**：无需使用 TypeScript，普通 JavaScript 也可以运行
 
-## 스폰서
+## 赞助商
 
-어떤 수준의 스폰서십도 환영하며 권장합니다. Zod를 사용해 유료 제품을 개발했다면, [기업용 티어](https://github.com/sponsors/colinhacks) 중 하나를 고려해 보세요.
+我们欢迎并鼓励任何级别的赞助。如果你使用 Zod 开发了付费产品，请考虑选择[企业级套餐](https://github.com/sponsors/colinhacks)之一。
 
 <br/>
-<h3 align="center">다이아몬드</h3>
+<h3 align="center">钻石级</h3>
 
 <br/>
 
@@ -192,13 +192,13 @@ Zod의 주요 특징은 다음과 같습니다:
   <a href="https://go.clerk.com/PKHrcwh">
     <picture width="100%">
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-      <img alt="clerk 로고" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+      <img alt="clerk 徽标" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
     </picture>
   </a>
   <br/>
   <br/>
   <p>
-    가장 포괄적인 사용자 관리 플랫폼
+    最全面的用户管理平台
     <br/>
     <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
   </p>
@@ -207,7 +207,7 @@ Zod의 주요 특징은 다음과 같습니다:
 <br/>
 <br/>
 
-<h3 align="center">플래티넘</h3>
+<h3 align="center">铂金级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -221,7 +221,7 @@ Zod의 주요 특징은 다음과 같습니다:
         </picture>
       </a>
       <br  />   
-      API를 위한 더 나은 SDK 생성
+      为 API 创建更好的 SDK
       <br/>
       <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
       </p>
@@ -239,7 +239,7 @@ Zod의 주요 특징은 다음과 같습니다:
         </picture>
       </a>
       <br  />   
-      서버리스 Postgres — 더 빠르게 배포
+      无服务器 Postgres — 更快部署
       <br/>
       <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
       </p>
@@ -257,7 +257,7 @@ Zod의 주요 특징은 다음과 같습니다:
         </picture>
       </a>
       <br  />   
-      <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>로 AI 앱과 워크플로우 구축
+      使用 <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a> 构建 AI 应用和工作流
       <br/>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
       </p>
@@ -275,7 +275,7 @@ Zod의 주요 특징은 다음과 같습니다:
         </picture>
       </a>
       <br  />   
-      최고 수준의 SDK 생성
+      创建顶级 SDK
       <br/>
       <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
       </p>
@@ -293,7 +293,7 @@ Zod의 주요 특징은 다음과 같습니다:
         </picture>
       </a>
       <br  />   
-      API를 위한 SDK 및 Terraform 프로바이더
+      面向 API 的 SDK 和 Terraform 提供商
       <br/>
       <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
       </p>
@@ -304,7 +304,7 @@ Zod의 주요 특징은 다음과 같습니다:
 
 <br/>
 
-<h3 align="center">골드</h3>
+<h3 align="center">黄金级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -319,45 +319,44 @@ Zod의 주요 특징은 다음과 같습니다:
       <a style="text-decoration:none;" href="https://cerbos.dev/" target="_blank">Cerbos</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="50px;" alt="Scalar.com 로고" />
+      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="50px;" alt="Scalar.com 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev 로고" />
+      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
     </tr><tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="50px;" alt="Transloadit 로고" />
+      <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="50px;" alt="Transloadit 徽标" />
       <br />
-      <a style="text-decoration:none;" href="https://transloadit.com/?utm_source=zod&utm_medium=refe
-    rral&utm_campaign=sponsorship&utm_content=github" target="_blank">Transloadit</a>
+      <a style="text-decoration:none;" href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">Transloadit</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="50px;" alt="Infisical 로고" />
+      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="50px;" alt="Infisical 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://infisical.com" target="_blank">Infisical</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="50px;" alt="Whop 로고" />
+      <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="50px;" alt="Whop 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://whop.com/" target="_blank">Whop</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList 로고" />
+      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a>
     </td>
     </tr><tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="50px;" alt="Plain 로고" />
+      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="50px;" alt="Plain 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://plain.com/" target="_blank">Plain.</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="50px;" alt="Inngest 로고" />
+      <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="50px;" alt="Inngest 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://inngest.com/" target="_blank">Inngest</a>
     </td>
@@ -367,7 +366,7 @@ Zod의 주요 특징은 다음과 같습니다:
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux 로고" />
+      <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux 徽标" />
       <br />
       <a style="text-decoration:none;" href="https://mux.link/zod" target="_blank">Mux</a>
     </td>
@@ -376,7 +375,7 @@ Zod의 주요 특징은 다음과 같습니다:
 
 <br/>
 
-<h3 align="center">실버</h3>
+<h3 align="center">白银级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -384,30 +383,30 @@ Zod의 주요 특징은 다음과 같습니다:
       <a href="https://www.val.town/">
         <picture width="100%" height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/36961d2e-d92e-42af-9031-a41885ece5f4">
-          <img alt="val town 로고" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d" height="40px">
+          <img alt="val town 徽标" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d" height="40px">
         </picture>
       </a>
     </td>
     <td align="center">
       <a href="https://www.route4me.com/">
-        <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me 로고" />
+        <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me 徽标" />
       </a>
     </td>
     <td align="center">
       <a href="https://encore.dev">
-        <img src="https://github.com/colinhacks/zod/assets/3084745/5ad94e73-cd34-4957-9979-37da85fcf9cd" height="40px;" alt="Encore.dev 로고" />
+        <img src="https://github.com/colinhacks/zod/assets/3084745/5ad94e73-cd34-4957-9979-37da85fcf9cd" height="40px;" alt="Encore.dev 徽标" />
       </a>
     </td>
     <td align="center">
       <a href="https://www.replay.io/">
-        <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io 로고" />
+        <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io 徽标" />
       </a>
     </td>
   </tr>
   <tr>
     <td align="center">
       <a href="https://www.numeric.io">
-        <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric 로고" />
+        <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric 徽标" />
       </a>
     </td>
     <td align="center">
@@ -429,7 +428,7 @@ Zod의 주요 특징은 다음과 같습니다:
   <tr>
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
-        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative 로고" />
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative 徽标" />
       </a>
     </td>
     <td align="center">
@@ -440,7 +439,7 @@ Zod의 주요 특징은 다음과 같습니다:
   </tr>
 </table>
 
-<h3 align="center">브론즈</h3>
+<h3 align="center">青铜级</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -469,121 +468,121 @@ Zod의 주요 특징은 다음과 같습니다:
   </tr>
 </table>
 
-### 생태계
+### 生态系统
 
-Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구들이 점점 늘어나고 있습니다! 여러분이 Zod를 기반으로 도구나 라이브러리를 만들었다면, [트위터](https://twitter.com/colinhacks)로 알려주거나 [GitHub Discussions](https://github.com/colinhacks/zod/discussions)에 글을 남겨주세요. 아래에 추가하고 트윗으로 알리겠습니다.
+基于 Zod 构建或原生支持 Zod 的工具越来越多了！如果你基于 Zod 创建了工具或库，请通过[推特](https://twitter.com/colinhacks)告知我们，或在 [GitHub Discussions](https://github.com/colinhacks/zod/discussions) 中发帖。我们会将其添加到下方并发布推文。
 
-#### 리소스
+#### 资源
 
-- [Total TypeScript Zod 튜토리얼](https://www.totaltypescript.com/tutorials/zod) by [@mattpocockuk](https://twitter.com/mattpocockuk)
-- [TypeScript의 약점 해결: 런타임 타입 체크](https://www.youtube.com/watch?v=rY_XqfSHock) by [@jherr](https://twitter.com/jherr)
+- [Total TypeScript Zod 教程](https://www.totaltypescript.com/tutorials/zod)，作者：[[@mattpocockuk](https://twitter.com/mattpocockuk)]
+- [解决 TypeScript 的弱点：运行时类型检查](https://www.youtube.com/watch?v=rY_XqfSHock)，作者：[[@jherr](https://twitter.com/jherr)]
 
-#### API 라이브러리
+#### API 库
 
-- [`tRPC`](https://github.com/trpc/trpc): GraphQL 없이도 타입 안전한 API를 구축할 수 있는 라이브러리.
-- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): NestJS 프로젝트에서 Zod를 사용하기 위한 헬퍼 메서드 제공.
-- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Zod를 사용해 엄격하게 타입이 지정된 엔드포인트를 구축. OpenAPI와 호환.
-- [`zhttp`](https://github.com/evertdespiegeleer/zhttp): OpenAPI 호환, 엄격한 타입 지정 HTTP 라이브러리. Zod를 사용한 입력 및 응답 검증 지원.
-- [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): 비즈니스 로직을 프레임워크와 분리할 수 있는 합성 가능한 함수 제공. Zod 스키마를 통해 타입 추론을 퍼스트클래스로 지원.
-- [`@zodios/core`](https://github.com/ecyrbe/zodios): axios와 Zod를 기반으로 한 타입스크립트 API 클라이언트. 런타임 및 컴파일 타임 검증 지원.
-- [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Express 기반 API를 구축할 때 I/O 스키마 검증과 커스텀 미들웨어를 제공.
-- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md): Zod와 Express를 사용한 엔드투엔드 타입 안전 JSON API. tRPC와 유사하지만 더 간단한 구조.
-- [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Koa에서 Zod를 사용해 I/O 검증이 포함된 타입 안전한 라우트 생성.
-- [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod 기반 Socket.IO 마이크로프레임워크. I/O 검증과 내장 AsyncAPI 스펙 지원.
-- [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): OpenAPI v3 스펙을 Zod 타입이 포함된 TS 엔드포인트 호출 함수로 변환하는 클라이언트 SDK 코드 생성기.
-- [`GQLoom`](https://github.com/modevol-com/gqloom): Zod를 사용하여 GraphQL 스키마와 리졸버를 엮습니다.
+- [`tRPC`](https://github.com/trpc/trpc)：无需 GraphQL 即可构建类型安全 API 的库
+- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs)：提供在 NestJS 项目中使用 Zod 的辅助方法
+- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints)：使用 Zod 构建严格类型化的端点。兼容 OpenAPI
+- [`zhttp`](https://github.com/evertdespiegeleer/zhttp)：兼容 OpenAPI、严格类型化的 HTTP 库。支持使用 Zod 进行输入和响应验证
+- [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/)：提供可组合的函数，使业务逻辑能够与框架分离。通过 Zod 模式以一等公民的方式支持类型推断
+- [`@zodios/core`](https://github.com/ecyrbe/zodios)：基于 axios 和 Zod 的 TypeScript API 客户端。支持运行时和编译时验证
+- [`express-zod-api`](https://github.com/RobinTail/express-zod-api)：使用 Express 构建 API 时提供 I/O 模式验证和自定义中间件
+- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md)：使用 Zod 和 Express 的端到端类型安全 JSON API。类似 tRPC，但结构更简单
+- [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router)：在 Koa 中使用 Zod 创建包含 I/O 验证的类型安全路由
+- [`zod-sockets`](https://github.com/RobinTail/zod-sockets)：基于 Zod 的 Socket.IO 微型框架。支持 I/O 验证和内置 AsyncAPI 规范
+- [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen)：将 OpenAPI v3 规范转换为包含 Zod 类型的 TS 端点调用函数的客户端 SDK 代码生成器
+- [`GQLoom`](https://github.com/modevol-com/gqloom)：使用 Zod 将 GraphQL 模式与解析器连接起来
 
-#### 폼 통합 라이브러리
+#### 表单集成库
 
-- [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): React Hook Form을 위한 공식 Zod 리졸버입니다.
-- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): `ZodError`에서 사용자 친화적인 오류 메시지를 생성합니다.
-- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): 커뮤니티에서 관리되는 Formik용 Zod 어댑터입니다.
-- [`react-zorm`](https://github.com/esamattis/react-zorm): Zod를 사용하여 React에서 독립적인 `<form>` 생성 및 검증을 제공합니다.
-- [`zodix`](https://github.com/rileytomasek/zodix): Remix 로더와 액션에서 FormData 및 URLSearchParams를 위한 Zod 유틸리티입니다.
-- [`conform`](https://conform.guide/api/zod/parseWithZod): HTML 폼의 점진적 향상을 위한 타입 안전한 폼 검증 라이브러리입니다. Remix와 Next.js에서 사용 가능합니다.
-- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Remix 앱에서 Zod와 표준 URLSearchParams 및 FormData 통합을 단순화합니다.
-- [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik과 호환되는 검증 라이브러리로, Zod를 Formik과 함께 사용하기 쉽게 해줍니다.
-- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Zod 오류 메시지를 번역하는 데 유용합니다.
-- [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): SolidJS를 위한 모듈식 폼 라이브러리로, Zod를 검증에 사용합니다.
-- [`houseform`](https://github.com/crutchcorn/houseform/): Zod를 검증에 사용하는 React 폼 라이브러리입니다.
-- [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): SvelteKit을 위한 강력한 폼 라이브러리로, Zod 검증을 지원합니다.
-- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): MobX와 Zod를 기반으로 한 데이터 중심 폼 빌더입니다.
-- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Vue.js를 위한 폼 라이브러리로, Zod 스키마 검증을 지원합니다.
-- [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer): Zod 스키마에서 폼 필드를 자동으로 추론하고, react-hook-form을 사용하여 E2E 타입 안전성을 보장합니다.
-- [`antd-zod`](https://github.com/MrBr/antd-zod): Ant Design 폼 필드 검증을 위한 Zod 어댑터입니다.
-- [`frrm`](https://github.com/schalkventer/frrm): 0.5kb 크기의 Zod 기반 HTML 폼 추상화 라이브러리입니다.
+- [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod)：适用于 React Hook Form 的官方 Zod 解析器
+- [`zod-validation-error`](https://github.com/causaly/zod-validation-error)：从 `ZodError` 生成用户友好的错误消息
+- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter)：由社区维护的 Formik Zod 适配器
+- [`react-zorm`](https://github.com/esamattis/react-zorm)：使用 Zod 在 React 中创建并验证独立的 `<form>`
+- [`zodix`](https://github.com/rileytomasek/zodix)：用于 Remix loader 和 action 中 FormData 及 URLSearchParams 的 Zod 实用工具
+- [`conform`](https://conform.guide/api/zod/parseWithZod)：用于 HTML 表单渐进式增强的类型安全表单验证库。可用于 Remix 和 Next.js
+- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper)：简化 Remix 应用中 Zod 与标准 URLSearchParams 和 FormData 的集成
+- [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod)：兼容 Formik 的验证库，让 Zod 更易与 Formik 一起使用
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n)：可用于翻译 Zod 错误消息
+- [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms)：适用于 SolidJS 的模块化表单库，使用 Zod 进行验证
+- [`houseform`](https://github.com/crutchcorn/houseform/)：使用 Zod 进行验证的 React 表单库
+- [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms)：适用于 SvelteKit 的强大表单库，支持 Zod 验证
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form)：基于 MobX 和 Zod 的数据驱动表单构建器
+- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod)：适用于 Vue.js 的表单库，支持 Zod 模式验证
+- [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer)：从 Zod 模式自动推断表单字段，并使用 react-hook-form 确保端到端类型安全
+- [`antd-zod`](https://github.com/MrBr/antd-zod)：用于 Ant Design 表单字段验证的 Zod 适配器
+- [`frrm`](https://github.com/schalkventer/frrm)：大小为 0.5kb 的基于 Zod 的 HTML 表单抽象库
 
-#### Zod를 활용한 다양한 도구들
+#### 使用 Zod 的各种工具
 
-- **[`zod-to-ts`](https://github.com/sachinraja/zod-to-ts)**: Zod 스키마를 TypeScript 타입 정의로 변환해주는 도구입니다.
-- **[`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)**: Zod 스키마를 [JSON 스키마](https://json-schema.org/)로 변환합니다.
-- **[`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi)**: Zod 스키마를 OpenAPI v3.x `SchemaObject`로 변환합니다.
-- **[`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check)**: Zod 스키마를 기반으로 `fast-check`의 임의 데이터 생성기를 만듭니다.
-- **[`zod-dto`](https://github.com/kbkk/abitia/tree/main/packages/zod-dto)**: Zod 스키마를 Nest.js의 DTO(Data Transfer Object)로 변환합니다.
-- **[`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod)**: Zod 스키마를 사용해 Fastify의 타입 프로바이더를 생성합니다.
-- **[`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi)**: Zod 스키마를 기반으로 OpenAPI(Swagger) 문서를 생성합니다. 스키마, 엔드포인트, 파라미터 등을 포함합니다.
-- **[`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod)**: Zod 스키마를 NestJS GraphQL 모델 클래스로 변환합니다. Zod 스키마와 함께 작동하는 GraphQL 메서드 데코레이터를 제공합니다.
-- **[`zod-openapi`](https://github.com/samchungy/zod-openapi)**: Zod 스키마를 사용해 완전한 OpenAPI v3.x 문서를 생성합니다.
-- **[`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi)**: Fastify 타입 프로바이더, 유효성 검사, 직렬화 및 `@fastify/swagger` 지원을 Zod 스키마와 함께 제공합니다.
-- **[`typeschema`](https://typeschema.com/)**: 스키마 유효성 검사를 위한 범용 어댑터입니다.
-- **[`zodex`](https://github.com/commonbaseapp/zodex)**: Zod 스키마의 (역)직렬화를 지원합니다.
+- **[`zod-to-ts`](https://github.com/sachinraja/zod-to-ts)**：将 Zod 模式转换为 TypeScript 类型定义的工具
+- **[`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)**：将 Zod 模式转换为 [JSON 模式](https://json-schema.org/)
+- **[`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi)**：将 Zod 模式转换为 OpenAPI v3.x `SchemaObject`
+- **[`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check)**：基于 Zod 模式创建 `fast-check` 的随机数据生成器
+- **[`zod-dto`](https://github.com/kbkk/abitia/tree/main/packages/zod-dto)**：将 Zod 模式转换为 Nest.js 的 DTO（Data Transfer Object）
+- **[`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod)**：使用 Zod 模式生成 Fastify 的类型提供程序
+- **[`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi)**：基于 Zod 模式生成 OpenAPI（Swagger）文档。包含模式、端点、参数等
+- **[`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod)**：将 Zod 模式转换为 NestJS GraphQL 模型类。提供可与 Zod 模式协同工作的 GraphQL 方法装饰器
+- **[`zod-openapi`](https://github.com/samchungy/zod-openapi)**：使用 Zod 模式生成完整的 OpenAPI v3.x 文档
+- **[`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi)**：为 Fastify 提供类型提供程序、验证、序列化以及 `@fastify/swagger` 支持，并与 Zod 模式配合使用
+- **[`typeschema`](https://typeschema.com/)**：用于模式验证的通用适配器
+- **[`zodex`](https://github.com/commonbaseapp/zodex)**：支持 Zod 模式的（反）序列化
 
-이 도구들은 Zod 스키마를 다양한 형식으로 변환하거나 다른 프레임워크와 통합하는 데 유용하게 사용할 수 있습니다.
+这些工具可用于将 Zod 模式转换为各种格式，或与其他框架集成。
 
 #### X to Zod
 
-- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): TypeScript 정의를 Zod 스키마로 변환합니다.
-- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/main/packages/zod): 정적 타입과 JSON 스키마에서 Zod를 생성합니다.
-- [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): [JSON 스키마](https://json-schema.org/)를 Zod 스키마로 변환합니다. [라이브 데모](https://StefanTerdell.github.io/json-schema-to-zod-react/).
-- [`json-to-zod`](https://github.com/rsinohara/json-to-zod): JSON 객체를 Zod 스키마로 변환합니다. [라이브 데모](https://rsinohara.github.io/json-to-zod-react/).
-- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL 스키마에서 폼 검증 스키마를 생성하는 GraphQL Code Generator 플러그인입니다.
-- [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Prisma 스키마에서 Zod 스키마를 생성합니다.
-- [`Supervillain`](https://github.com/Southclaws/supervillain): Go 구조체에서 Zod 스키마를 생성합니다.
-- [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Prisma 스키마에서 Zod 스키마를 생성합니다.
-- [`drizzle-zod`](https://orm.drizzle.team/docs/zod): Drizzle 스키마에서 Zod 스키마를 생성합니다.
-- [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Zod를 사용하여 완전히 구현된 tRPC 라우터와 검증 스키마를 생성합니다.
-- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types): Prisma 모델에서 Zod 타입을 생성합니다.
-- [`quicktype`](https://app.quicktype.io/): JSON 객체와 JSON 스키마를 Zod 스키마로 변환합니다.
-- [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod): [Sanity 스키마](https://www.sanity.io/docs/schema-types)에서 Zod 스키마를 생성합니다.
-- [`java-to-zod`](https://github.com/ivangreene/java-to-zod): POJO를 Zod 스키마로 변환합니다.
-- [`Orval`](https://github.com/anymaniax/orval): OpenAPI 스키마에서 Zod 스키마를 생성합니다.
-- [`Kubb`](https://github.com/kubb-labs/kubb): OpenAPI 스키마에서 SDK와 Zod 스키마를 생성합니다.
+- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod)：将 TypeScript 定义转换为 Zod 模式
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/main/packages/zod)：从静态类型和 JSON 模式生成 Zod
+- [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod)：将 [JSON 模式](https://json-schema.org/)转换为 Zod 模式。[在线演示](https://StefanTerdell.github.io/json-schema-to-zod-react/)
+- [`json-to-zod`](https://github.com/rsinohara/json-to-zod)：将 JSON 对象转换为 Zod 模式。[在线演示](https://rsinohara.github.io/json-to-zod-react/)
+- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema)：从 GraphQL 模式生成表单验证模式的 GraphQL Code Generator 插件
+- [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma)：从 Prisma 模式生成 Zod 模式
+- [`Supervillain`](https://github.com/Southclaws/supervillain)：从 Go 结构体生成 Zod 模式
+- [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator)：从 Prisma 模式生成 Zod 模式
+- [`drizzle-zod`](https://orm.drizzle.team/docs/zod)：从 Drizzle 模式生成 Zod 模式
+- [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator)：使用 Zod 生成完整实现的 tRPC 路由器和验证模式
+- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types)：从 Prisma 模型生成 Zod 类型
+- [`quicktype`](https://app.quicktype.io/)：将 JSON 对象和 JSON 模式转换为 Zod 模式
+- [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod)：从 [Sanity 模式](https://www.sanity.io/docs/schema-types)生成 Zod 模式
+- [`java-to-zod`](https://github.com/ivangreene/java-to-zod)：将 POJO 转换为 Zod 模式
+- [`Orval`](https://github.com/anymaniax/orval)：从 OpenAPI 模式生成 Zod 模式
+- [`Kubb`](https://github.com/kubb-labs/kubb)：从 OpenAPI 模式生成 SDK 和 Zod 模式
 
-#### 목킹(Mocking)
+#### 模拟（Mocking）
 
-- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Zod 스키마에서 목 데이터를 생성합니다. [faker.js](https://github.com/faker-js/faker)를 기반으로 동작합니다.
-- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Zod 스키마를 사용해 목 데이터를 생성합니다.
-- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture): Zod 스키마를 활용해 테스트용 픽스처를 결정론적인 방식으로 자동 생성합니다.
-- [`zocker`](https://zocker.sigrist.dev): 스키마를 기반으로 실제와 유사한 목 데이터를 생성합니다.
-- [`zodock`](https://github.com/ItMaga/zodock): Zod 스키마를 기반으로 목 데이터를 생성합니다.
-- [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker): Zod 스키마에서 목 데이터를 생성합니다. [@faker-js/faker](https://github.com/faker-js/faker)와 [randexp.js](https://github.com/fent/randexp.js)를 사용합니다.
+- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock)：从 Zod 模式生成模拟数据。基于 [faker.js](https://github.com/faker-js/faker) 运行
+- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking)：使用 Zod 模式生成模拟数据
+- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture)：利用 Zod 模式以确定性方式自动生成测试用 fixture
+- [`zocker`](https://zocker.sigrist.dev)：基于模式生成逼真的模拟数据
+- [`zodock`](https://github.com/ItMaga/zodock)：基于 Zod 模式生成模拟数据
+- [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker)：从 Zod 模式生成模拟数据。使用 [@faker-js/faker](https://github.com/faker-js/faker) 和 [randexp.js](https://github.com/fent/randexp.js)
 
-#### Zod로 구동되는 프로젝트들
+#### 由 Zod 驱动的项目
 
-- [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore 비용 최적화 도구.
-- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): 강력한 Zod 통합을 지원하는 Node.js Postgres 클라이언트.
-- [`schemql`](https://github.com/a2lix/schemql): 원시 SQL에 타입 안전성과 스키마 검증을 결합하여 SQL 워크플로우를 강화.
-- [`soly`](https://github.com/mdbetancourt/soly): Zod를 사용하여 CLI 애플리케이션 생성.
-- [`pastel`](https://github.com/vadimdemedes/pastel): React, Zod, Ink를 사용하여 CLI 애플리케이션 생성.
-- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): Zod 스키마를 사용한 XLSX 기반 리소스 검증 도구.
-- [`znv`](https://github.com/lostfictions/znv): Zod 스키마를 사용한 Node.js 환경 변수의 타입 안전한 파싱 및 검증.
-- [`zod-config`](https://github.com/alexmarqs/zod-config): 유연한 어댑터를 통해 여러 소스에서 설정을 로드하고 Zod를 사용해 타입 안전성 보장.
-- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): 스키마 검증을 통해 안전하게 환경 변수를 로드하는 플러그인. 가상 모듈을 사용해 간단하고, 인텔리센스를 통해 타입 안전성을 제공하며, 더 나은 개발자 경험(DX)을 제공. Zod로 구동.
+- [`freerstore`](https://github.com/JacobWeisenburger/freerstore)：Firestore 成本优化工具
+- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference)：支持强大 Zod 集成的 Node.js Postgres 客户端
+- [`schemql`](https://github.com/a2lix/schemql)：将类型安全与模式验证结合到原始 SQL 中，强化 SQL 工作流
+- [`soly`](https://github.com/mdbetancourt/soly)：使用 Zod 创建 CLI 应用
+- [`pastel`](https://github.com/vadimdemedes/pastel)：使用 React、Zod 和 Ink 创建 CLI 应用
+- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx)：使用 Zod 模式的基于 XLSX 的资源验证工具
+- [`znv`](https://github.com/lostfictions/znv)：使用 Zod 模式对 Node.js 环境变量进行类型安全的解析和验证
+- [`zod-config`](https://github.com/alexmarqs/zod-config)：通过灵活的适配器从多个来源加载配置，并使用 Zod 确保类型安全
+- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme)：通过模式验证安全地加载环境变量的插件。使用虚拟模块，简单易用，通过智能感知提供类型安全，并带来更好的开发者体验（DX）。由 Zod 驱动
 
-#### Zod 유틸리티 모음
+#### Zod 实用工具集合
 
-- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): 프레임워크에 구애받지 않는 Zod 유틸리티 모음.
-- [`zod-playground`](https://github.com/marilari88/zod-playground): Zod 스키마 검증 기능을 학습하고 테스트할 수 있는 도구. [링크](https://zod-playground.vercel.app/).
-- [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Zod 스키마를 테스트하기 위한 제어된 환경. [라이브 데모](https://zod-sandbox.vercel.app/).
-- [`zod-dev`](https://github.com/schalkventer/zod-dev): 프로덕션 환경에서 Zod 런타임 파싱을 조건부로 비활성화.
-- [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Zod의 처리 속도를 최대 ~100배까지 가속.
+- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz)：与框架无关的 Zod 工具集合
+- [`zod-playground`](https://github.com/marilari88/zod-playground)：用于学习和测试 Zod 模式验证功能的工具。[链接](https://zod-playground.vercel.app/)
+- [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox)：用于测试 Zod 模式的受控环境。[在线演示](https://zod-sandbox.vercel.app/)
+- [`zod-dev`](https://github.com/schalkventer/zod-dev)：有条件地禁用生产环境中的 Zod 运行时解析
+- [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator)：将 Zod 的处理速度提升至最高约 100 倍
 
-## 설치
+## 安装
 
-### 요구사항
+### 要求
 
-- **TypeScript 4.5 이상**이 필요합니다!
-- `tsconfig.json`에서 `strict` 모드를 활성화해야 합니다. 이는 모든 TypeScript 프로젝트에서 권장되는 모범 사례입니다.
+- 需要 **TypeScript 4.5 或更高版本**！
+- 必须在 `tsconfig.json` 中启用 `strict` 模式。这是所有 TypeScript 项目推荐的最佳实践。
 
   ```ts
   // tsconfig.json
@@ -596,7 +595,7 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
   }
   ```
 
-### `npm`에서 설치하기
+### 从 `npm` 安装
 
 ```sh
 npm install zod       # npm
@@ -606,21 +605,11 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-Zod는 모든 커밋마다 카나리(canary) 버전도 배포합니다. 카나리 버전을 설치하려면:
+> 本 README 的其余部分假设你使用 npm，并直接从 `"zod"` 包中导入。
 
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
+## 基本用法
 
-> 이 README의 나머지 부분은 여러분이 npm을 사용하고 `"zod"` 패키지에서 직접 임포트한다고 가정합니다.
-
-## 기본 사용법
-
-### 간단한 문자열 스키마 생성하기
+### 创建简单的字符串模式
 
 ```ts
 import { z } from "zod";
@@ -637,7 +626,7 @@ mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-### 객체 스키마 생성하기
+### 创建对象模式
 
 ```ts
 import { z } from "zod";
@@ -653,7 +642,7 @@ type User = z.infer<typeof User>;
 // { username: string }
 ```
 
-## 기본 타입(Primitives)
+## 基本类型（Primitives）
 
 ```ts
 import { z } from "zod";
@@ -681,9 +670,9 @@ z.unknown();
 z.never();
 ```
 
-## 기본 타입 강제 변환(Coercion)
+## 基本类型强制转换（Coercion）
 
-Zod는 이제 기본 타입 값을 더 편리하게 강제 변환할 수 있는 방법을 제공합니다.
+Zod 现在提供了一种更方便地强制转换基本类型值的方法。
 
 ```ts
 const schema = z.coerce.string();
@@ -691,7 +680,7 @@ schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
 ```
 
-파싱 단계에서 입력값은 `String()` 함수를 통해 전달됩니다. 이 함수는 데이터를 문자열로 강제 변환하는 자바스크립트 내장 함수입니다.
+在解析阶段，输入值会通过 `String()` 函数传递。这是一个将数据强制转换为字符串的 JavaScript 内置函数。
 
 ```ts
 schema.parse(12); // => "12"
@@ -700,15 +689,15 @@ schema.parse(undefined); // => "undefined"
 schema.parse(null); // => "null"
 ```
 
-반환된 스키마는 일반적인 `ZodString` 인스턴스이므로 모든 문자열 메서드를 사용할 수 있습니다.
+返回的模式是一个普通的 `ZodString` 实例，因此可以使用所有字符串方法。
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-**강제 변환 작동 방식**
+**强制转换的工作方式**
 
-모든 기본 타입은 강제 변환을 지원합니다. Zod는 내장 생성자를 사용하여 모든 입력값을 강제 변환합니다: `String(input)`, `Number(input)`, `new Date(input)` 등.
+所有基本类型都支持强制转换。Zod 使用内置构造函数强制转换所有输入值：`String(input)`、`Number(input)`、`new Date(input)` 等。
 
 ```ts
 z.coerce.string(); // String(input)
@@ -718,7 +707,7 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
-**주의** — `z.coerce.boolean()`을 사용한 불리언 강제 변환은 예상과 다르게 동작할 수 있습니다. 모든 [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) 값은 `true`로 변환되고, 모든 [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) 값은 `false`로 변환됩니다.
+**注意** — 使用 `z.coerce.boolean()` 进行布尔值强制转换时，行为可能与你的预期不同。所有 [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) 值都会转换为 `true`，所有 [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) 值都会转换为 `false`。
 
 ```ts
 const schema = z.coerce.boolean(); // Boolean(input)
@@ -735,11 +724,11 @@ schema.parse(undefined); // => false
 schema.parse(null); // => false
 ```
 
-강제 변환 로직을 더 세밀하게 제어하려면 [`z.preprocess`](#전처리preprocess) 또는 [`z.pipe()`](#pipe)를 사용하는 것을 고려해보세요.
+若要更细致地控制强制转换逻辑，可以考虑使用 [`z.preprocess`](#전처리preprocess) 或 [`z.pipe()`](#pipe)。
 
-## 리터럴(Literals)
+## 字面量（Literals）
 
-리터럴 스키마는 `"hello world"`나 `5`와 같은 [리터럴 타입](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)을 나타냅니다.
+字面量模式表示 `"hello world"` 或 `5` 之类的[字面量类型](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)。
 
 ```ts
 const tuna = z.literal("tuna");
@@ -754,11 +743,11 @@ const terrific = z.literal(terrificSymbol);
 tuna.value; // "tuna"
 ```
 
-> 현재 Zod에서는 Date 리터럴을 지원하지 않습니다. 이 기능이 필요한 경우 이슈를 등록해 주세요.
+> Zod 目前不支持 Date 字面量。如果需要此功能，请提交 issue。
 
-## 문자열
+## 字符串
 
-Zod는 문자열에 특화된 여러 가지 유효성 검사를 제공합니다.
+Zod 提供了多种专用于字符串的验证。
 
 ```ts
 // 유효성 검사
@@ -793,9 +782,9 @@ z.string().duration(); // ISO 8601 기간 형식
 z.string().base64(); // Base64 형식
 ```
 
-> [Refinements](#refine)와 함께 사용할 수 있는 다양한 유용한 문자열 유효성 검사 함수는 [validator.js](https://github.com/validatorjs/validator.js)에서 확인할 수 있습니다.
+> 可以在 [validator.js](https://github.com/validatorjs/validator.js) 中找到许多可与 [Refinements](#refine) 结合使用的实用字符串验证函数。
 
-문자열 스키마를 생성할 때 일반적인 오류 메시지를 커스터마이징할 수 있습니다.
+创建字符串模式时，可以自定义通用错误消息。
 
 ```ts
 const name = z.string({
@@ -804,7 +793,7 @@ const name = z.string({
 });
 ```
 
-유효성 검사 메서드를 사용할 때, 추가 인자로 커스텀 오류 메시지를 제공할 수 있습니다.
+使用验证方法时，可以通过额外参数提供自定义错误消息。
 
 ```ts
 z.string().min(5, { message: "5자 이상이어야 합니다" });
@@ -826,11 +815,11 @@ z.string().ip({ message: "유효하지 않은 IP 주소입니다" });
 z.string().cidr({ message: "유효하지 않은 CIDR입니다" });
 ```
 
-### 날짜와 시간
+### 日期和时间
 
-Zod 문자열에는 몇 가지 날짜/시간 관련 유효성 검사가 포함되어 있습니다. 이 유효성 검사는 정규 표현식을 기반으로 하기 때문에, 완전한 날짜/시간 라이브러리만큼 엄격하지는 않습니다. 하지만 사용자 입력을 검증하는 데 매우 편리합니다.
+Zod 字符串包含一些与日期/时间相关的验证。这些验证基于正则表达式，因此不如完整的日期/时间库严格。但它们非常适合验证用户输入。
 
-`z.string().datetime()` 메서드는 ISO 8601을 강제합니다. 기본적으로 시간대 오프셋은 허용되지 않으며, 소수점 초 단위의 임의 정밀도를 지원합니다.
+`z.string().datetime()` 方法强制使用 ISO 8601。默认情况下不允许使用时区偏移，并支持小数秒的任意精度。
 
 ```ts
 const datetime = z.string().datetime();
@@ -841,7 +830,7 @@ datetime.parse("2020-01-01T00:00:00.123456Z"); // 통과 (임의 정밀도)
 datetime.parse("2020-01-01T00:00:00+02:00"); // 실패 (오프셋 허용 안 됨)
 ```
 
-`offset` 옵션을 `true`로 설정하면 시간대 오프셋을 허용할 수 있습니다.
+将 `offset` 选项设置为 `true` 后，可以允许时区偏移。
 
 ```ts
 const datetime = z.string().datetime({ offset: true });
@@ -853,14 +842,14 @@ datetime.parse("2020-01-01T00:00:00.123+02"); // 통과 (시간 오프셋만)
 datetime.parse("2020-01-01T00:00:00Z"); // 통과 (Z 지원)
 ```
 
-`local` 플래그를 사용하면 시간대가 없는 날짜/시간을 허용할 수 있습니다.
+使用 `local` 标志可以允许不带时区的日期/时间。
 
 ```ts
 const schema = z.string().datetime({ local: true });
 schema.parse("2020-01-01T00:00:00"); // 통과
 ```
 
-추가로 허용 가능한 `precision`을 제한할 수 있습니다. 기본적으로 임의의 소수점 초 단위 정밀도를 지원하지만 선택적입니다.
+此外，还可以限制允许的 `precision`。默认支持任意的小数秒精度，但该精度是可选的。
 
 ```ts
 const datetime = z.string().datetime({ precision: 3 });
@@ -870,11 +859,11 @@ datetime.parse("2020-01-01T00:00:00Z"); // 실패
 datetime.parse("2020-01-01T00:00:00.123456Z"); // 실패
 ```
 
-### 날짜
+### 日期
 
-> Zod 3.23에서 추가됨
+> Zod 3.23 中新增
 
-`z.string().date()` 메서드는 `YYYY-MM-DD` 형식의 문자열을 검증합니다.
+`z.string().date()` 方法验证 `YYYY-MM-DD` 格式的字符串。
 
 ```ts
 const date = z.string().date();
@@ -884,11 +873,11 @@ date.parse("2020-1-1"); // 실패
 date.parse("2020-01-32"); // 실패
 ```
 
-### 시간 형식 검증
+### 时间格式验证
 
-> Zod 3.23에서 추가됨
+> Zod 3.23 中新增
 
-`z.string().time()` 메서드는 `HH:MM:SS[.s+]` 형식의 문자열을 검증합니다. 초 단위는 소수점 이하 임의의 정밀도를 포함할 수 있습니다. 하지만 시간대 오프셋은 허용하지 않습니다.
+`z.string().time()` 方法验证 `HH:MM:SS[.s+]` 格式的字符串。秒可以包含小数点后任意精度的数值，但不允许时区偏移。
 
 ```ts
 const time = z.string().time();
@@ -901,7 +890,7 @@ time.parse("00:00:00.123Z"); // 실패 (`Z` 허용 안 됨)
 time.parse("00:00:00.123+02:00"); // 실패 (오프셋 허용 안 됨)
 ```
 
-`precision` 옵션을 설정하여 허용 가능한 소수점 정밀도를 제한할 수 있습니다.
+可以设置 `precision` 选项来限制允许的小数精度。
 
 ```ts
 const time = z.string().time({ precision: 3 });
@@ -911,9 +900,9 @@ time.parse("00:00:00.123456"); // 실패
 time.parse("00:00:00"); // 실패
 ```
 
-### IP 주소
+### IP 地址
 
-기본적으로 `.ip()`는 IPv4와 IPv6를 모두 허용합니다.
+默认情况下，`.ip()` 同时允许 IPv4 和 IPv6。
 
 ```ts
 const ip = z.string().ip();
@@ -923,10 +912,10 @@ ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // 통과
 ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // 통과
 
 ip.parse("256.1.1.1"); // 실패
-ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // 실패
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // 실패
 ```
 
-추가적으로 IP `version`을 설정할 수 있습니다.
+还可以设置 IP `version`。
 
 ```ts
 const ipv4 = z.string().ip({ version: "v4" });
@@ -936,9 +925,9 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // 실패
 ```
 
-### IP 범위 (CIDR)
+### IP 范围（CIDR）
 
-[CIDR 표기법](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)으로 지정된 IP 주소 범위를 검증합니다. 기본적으로 `.cidr()`은 IPv4와 IPv6를 모두 허용합니다.
+验证以 [CIDR 表示法](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)指定的 IP 地址范围。默认情况下，`.cidr()` 同时允许 IPv4 和 IPv6。
 
 ```ts
 const cidr = z.string().cidr();
@@ -946,7 +935,7 @@ cidr.parse("192.168.0.0/24"); // 통과
 cidr.parse("2001:db8::/32"); // 통과
 ```
 
-`version` 매개변수를 사용하여 특정 버전을 지정할 수 있습니다.
+可以使用 `version` 参数指定特定版本。
 
 ```ts
 const ipv4Cidr = z.string().cidr({ version: "v4" });
@@ -956,9 +945,9 @@ const ipv6Cidr = z.string().cidr({ version: "v6" });
 ipv6Cidr.parse("192.168.1.1"); // 실패
 ```
 
-## 숫자
+## 数字
 
-숫자 스키마를 생성할 때 특정 오류 메시지를 커스텀할 수 있습니다.
+创建数字模式时，可以自定义特定的错误消息。
 
 ```ts
 const age = z.number({
@@ -967,7 +956,7 @@ const age = z.number({
 });
 ```
 
-Zod는 숫자에 특화된 여러 유효성 검사를 제공합니다.
+Zod 提供了多种专用于数字的验证。
 
 ```ts
 z.number().gt(5); // 5보다 커야 함
@@ -988,7 +977,7 @@ z.number().finite(); // 유한한 값이어야 함 (Infinity 또는 -Infinity �
 z.number().safe(); // Number.MIN_SAFE_INTEGER와 Number.MAX_SAFE_INTEGER 사이의 값이어야 함
 ```
 
-선택적으로, 두 번째 인자로 커스텀 오류 메시지를 제공할 수 있습니다.
+也可以选择通过第二个参数提供自定义错误消息。
 
 ```ts
 z.number().lte(5, { message: "이👏값은👏너무👏큽니다" });
@@ -996,7 +985,7 @@ z.number().lte(5, { message: "이👏값은👏너무👏큽니다" });
 
 ## BigInts
 
-Zod는 BigInt 타입을 위한 몇 가지 유효성 검사를 제공합니다.
+Zod 为 BigInt 类型提供了几种验证。
 
 ```ts
 z.bigint().gt(5n); // 5n보다 큰지 확인
@@ -1012,9 +1001,9 @@ z.bigint().nonpositive(); // 0n보다 작거나 같은지 확인
 z.bigint().multipleOf(5n); // 5n으로 나누어 떨어지는지 확인
 ```
 
-## NaN (Not a Number)
+## NaN（Not a Number）
 
-NaN 스키마를 생성할 때 특정 오류 메시지를 커스텀할 수 있습니다.
+创建 NaN 模式时，可以自定义特定的错误消息。
 
 ```ts
 const isNaN = z.nan({
@@ -1023,9 +1012,9 @@ const isNaN = z.nan({
 });
 ```
 
-## 불리언(Booleans)
+## 布尔值（Booleans）
 
-불리언 스키마를 생성할 때 특정 오류 메시지를 커스텀할 수 있습니다.
+创建布尔值模式时，可以自定义特定的错误消息。
 
 ```ts
 const isActive = z.boolean({
@@ -1034,16 +1023,16 @@ const isActive = z.boolean({
 });
 ```
 
-## 날짜
+## 日期
 
-`Date` 인스턴스를 검증하려면 `z.date()`를 사용하세요.
+要验证 `Date` 实例，请使用 `z.date()`。
 
 ```ts
 z.date().safeParse(new Date()); // 성공: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // 성공: false
 ```
 
-날짜 스키마를 생성할 때 특정 오류 메시지를 커스터마이징할 수 있습니다.
+创建日期模式时，可以自定义特定的错误消息。
 
 ```ts
 const myDateSchema = z.date({
@@ -1052,16 +1041,16 @@ const myDateSchema = z.date({
 });
 ```
 
-Zod는 몇 가지 날짜 관련 유효성 검사를 제공합니다.
+Zod 提供了几种与日期相关的验证。
 
 ```ts
 z.date().min(new Date("1900-01-01"), { message: "너무 오래된 날짜입니다" });
 z.date().max(new Date(), { message: "너무 미래의 날짜입니다!" });
 ```
 
-**Date로 강제 변환**
+**强制转换为 Date**
 
-[zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20)부터는 [`z.coerce.date()`](#coercion-for-primitives)를 사용하여 입력을 `new Date(input)`로 변환할 수 있습니다.
+从 [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20) 开始，可以使用 [`z.coerce.date()`](#coercion-for-primitives) 将输入转换为 `new Date(input)`。
 
 ```ts
 const dateSchema = z.coerce.date();
@@ -1079,9 +1068,9 @@ console.log(dateSchema.safeParse("2023-13-10").success); // false
 console.log(dateSchema.safeParse("0000-00-00").success); // false
 ```
 
-이전 버전의 zod를 사용하는 경우, [이 스레드](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276)에서 설명한 대로 [`z.preprocess`](#전처리preprocess)를 사용하세요.
+如果使用的是旧版本的 zod，请按照[此讨论](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276)中的说明，使用 [`z.preprocess`](#전처리preprocess)。
 
-## Zod 열거형(enum)
+## Zod 枚举（enum）
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -1089,14 +1078,14 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-`z.enum`은 Zod에서 허용 가능한 고정된 문자열 값 집합을 선언하는 방법입니다. 값 배열을 직접 `z.enum()`에 전달합니다. 또는 `as const`를 사용하여 열거형 값을 문자열 튜플로 정의할 수도 있습니다. 자세한 내용은 [const assertion 문서](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions)를 참고하세요.
+`z.enum` 是在 Zod 中声明一组允许的固定字符串值的方法。将值数组直接传递给 `z.enum()`。也可以使用 `as const` 将枚举值定义为字符串元组。详情请参阅 [const assertion 文档](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions)。
 
 ```ts
 const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-다음은 허용되지 않습니다. Zod가 각 요소의 정확한 값을 추론할 수 없기 때문입니다.
+以下写法不被允许，因为 Zod 无法推断每个元素的确切值。
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
@@ -1105,7 +1094,7 @@ const FishEnum = z.enum(fish);
 
 **`.enum`**
 
-Zod 열거형에서 자동 완성을 사용하려면 스키마의 `.enum` 속성을 사용하세요.
+要在 Zod 枚举中使用自动补全，请使用模式的 `.enum` 属性。
 
 ```ts
 FishEnum.enum.Salmon; // => 자동 완성
@@ -1120,7 +1109,7 @@ FishEnum.enum;
 */
 ```
 
-`.options` 속성을 사용하여 옵션 목록을 튜플로 가져올 수도 있습니다.
+也可以使用 `.options` 属性将选项列表作为元组获取。
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
@@ -1128,7 +1117,7 @@ FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 
 **`.exclude/.extract()`**
 
-`.exclude`와 `.extract` 메서드를 사용하여 Zod 열거형의 부분 집합을 만들 수 있습니다.
+可以使用 `.exclude` 和 `.extract` 方法创建 Zod 枚举的子集。
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -1136,11 +1125,11 @@ const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
 const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 
-## 네이티브 열거형(Native Enums)
+## 原生枚举（Native Enums）
 
-Zod 열거형은 열거형을 정의하고 검증하는 데 권장되는 방법입니다. 하지만 서드파티 라이브러리의 열거형을 검증해야 하거나 기존 열거형을 다시 작성하고 싶지 않은 경우 `z.nativeEnum()`을 사용할 수 있습니다.
+Zod 枚举是定义和验证枚举的推荐方式。但如果需要验证第三方库中的枚举，或者不想重新编写现有枚举，可以使用 `z.nativeEnum()`。
 
-**숫자 열거형(Numeric Enums)**
+**数字枚举（Numeric Enums）**
 
 ```ts
 enum Fruits {
@@ -1158,7 +1147,7 @@ FruitEnum.parse(1); // 통과
 FruitEnum.parse(3); // 실패
 ```
 
-**문자열 열거형(String Enums)**
+**字符串枚举（String Enums）**
 
 ```ts
 enum Fruits {
@@ -1178,9 +1167,9 @@ FruitEnum.parse(0); // 통과
 FruitEnum.parse("Cantaloupe"); // 실패
 ```
 
-**상수 열거형(Const Enums)**
+**常量枚举（Const Enums）**
 
-`.nativeEnum()` 함수는 `as const` 객체에서도 동작합니다. ⚠️ `as const`는 TypeScript 3.4 이상이 필요합니다!
+`.nativeEnum()` 函数也适用于 `as const` 对象。⚠️ `as const` 需要 TypeScript 3.4 或更高版本！
 
 ```ts
 const Fruits = {
@@ -1198,15 +1187,15 @@ FruitEnum.parse(3); // 통과
 FruitEnum.parse("Cantaloupe"); // 실패
 ```
 
-`.enum` 속성을 사용하여 기본 객체에 접근할 수 있습니다:
+可以使用 `.enum` 属性访问底层对象：
 
 ```ts
 FruitEnum.enum.Apple; // "apple"
 ```
 
-## 옵셔널(Optional)
+## 可选（Optional）
 
-`schema`를 옵셔널로 만들고 싶다면 `z.optional()`을 사용하면 됩니다. 이 함수는 스키마를 `ZodOptional` 인스턴스로 감싼 후 결과를 반환합니다.
+如果想将 `schema` 设为可选，可以使用 `z.optional()`。此函数会将模式包装为 `ZodOptional` 实例，然后返回结果。
 
 ```ts
 const schema = z.optional(z.string());
@@ -1215,7 +1204,7 @@ schema.parse(undefined); // => undefined 반환
 type A = z.infer<typeof schema>; // string | undefined
 ```
 
-편의를 위해, 기존 스키마에서 `.optional()` 메서드를 직접 호출할 수도 있습니다.
+为方便起见，也可以直接在现有模式上调用 `.optional()` 方法。
 
 ```ts
 const user = z.object({
@@ -1224,7 +1213,7 @@ const user = z.object({
 type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
-`ZodOptional` 인스턴스에서 감싸진 스키마를 추출하려면 `.unwrap()`을 사용하면 됩니다.
+要从 `ZodOptional` 实例中提取被包装的模式，可以使用 `.unwrap()`。
 
 ```ts
 const stringSchema = z.string();
@@ -1232,9 +1221,9 @@ const optionalString = stringSchema.optional();
 optionalString.unwrap() === stringSchema; // true
 ```
 
-## Nullable 타입
+## Nullable 类型
 
-`z.nullable()`을 사용하면 nullable 타입을 만들 수 있습니다.
+使用 `z.nullable()` 可以创建 nullable 类型。
 
 ```ts
 const nullableString = z.nullable(z.string());
@@ -1242,14 +1231,14 @@ nullableString.parse("asdf"); // => "asdf"
 nullableString.parse(null); // => null
 ```
 
-또는 `.nullable()` 메서드를 사용할 수도 있습니다.
+也可以使用 `.nullable()` 方法。
 
 ```ts
 const E = z.string().nullable(); // nullableString과 동일
 type E = z.infer<typeof E>; // string | null
 ```
 
-`.unwrap()`을 사용하면 내부 스키마를 추출할 수 있습니다.
+使用 `.unwrap()` 可以提取内部模式。
 
 ```ts
 const stringSchema = z.string();
@@ -1257,7 +1246,7 @@ const nullableString = stringSchema.nullable();
 nullableString.unwrap() === stringSchema; // true
 ```
 
-## 객체
+## 对象
 
 ```ts
 // 기본적으로 모든 속성은 필수입니다.
@@ -1278,7 +1267,7 @@ type Dog = {
 
 ### `.shape`
 
-특정 키에 대한 스키마에 접근하려면 `.shape`를 사용하세요.
+要访问特定键的模式，请使用 `.shape`。
 
 ```ts
 Dog.shape.name; // => 문자열 스키마
@@ -1287,18 +1276,18 @@ Dog.shape.age; // => 숫자 스키마
 
 ### `.keyof`
 
-`.keyof`를 사용하면 객체 스키마의 키들로부터 `ZodEnum` 스키마를 생성할 수 있습니다.
+使用 `.keyof` 可以根据对象模式的键创建 `ZodEnum` 模式。
 
 ```ts
 const keySchema = Dog.keyof();
 keySchema; // ZodEnum
 ```
 
-이 코드는 `Dog` 객체 스키마의 키들을 기반으로 `ZodEnum` 스키마를 만듭니다. `keySchema`는 `ZodEnum` 타입이 됩니다.
+此代码根据 `Dog` 对象模式的键创建 `ZodEnum` 模式。`keySchema` 的类型将是 `ZodEnum` 类型。
 
 ### `.extend`
 
-`.extend` 메서드를 사용하면 객체 스키마에 추가 필드를 넣을 수 있습니다.
+使用 `.extend` 方法可以向对象模式中添加字段。
 
 ```ts
 const DogWithBreed = Dog.extend({
@@ -1306,11 +1295,11 @@ const DogWithBreed = Dog.extend({
 });
 ```
 
-`.extend`는 기존 필드를 덮어쓸 때도 사용할 수 있습니다. 이 기능을 사용할 때는 주의가 필요합니다!
+`.extend` 也可以用于覆盖现有字段。使用此功能时需要谨慎！
 
 ### `.merge`
 
-`.merge`는 `A.extend(B.shape)`와 동일한 기능을 합니다.
+`.merge` 与 `A.extend(B.shape)` 功能相同。
 
 ```ts
 const BaseTeacher = z.object({ students: z.array(z.string()) });
@@ -1320,11 +1309,11 @@ const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
-> 두 스키마가 동일한 키를 공유할 경우, B의 속성이 A의 속성을 덮어씁니다. 반환된 스키마는 B의 "unknownKeys" 정책(strip/strict/passthrough)과 catchall 스키마를 상속받습니다.
+> 如果两个模式共享相同的键，B 的属性会覆盖 A 的属性。返回的模式会继承 B 的“unknownKeys”策略（strip/strict/passthrough）和 catchall 模式。
 
 ### `.pick` / `.omit`
 
-TypeScript의 내장 `Pick`과 `Omit` 유틸리티 타입에서 영감을 받아, 모든 Zod 객체 스키마는 `.pick`과 `.omit` 메서드를 제공합니다. 이 메서드들은 수정된 버전의 스키마를 반환합니다. 다음은 Recipe 스키마 예제입니다:
+受 TypeScript 内置 `Pick` 和 `Omit` 工具类型的启发，所有 Zod 对象模式都提供 `.pick` 和 `.omit` 方法。这些方法会返回修改后的模式。以下是 Recipe 模式示例：
 
 ```ts
 const Recipe = z.object({
@@ -1334,7 +1323,7 @@ const Recipe = z.object({
 });
 ```
 
-특정 키만 유지하려면 `.pick`을 사용하세요.
+要仅保留特定键，请使用 `.pick`。
 
 ```ts
 const JustTheName = Recipe.pick({ name: true });
@@ -1342,7 +1331,7 @@ type JustTheName = z.infer<typeof JustTheName>;
 // => { name: string }
 ```
 
-특정 키를 제거하려면 `.omit`을 사용하세요.
+要移除特定键，请使用 `.omit`。
 
 ```ts
 const NoIDRecipe = Recipe.omit({ id: true });
@@ -1353,9 +1342,9 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-TypeScript의 내장 유틸리티 타입인 [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)에서 영감을 받은 `.partial` 메서드는 모든 프로퍼티를 선택적으로 만듭니다.
+受 TypeScript 内置工具类型 [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype) 的启发，`.partial` 方法会将所有属性设为可选。
 
-다음과 같은 객체에서 시작해 보겠습니다:
+从以下对象开始：
 
 ```ts
 const user = z.object({
@@ -1365,14 +1354,14 @@ const user = z.object({
 // { email: string; username: string }
 ```
 
-이 객체를 부분적으로 만들 수 있습니다:
+可以将此对象设为部分对象：
 
 ```ts
 const partialUser = user.partial();
 // { email?: string | undefined; username?: string | undefined }
 ```
 
-또한, 특정 프로퍼티만 선택적으로 만들 수도 있습니다:
+也可以只将特定属性设为可选：
 
 ```ts
 const optionalEmail = user.partial({
@@ -1388,7 +1377,7 @@ const optionalEmail = user.partial({
 
 ### `.deepPartial`
 
-`.partial` 메서드는 얕은(shallow) 동작만 수행합니다. 즉, 한 단계 깊이만 적용됩니다. 이에 더해 "깊은(deep)" 버전도 존재합니다:
+`.partial` 方法只执行浅层（shallow）操作，也就是说只应用一层深度。此外还存在“深层（deep）”版本：
 
 ```ts
 const user = z.object({
@@ -1414,13 +1403,13 @@ const deepPartialUser = user.deepPartial();
 */
 ```
 
-> **중요한 제한 사항**: 깊은 부분 적용(deep partials)은 객체, 배열, 튜플로 구성된 계층 구조에서만 예상대로 동작합니다.
+> **重要限制**：深层部分应用（deep partials）仅在由对象、数组和元组组成的层次结构中按预期工作。
 
 ### `.required`
 
-`.partial` 메서드와 반대로, `.required` 메서드는 모든 속성을 필수로 만듭니다.
+与 `.partial` 方法相反，`.required` 方法会将所有属性设为必需。
 
-다음과 같은 객체에서 시작해 보겠습니다:
+从以下对象开始：
 
 ```ts
 const user = z
@@ -1432,14 +1421,14 @@ const user = z
 // { email?: string | undefined; username?: string | undefined }
 ```
 
-이제 필수 버전을 만들 수 있습니다:
+现在可以创建必需版本：
 
 ```ts
 const requiredUser = user.required();
 // { email: string; username: string }
 ```
 
-특정 속성만 필수로 만들 수도 있습니다:
+也可以只将特定属性设为必需：
 
 ```ts
 const requiredEmail = user.required({
@@ -1455,7 +1444,7 @@ const requiredEmail = user.required({
 
 ### `.passthrough`
 
-기본적으로 Zod 객체 스키마는 파싱 과정에서 인식되지 않는 키를 제거합니다.
+默认情况下，Zod 对象模式会在解析过程中移除无法识别的键。
 
 ```ts
 const person = z.object({
@@ -1470,7 +1459,7 @@ person.parse({
 // extraKey가 제거됨
 ```
 
-만약 알려지지 않은 키를 그대로 유지하고 싶다면 `.passthrough()`를 사용하세요.
+如果想保留未知键，请使用 `.passthrough()`。
 
 ```ts
 person.passthrough().parse({
@@ -1482,7 +1471,7 @@ person.passthrough().parse({
 
 ### `.strict`
 
-기본적으로 Zod 객체 스키마는 파싱 과정에서 인식되지 않는 키를 제거합니다. `.strict()`를 사용하면 알려지지 않은 키를 허용하지 않을 수 있습니다. 입력에 알려지지 않은 키가 있으면 Zod가 에러를 발생시킵니다.
+默认情况下，Zod 对象模式会在解析过程中移除无法识别的键。使用 `.strict()` 可以禁止未知键。如果输入中存在未知键，Zod 会产生错误。
 
 ```ts
 const person = z
@@ -1498,13 +1487,13 @@ person.parse({
 // => ZodError 발생
 ```
 
-### `.strip` 메서드
+### `.strip` 方法
 
-`.strip` 메서드를 사용하면 객체 스키마를 기본 동작으로 재설정할 수 있습니다. 이때, 인식되지 않는 키는 제거됩니다.
+使用 `.strip` 方法可以将对象模式重置为默认行为。此时，无法识别的键会被移除。
 
 ### `.catchall`
 
-객체 스키마에 "catchall" 스키마를 전달할 수 있습니다. 이 경우, 알려지지 않은 모든 키는 이 스키마에 따라 검증됩니다.
+可以向对象模式传入一个“catchall”模式。此时，所有未知键都会根据该模式进行验证。
 
 ```ts
 const person = z
@@ -1525,9 +1514,9 @@ person.parse({
 // => ZodError 발생
 ```
 
-`.catchall()`을 사용하면 `.passthrough()`, `.strip()`, `.strict()`가 필요 없어집니다. 모든 키가 "알려진" 것으로 간주됩니다.
+使用 `.catchall()` 后，就不再需要 `.passthrough()`、`.strip()` 和 `.strict()`。所有键都会被视为“已知”键。
 
-## 배열
+## 数组
 
 ```ts
 const stringArray = z.array(z.string());
@@ -1536,18 +1525,18 @@ const stringArray = z.array(z.string());
 const stringArray = z.string().array();
 ```
 
-`.array()` 메서드를 사용할 때 주의해야 합니다. 이 메서드는 새로운 `ZodArray` 인스턴스를 반환합니다. 따라서 메서드를 호출하는 **순서**가 중요합니다. 예를 들어:
+使用 `.array()` 方法时需要注意。此方法会返回一个新的 `ZodArray` 实例。因此，调用方法的**顺序**很重要。例如：
 
 ```ts
 z.string().optional().array(); // (string | undefined)[]
 z.string().array().optional(); // string[] | undefined
 ```
 
-위 예제에서 첫 번째 줄은 각 요소가 `string` 또는 `undefined`일 수 있는 배열을 생성합니다. 반면 두 번째 줄은 `string` 배열 자체가 `undefined`일 수 있음을 의미합니다.
+在上面的示例中，第一行创建了一个数组，其每个元素都可以是 `string` 或 `undefined`。而第二行表示 `string` 数组本身可以是 `undefined`。
 
 ### `.element`
 
-배열의 요소에 대한 스키마에 접근하려면 `.element`를 사용합니다.
+要访问数组元素的模式，请使用 `.element`。
 
 ```ts
 stringArray.element; // => string 스키마
@@ -1555,7 +1544,7 @@ stringArray.element; // => string 스키마
 
 ### `.nonempty`
 
-배열에 최소한 하나의 요소가 포함되어 있는지 확인하려면 `.nonempty()`를 사용하세요.
+要确认数组至少包含一个元素，请使用 `.nonempty()`。
 
 ```ts
 const nonEmptyStrings = z.string().array().nonempty();
@@ -1566,7 +1555,7 @@ nonEmptyStrings.parse([]); // 오류 발생: "배열이 비어 있을 수 없습
 nonEmptyStrings.parse(["Ariana Grande"]); // 통과
 ```
 
-필요한 경우 커스텀 오류 메시지를 지정할 수도 있습니다:
+如有需要，也可以指定自定义错误消息：
 
 ```ts
 // 커스텀 오류 메시지 지정
@@ -1583,11 +1572,11 @@ z.string().array().max(5); // 배열은 5개 이하의 항목을 포함해야 �
 z.string().array().length(5); // 배열은 정확히 5개의 항목을 포함해야 함
 ```
 
-`.nonempty()`와 달리, 이 메서드들은 타입 추론에 영향을 주지 않습니다.
+与 `.nonempty()` 不同，这些方法不会影响类型推断。
 
-## 튜플(Tuples)
+## 元组（Tuples）
 
-배열과 달리 튜플은 고정된 수의 요소를 가지며, 각 요소는 서로 다른 타입을 가질 수 있습니다.
+与数组不同，元组具有固定数量的元素，并且每个元素可以拥有不同的类型。
 
 ```ts
 const athleteSchema = z.tuple([
@@ -1602,7 +1591,7 @@ type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
-`.rest` 메서드를 사용하면 가변 인수("rest")를 추가할 수 있습니다.
+使用 `.rest` 方法可以添加可变参数（“rest”）。
 
 ```ts
 const variadicTuple = z.tuple([z.string()]).rest(z.number());
@@ -1610,9 +1599,9 @@ const result = variadicTuple.parse(["hello", 1, 2, 3]);
 // => [string, ...number[]];
 ```
 
-## 유니온 타입
+## 联合类型
 
-Zod는 "OR" 타입을 구성하기 위해 내장된 `z.union` 메서드를 제공합니다.
+Zod 提供了内置的 `z.union` 方法，用于构建“OR”类型。
 
 ```ts
 const stringOrNumber = z.union([z.string(), z.number()]);
@@ -1621,19 +1610,19 @@ stringOrNumber.parse("foo"); // 통과
 stringOrNumber.parse(14); // 통과
 ```
 
-Zod는 입력값을 각 "옵션"에 대해 순서대로 테스트하고, 유효성 검사를 통과한 첫 번째 값을 반환합니다.
+Zod 会依次针对每个“选项”测试输入值，并返回第一个通过验证的值。
 
-편의를 위해 [`.or` 메서드](#or)를 사용할 수도 있습니다.
+为方便起见，也可以使用 [`.or` 方法](#or)。
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
 ```
 
-**선택적 문자열 유효성 검사:**
+**可选字符串验证：**
 
-선택적인 폼 입력을 검증하기 위해, 원하는 문자열 유효성 검사를 빈 문자열 [리터럴](#리터럴literals)과 함께 유니온으로 결합할 수 있습니다.
+为了验证可选的表单输入，可以将所需的字符串验证与空字符串[字面量](#리터럴literals)联合起来。
 
-다음 예제는 선택적이지만 [유효한 URL](#문자열)을 포함해야 하는 입력을 검증합니다.
+以下示例验证一个可选的输入，但如果提供值，则必须包含[有效 URL](#문자열)。
 
 ```ts
 const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);
@@ -1645,9 +1634,9 @@ console.log(optionalUrl.safeParse("https://zod.dev").success); // true
 console.log(optionalUrl.safeParse("not a valid url").success); // false
 ```
 
-## 구별된 유니온(Discriminated Unions)
+## 判别联合（Discriminated Unions）
 
-구별된 유니온은 특정 키를 공유하는 객체 스키마들의 유니온입니다.
+判别联合是多个共享特定键的对象模式的联合。
 
 ```ts
 type MyUnion =
@@ -1655,9 +1644,9 @@ type MyUnion =
   | { status: "failed"; error: Error };
 ```
 
-이러한 유니온은 `z.discriminatedUnion` 메서드를 사용하여 표현할 수 있습니다. 이 방법은 Zod가 `discriminator key`(위 예제에서는 `status`)를 확인하여 어떤 스키마를 사용하여 입력을 파싱할지 결정할 수 있게 해주기 때문에 더 빠른 평가를 가능하게 합니다. 이는 파싱을 더 효율적으로 만들고, Zod가 더 친절한 오류를 보고할 수 있게 해줍니다.
+可以使用 `z.discriminatedUnion` 方法表示此类联合。由于这种方式允许 Zod 检查 `discriminator key`（上例中的 `status`），从而决定使用哪个模式解析输入，因此可以实现更快的评估。这使解析更加高效，也让 Zod 能够报告更友好的错误。
 
-기본 유니온 메서드를 사용하면 입력이 제공된 "옵션" 각각에 대해 테스트되고, 유효하지 않은 경우 모든 "옵션"에 대한 문제가 Zod 오류에 표시됩니다. 반면, 구별된 유니온은 하나의 "옵션"만 선택하여 테스트하고, 해당 "옵션"과 관련된 문제만 표시할 수 있습니다.
+使用基本联合方法时，输入会针对每个提供的“选项”进行测试；如果无效，Zod 错误中会显示所有“选项”的问题。相比之下，判别联合只选择并测试一个“选项”，并且只显示与该“选项”相关的问题。
 
 ```ts
 const myUnion = z.discriminatedUnion("status", [
@@ -1668,13 +1657,13 @@ const myUnion = z.discriminatedUnion("status", [
 myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
-`.options` 속성을 사용하여 스키마 배열에 대한 참조를 추출할 수 있습니다.
+可以使用 `.options` 属性提取对模式数组的引用。
 
 ```ts
 myUnion.options; // [ZodObject, ZodObject]
 ```
 
-두 개 이상의 구별된 유니온을 병합하려면, `.options`와 구조 분해 할당을 사용하세요.
+要合并两个或更多判别联合，请使用 `.options` 和解构赋值。
 
 ```ts
 const A = z.discriminatedUnion("status", [
@@ -1687,9 +1676,9 @@ const B = z.discriminatedUnion("status", [
 const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 ```
 
-## 레코드(Records)
+## 记录（Records）
 
-레코드 스키마는 `Record<string, number>`와 같은 타입을 검증하는 데 사용됩니다. 이는 ID로 아이템을 저장하거나 캐싱할 때 특히 유용합니다.
+记录模式用于验证 `Record<string, number>` 等类型。在使用 ID 存储或缓存项目时尤其有用。
 
 ```ts
 const User = z.object({ name: z.string() });
@@ -1699,7 +1688,7 @@ type UserStore = z.infer<typeof UserStore>;
 // => Record
 ```
 
-스키마와 추론된 타입은 다음과 같이 사용할 수 있습니다:
+可以按如下方式使用该模式和推断出的类型：
 
 ```ts
 const userStore: UserStore = {};
@@ -1713,11 +1702,11 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError 발생
 ```
 
-**숫자 키에 대한 주의사항**
+**关于数字键的注意事项**
 
-`z.record(keyType, valueType)`는 숫자 키 타입을 허용할 수 있고, TypeScript의 내장 `Record` 타입은 `Record<KeyType, ValueType>`입니다. 하지만 TypeScript의 `Record<number, any>` 타입을 Zod에서 표현하는 것은 어렵습니다.
+`z.record(keyType, valueType)` 可以接受数字键类型，而 TypeScript 内置的 `Record` 类型是 `Record<KeyType, ValueType>`。但是，在 Zod 中表示 TypeScript 的 `Record<number, any>` 类型比较困难。
 
-TypeScript의 `[k: number]` 동작은 약간 직관적이지 않습니다:
+TypeScript 中 `[k: number]` 的行为不太直观：
 
 ```ts
 const testMap: { [k: number]: string } = {
@@ -1730,9 +1719,9 @@ for (const key in testMap) {
 // 출력: `1: string`
 ```
 
-보시다시피, JavaScript는 모든 객체 키를 내부적으로 문자열로 변환합니다. Zod는 정적 타입과 런타임 타입 간의 간극을 메우려고 하기 때문에, 런타임 JavaScript에서는 숫자 키가 존재하지 않으므로 숫자 키를 가진 레코드 스키마를 생성하는 방법을 제공하는 것은 의미가 없습니다.
+如你所见，JavaScript 会在内部将所有对象键转换为字符串。由于 Zod 试图弥合静态类型与运行时类型之间的差距，而在运行时 JavaScript 中不存在数字键，因此没有必要提供创建带有数字键的记录模式的方法。
 
-## 맵(Map)
+## Map
 
 ```ts
 const stringNumberMap = z.map(z.string(), z.number());
@@ -1741,9 +1730,9 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 // type StringNumberMap = Map<string, number>
 ```
 
-위 코드는 `zod` 라이브러리를 사용하여 문자열을 키로, 숫자를 값으로 가지는 맵을 정의하는 예제입니다. `z.map()` 함수는 첫 번째 인자로 키의 타입을, 두 번째 인자로 값의 타입을 받습니다. 이렇게 정의된 맵의 타입은 `Map<string, number>`가 됩니다.
+上面的代码示例使用 `zod` 库定义了一个以字符串为键、数字为值的 Map。`z.map()` 函数的第一个参数是键的类型，第二个参数是值的类型。这样定义的 Map 类型将是 `Map<string, number>`。
 
-## Set(집합)
+## Set（集合）
 
 ```ts
 const numberSet = z.set(z.number());
@@ -1751,7 +1740,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set 스키마는 다음과 같은 유틸리티 메서드로 추가 제약을 걸 수 있습니다.
+Set 模式可以通过以下实用方法添加额外约束。
 
 ```ts
 z.set(z.string()).nonempty(); // 최소 하나 이상의 항목을 포함해야 함
@@ -1760,9 +1749,9 @@ z.set(z.string()).max(5); // 5개 이하의 항목을 포함해야 함
 z.set(z.string()).size(5); // 정확히 5개의 항목을 포함해야 함
 ```
 
-## 교차 타입(Intersections)
+## 交叉类型（Intersections）
 
-교차 타입은 "논리적 AND" 타입을 생성할 때 유용합니다. 두 객체 타입을 교차시키는 데 사용할 수 있습니다.
+交叉类型适用于生成“逻辑 AND”类型。可以用于交叉两个对象类型。
 
 ```ts
 const Person = z.object({
@@ -1775,11 +1764,11 @@ const Employee = z.object({
 
 const EmployedPerson = z.intersection(Person, Employee);
 
-// 다음과 동일합니다:
+// 与以下代码相同：
 const EmployedPerson = Person.and(Employee);
 ```
 
-하지만 많은 경우, 두 객체를 병합할 때 `A.merge(B)`를 사용하는 것이 권장됩니다. `.merge` 메서드는 새로운 `ZodObject` 인스턴스를 반환하는 반면, `A.and(B)`는 `pick`이나 `omit`과 같은 일반적인 객체 메서드가 없는 `ZodIntersection` 인스턴스를 반환합니다.
+不过，在许多情况下，合并两个对象时建议使用 `A.merge(B)`。`.merge` 方法会返回一个新的 `ZodObject` 实例，而 `A.and(B)` 会返回一个没有 `pick` 或 `omit` 等常用对象方法的 `ZodIntersection` 实例。
 
 ```ts
 const a = z.union([z.number(), z.string()]);
@@ -1789,7 +1778,7 @@ const c = z.intersection(a, b);
 type c = z.infer<typeof c>; // => number
 ```
 
-<!-- Zod에서의 교차 타입은 똑똑하지 않습니다. `.parse()`에 전달된 데이터는 두 교차된 스키마에 그대로 전달됩니다. Zod 객체 스키마는 기본적으로 알려지지 않은 키를 허용하지 않기 때문에, 객체 스키마의 교차와 관련된 몇 가지 직관적이지 않은 동작이 있습니다. -->
+<!-- Zod 中的交叉类型并不智能。传递给 `.parse()` 的数据会原样传递给两个相交的 schema。由于 Zod 对象 schema 默认不允许未知键，因此与对象 schema 交叉相关的行为有一些不符合直觉。 -->
 
 <!--
 
@@ -1808,9 +1797,9 @@ type Teacher = z.infer<typeof AB>;
 // { id:string; name:string };
 ```  -->
 
-## 재귀 타입
+## 递归类型
 
-Zod에서 재귀 스키마를 정의할 수 있지만, TypeScript의 한계로 인해 해당 타입을 정적으로 추론할 수 없습니다. 대신 타입 정의를 수동으로 작성하고, Zod에 "타입 힌트"로 제공해야 합니다.
+虽然可以在 Zod 中定义递归 schema，但由于 TypeScript 的限制，无法静态推断出相应的类型。相反，需要手动编写类型定义，并将其作为“类型提示”提供给 Zod。
 
 ```ts
 const baseCategorySchema = z.object({
@@ -1841,16 +1830,15 @@ categorySchema.parse({
 }); // 통과
 ```
 
-이 예제는 [crasite](https://github.com/crasite)에게 감사드립니다.
+感谢 [crasite](https://github.com/crasite) 提供此示例。
 
-### ZodType과 ZodEffects 함께 사용하기
+### 一起使用 ZodType 和 ZodEffects
 
-`z.ZodType`과 `z.ZodEffects`를 함께 사용할 때 (
-[`.refine`](https://github.com/colinhacks/zod#refine),
-[`.transform`](https://github.com/colinhacks/zod#transform),
-[`preprocess`](https://github.com/colinhacks/zod#preprocess),
-등...
-), 스키마의 입력과 출력 타입을 정의해야 합니다. `z.ZodType<Output, z.ZodTypeDef, Input>`
+将 `z.ZodType` 与 `z.ZodEffects` 一起使用时（
+[`.refine`](https://github.com/colinhacks/zod#refine)、
+[`.transform`](https://github.com/colinhacks/zod#transform)、
+[`preprocess`](https://github.com/colinhacks/zod#preprocess)、
+等……），需要定义 schema 的输入和输出类型。`z.ZodType<Output, z.ZodTypeDef, Input>`
 
 ```ts
 const isValidId = (id: string): id is `${string}/${string}` =>
@@ -1873,11 +1861,11 @@ const schema: z.ZodType = baseSchema.extend({
 });
 ```
 
-이 예제는 [marcus13371337](https://github.com/marcus13371337)와 [JoelBeeldi](https://github.com/JoelBeeldi)에게 감사드립니다.
+感谢 [marcus13371337](https://github.com/marcus13371337) 和 [JoelBeeldi](https://github.com/JoelBeeldi) 提供此示例。
 
-### JSON 타입 검증
+### 验证 JSON 类型
 
-JSON 값을 검증하고 싶다면 아래 코드 조각을 사용할 수 있습니다.
+如果想验证 JSON 值，可以使用下面的代码片段。
 
 ```ts
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
@@ -1890,13 +1878,13 @@ const jsonSchema: z.ZodType = z.lazy(() =>
 jsonSchema.parse(data);
 ```
 
-이 코드는 [ggoodman](https://github.com/ggoodman)이 제안한 내용을 기반으로 작성되었습니다.
+此代码基于 [ggoodman](https://github.com/ggoodman) 提出的内容编写。
 
-### 순환 객체
+### 循环对象
 
-Zod는 재귀 스키마를 지원하지만, 순환 데이터를 전달하면 경우에 따라 무한 루프가 발생할 수 있습니다.
+Zod 支持递归 schema，但如果传入循环数据，在某些情况下可能会导致无限循环。
 
-> 문제가 발생하기 전에 순환 객체를 감지하려면 [이 방법](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b)을 고려해 보세요.
+> 如果想在出现问题前检测循环对象，可以考虑[这种方法](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b)。
 
 ## Promise
 
@@ -1904,10 +1892,10 @@ Zod는 재귀 스키마를 지원하지만, 순환 데이터를 전달하면 경
 const numberPromise = z.promise(z.number());
 ```
 
-Promise 스키마를 사용할 때 "파싱"은 약간 다르게 동작합니다. 검증은 두 단계로 이루어집니다:
+使用 Promise schema 时，“解析”的行为略有不同。验证分为两个步骤：
 
-1. Zod는 입력값이 Promise의 인스턴스인지 동기적으로 확인합니다. 즉, `.then`과 `.catch` 메서드를 가진 객체인지 확인합니다.
-2. Zod는 `.then`을 사용해 기존 Promise에 추가 검증 단계를 연결합니다. 반환된 Promise에서 `.catch`를 사용해 검증 실패를 처리해야 합니다.
+1. Zod 会同步检查输入值是否为 Promise 的实例。也就是说，会检查它是否为具有 `.then` 和 `.catch` 方法的对象。
+2. Zod 使用 `.then` 将额外的验证步骤连接到现有 Promise 上。需要在返回的 Promise 上使用 `.catch` 来处理验证失败。
 
 ```ts
 numberPromise.parse("tuna");
@@ -1925,13 +1913,13 @@ const test = async () => {
 };
 ```
 
-<!-- #### 비네이티브 Promise 구현
+<!-- #### 非原生 Promise 实现
 
-Promise를 "파싱"할 때, Zod는 전달된 값이 `.then`과 `.catch` 메서드를 가진 객체인지 확인합니다. 따라서 Bluebird와 같은 비네이티브 Promise를 `z.promise(...).parse`에 전달해도 문제없이 동작합니다. 단, 주의할 점은 파싱 함수의 반환 타입이 `네이티브` `Promise`가 되므로, 비표준 Promise 메서드를 사용하는 하위 로직이 있다면 작동하지 않을 수 있습니다. -->
+在“解析” Promise 时，Zod 会检查传入的值是否为具有 `.then` 和 `.catch` 方法的对象。因此，即使将 Bluebird 等非原生 Promise 传递给 `z.promise(...).parse`，也可以正常工作。但需要注意的是，解析函数的返回类型会变成`原生` `Promise`，因此如果下层逻辑使用了非标准 Promise 方法，可能无法正常工作。 -->
 
 ## Instanceof
 
-`z.instanceof`를 사용하면 입력값이 특정 클래스의 인스턴스인지 확인할 수 있습니다. 이는 외부 라이브러리에서 내보낸 클래스에 대해 입력값을 검증할 때 유용합니다.
+使用 `z.instanceof` 可以检查输入值是否为特定类的实例。这对于验证由外部库导出的类的输入值非常有用。
 
 ```ts
 class Test {
@@ -1945,13 +1933,13 @@ TestSchema.parse(new Test()); // 통과
 TestSchema.parse(blob); // 오류 발생
 ```
 
-위 예제에서 `TestSchema`는 `Test` 클래스의 인스턴스인지 검증합니다. `new Test()`는 검증을 통과하지만, `blob`은 문자열이므로 오류가 발생합니다.
+在上面的示例中，`TestSchema` 会验证输入值是否为 `Test` 类的实例。`new Test()` 可以通过验证，但 `blob` 是字符串，因此会发生错误。
 
-## 함수
+## 函数
 
-Zod는 "함수 스키마"를 정의할 수 있게 해줍니다. 이를 통해 검증 코드와 "비즈니스 로직"을 섞지 않고도 함수의 입력과 출력을 쉽게 검증할 수 있습니다.
+Zod 支持定义“函数 schema”。这样可以轻松验证函数的输入和输出，而无需将验证代码与“业务逻辑”混合在一起。
 
-`z.function(args, returnType)`를 사용해 함수 스키마를 만들 수 있습니다.
+可以使用 `z.function(args, returnType)` 创建函数 schema。
 
 ```ts
 const myFunction = z.function();
@@ -1960,7 +1948,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => ()=>unknown
 ```
 
-입력과 출력을 정의해 보겠습니다.
+接下来定义输入和输出。
 
 ```ts
 const myFunction = z
@@ -1972,7 +1960,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
 
-함수 스키마는 `.implement()` 메서드를 가지고 있습니다. 이 메서드는 함수를 인자로 받아 입력과 출력을 자동으로 검증하는 새로운 함수를 반환합니다.
+函数 schema 具有 `.implement()` 方法。该方法接收一个函数作为参数，并返回一个会自动验证输入和输出的新函数。
 
 ```ts
 const trimmedLength = z
@@ -1988,9 +1976,9 @@ trimmedLength("sandwich"); // => 8
 trimmedLength(" asdf "); // => 4
 ```
 
-입력만 검증하고 싶다면 `.returns()` 메서드를 호출하지 않으면 됩니다. 출력 타입은 구현에서 추론됩니다.
+如果只想验证输入，可以不调用 `.returns()` 方法。输出类型会从实现中推断出来。
 
-> 함수가 아무것도 반환하지 않는다면 특별한 `z.void()` 옵션을 사용할 수 있습니다. 이렇게 하면 Zod가 void 반환 함수의 타입을 올바르게 추론할 수 있습니다. (void 반환 함수는 실제로 undefined를 반환합니다.)
+> 如果函数不返回任何内容，可以使用特殊的 `z.void()` 选项。这样 Zod 就能正确推断返回 void 的函数类型。（返回 void 的函数实际上会返回 undefined。）
 
 ```ts
 const myFunction = z
@@ -2003,7 +1991,7 @@ const myFunction = z
 myFunction; // (arg: string)=>number[]
 ```
 
-함수 스키마에서 입력과 출력 스키마를 추출할 수 있습니다.
+可以从函数 schema 中提取输入和输出 schema。
 
 ```ts
 myFunction.parameters();
@@ -2013,23 +2001,23 @@ myFunction.returnType();
 // => ZodBoolean
 ```
 
-## 전처리(Preprocess)
+## 预处理（Preprocess）
 
-> Zod는 이제 `.preprocess()` 없이도 기본 타입 강제 변환을 지원합니다. 자세한 내용은 [강제 변환 문서](#기본-타입-강제-변환coercion)를 참고하세요.
+> Zod 现在无需 `.preprocess()` 即可支持基本类型强制转换。详情请参考[强制转换文档](#基本类型强制转换coercion)。
 
-일반적으로 Zod는 "파싱 후 변환" 패러다임으로 동작합니다. Zod는 먼저 입력값을 검증한 다음, 변환 함수 체인을 통해 전달합니다. (변환에 대한 자세한 내용은 [.transform 문서](#transform)를 참고하세요.)
+通常，Zod 遵循“解析后转换”的范式。Zod 会先验证输入值，然后将其传递给转换函数链。（有关转换的详细信息，请参考[.transform 文档](#transform)。）
 
-하지만 때로는 파싱이 일어나기 `전에` 입력값에 어떤 변환을 적용하고 싶을 때가 있습니다. 일반적인 사용 사례는 타입 강제 변환입니다. Zod는 `z.preprocess()`를 통해 이를 가능하게 합니다.
+但有时，你可能希望在解析发生`之前`对输入值应用某种转换。常见的使用场景是类型强制转换。Zod 通过 `z.preprocess()` 支持这一点。
 
 ```ts
 const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
-이 코드는 `ZodEffects` 인스턴스를 반환합니다. `ZodEffects`는 전처리, 개선(refinements), 변환과 관련된 모든 로직을 포함하는 래퍼 클래스입니다.
+这段代码会返回一个 `ZodEffects` 实例。`ZodEffects` 是一个包装类，包含与预处理、改进（refinements）和转换相关的所有逻辑。
 
-## 커스텀 스키마
+## 自定义 schema
 
-Zod에서 `z.custom()`을 사용하면 TypeScript의 어떤 타입이든 스키마로 만들 수 있습니다. 이 기능은 Zod에서 기본적으로 지원하지 않는 타입, 예를 들어 템플릿 문자열 리터럴 같은 경우에 유용합니다.
+在 Zod 中，可以使用 `z.custom()` 将 TypeScript 中的任意类型创建为 schema。这对于 Zod 默认不支持的类型非常有用，例如模板字符串字面量。
 
 ```ts
 const px = z.custom((val) => {
@@ -2042,29 +2030,29 @@ px.parse("42px"); // "42px"
 px.parse("42vw"); // 에러 발생
 ```
 
-만약 검증 함수를 제공하지 않으면, Zod는 모든 값을 허용합니다. 이는 위험할 수 있습니다!
+如果不提供验证函数，Zod 将接受所有值。这可能会有危险！
 
 ```ts
 z.custom(); // 검증을 수행하지 않음
 ```
 
-두 번째 인자로 에러 메시지나 다른 옵션을 커스텀할 수 있습니다. 이 매개변수는 [`.refine`](#refine)의 params 매개변수와 동일하게 작동합니다.
+可以通过第二个参数自定义错误消息或其他选项。此参数的工作方式与 [`.refine`](#refine) 的 params 参数相同。
 
 ```ts
 z.custom((val) => ..., "커스텀 에러 메시지");
 ```
 
-## 스키마 메서드
+## Schema 方法
 
-모든 Zod 스키마는 특정 메서드를 포함하고 있습니다.
+所有 Zod schema 都包含特定的方法。
 
 ### `.parse`
 
 `.parse(data: unknown): T`
 
-Zod 스키마가 주어지면, `.parse` 메서드를 호출하여 `data`가 유효한지 확인할 수 있습니다. 유효하다면, 완전한 타입 정보와 함께 값이 반환됩니다! 그렇지 않으면 오류가 발생합니다.
+给定一个 Zod schema，可以调用 `.parse` 方法检查 `data` 是否有效。如果有效，将返回带有完整类型信息的值！否则会发生错误。
 
-> 중요: `.parse`가 반환하는 값은 여러분이 전달한 변수의 **깊은 복사본(deep clone)**입니다.
+> 重要：`.parse` 返回的值是你传入变量的**深拷贝（deep clone）**。
 
 ```ts
 const stringSchema = z.string();
@@ -2077,7 +2065,7 @@ stringSchema.parse(12); // 오류 발생
 
 `.parseAsync(data:unknown): Promise<T>`
 
-비동기 [검증](#refine)이나 [변환](#transform)을 사용할 경우, `.parseAsync`를 사용해야 합니다.
+使用异步[验证](#refine)或[转换](#transform)时，必须使用 `.parseAsync`。
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length <= 8);
@@ -2090,7 +2078,7 @@ await stringSchema.parseAsync("hello world"); // => 에러 발생
 
 `.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-Zod에서 유효성 검사가 실패할 때 에러를 던지지 않도록 하려면 `.safeParse`를 사용하세요. 이 메서드는 성공적으로 파싱된 데이터를 포함하는 객체 또는 유효성 검사 문제에 대한 상세 정보를 담은 ZodError 인스턴스를 반환합니다.
+如果不希望 Zod 在验证失败时抛出错误，请使用 `.safeParse`。该方法会返回一个对象，其中包含成功解析的数据，或包含验证问题详细信息的 ZodError 实例。
 
 ```ts
 stringSchema.safeParse(12);
@@ -2100,7 +2088,7 @@ stringSchema.safeParse("billie");
 // => { success: true; data: 'billie' }
 ```
 
-결과는 **판별 유니온(discriminated union)**이기 때문에, 에러를 매우 편리하게 처리할 수 있습니다:
+结果是一个**判别联合（discriminated union）**，因此可以非常方便地处理错误：
 
 ```ts
 const result = stringSchema.safeParse("billie");
@@ -2115,15 +2103,15 @@ if (!result.success) {
 
 ### `.safeParseAsync`
 
-> 별칭: `.spa`
+> 别名：`.spa`
 
-`safeParse`의 비동기 버전입니다.
+这是 `safeParse` 的异步版本。
 
 ```ts
 await stringSchema.safeParseAsync("billie");
 ```
 
-편의를 위해 `.spa`로 별칭이 지정되었습니다:
+为方便起见，它被设置了 `.spa` 别名：
 
 ```ts
 await stringSchema.spa("billie");
@@ -2133,11 +2121,11 @@ await stringSchema.spa("billie");
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
-Zod는 **커스텀 검증 로직**을 제공할 수 있도록 `refinements` 기능을 지원합니다. (여러 이슈를 생성하거나 에러 코드를 커스텀하는 등 고급 기능을 원한다면 [`.superRefine`](#superrefine)을 참고하세요.)
+Zod 支持 `refinements` 功能，用于提供**自定义验证逻辑**。（如果想了解创建多个 issue 或自定义错误代码等高级功能，请参考 [`.superRefine`](#superrefine)。）
 
-Zod는 TypeScript와 최대한 비슷하게 동작하도록 설계되었습니다. 하지만 TypeScript의 타입 시스템으로는 표현할 수 없는 다양한 **리파인먼트 타입**이 존재합니다. 예를 들어, 숫자가 정수인지 확인하거나 문자열이 유효한 이메일 주소인지 검사하는 경우가 있습니다.
+Zod 的设计目标是尽可能接近 TypeScript 的行为。不过，存在许多 TypeScript 类型系统无法表达的**细化类型**。例如，检查数字是否为整数，或检查字符串是否为有效的电子邮件地址。
 
-예를 들어, `.refine`을 사용해 **어떤 Zod 스키마**에든 커스텀 검증을 추가할 수 있습니다:
+例如，可以使用 `.refine` 为**任意 Zod schema**添加自定义验证：
 
 ```ts
 const myString = z.string().refine((val) => val.length <= 255, {
@@ -2145,14 +2133,14 @@ const myString = z.string().refine((val) => val.length <= 255, {
 });
 ```
 
-> ⚠️ 리파인먼트 함수는 **에러를 던지지 않아야 합니다**. 대신 검증 실패 시 `falsy` 값을 반환해야 합니다.
+> ⚠️ refinements 函数**不应抛出错误**。相反，验证失败时应返回 `falsy` 值。
 
-#### 인자
+#### 参数
 
-`.refine`은 두 가지 인자를 받습니다.
+`.refine` 接收两个参数。
 
-1. 첫 번째는 검증 함수입니다. 이 함수는 하나의 입력(`T` 타입 — 스키마에서 추론된 타입)을 받고 `any`를 반환합니다. 참 같은 값(truthy value)이면 검증을 통과합니다. (zod@1.6.2 이전 버전에서는 검증 함수가 불리언 값을 반환해야 했습니다.)
-2. 두 번째는 몇 가지 옵션을 받습니다. 이 옵션을 사용해 특정 오류 처리 동작을 커스터마이징할 수 있습니다:
+1. 第一个是验证函数。该函数接收一个输入（`T` 类型——从 schema 推断出的类型），并返回 `any`。如果返回 truthy value，则验证通过。（在 zod@1.6.2 之前的版本中，验证函数必须返回布尔值。）
+2. 第二个接收一些选项。可以使用这些选项自定义特定的错误处理行为：
 
 ```ts
 type RefineParams = {
@@ -2167,7 +2155,7 @@ type RefineParams = {
 };
 ```
 
-고급 사용 사례에서는 두 번째 인자가 `RefineParams`를 반환하는 함수일 수도 있습니다.
+在高级使用场景中，第二个参数也可以是返回 `RefineParams` 的函数。
 
 ```ts
 const longString = z.string().refine(
@@ -2176,7 +2164,7 @@ const longString = z.string().refine(
 );
 ```
 
-#### 에러 경로 커스텀하기
+#### 自定义错误路径
 
 ```ts
 const passwordForm = z
@@ -2192,7 +2180,7 @@ const passwordForm = z
 passwordForm.parse({ password: "asdf", confirm: "qwer" });
 ```
 
-`path` 매개변수를 제공했기 때문에, 발생한 에러는 다음과 같습니다:
+由于提供了 `path` 参数，产生的错误如下：
 
 ```ts
 ZodError {
@@ -2204,9 +2192,9 @@ ZodError {
 }
 ```
 
-#### 비동기 정제(Refinements)
+#### 异步 refinements
 
-정제는 비동기로도 사용할 수 있습니다:
+refinements 也可以异步使用：
 
 ```ts
 const userId = z.string().refine(async (id) => {
@@ -2215,11 +2203,11 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️ 비동기 정제를 사용할 경우, 데이터를 파싱할 때 반드시 `.parseAsync` 메서드를 사용해야 합니다! 그렇지 않으면 Zod에서 에러가 발생합니다.
+> ⚠️ 使用异步 refinements 时，解析数据必须使用 `.parseAsync` 方法！否则 Zod 会发生错误。
 
-#### transform과 refine의 관계
+#### transform 与 refine 的关系
 
-transform과 refine은 서로 교차하여 사용할 수 있습니다:
+transform 和 refine 可以交替使用：
 
 ```ts
 z.string()
@@ -2253,7 +2241,7 @@ ZodError {
 
 ### `.superRefine`
 
-`.refine` 메서드는 사실 더 강력하고(그리고 더 장황한) `superRefine`이라는 메서드 위에 구축된 문법적 설탕(syntactic sugar)입니다. 다음은 예제입니다:
+`.refine` 方法实际上是构建在更强大（也更冗长）的 `superRefine` 方法之上的语法糖（syntactic sugar）。示例如下：
 
 ```ts
 const Strings = z.array(z.string()).superRefine((val, ctx) => {
@@ -2276,13 +2264,13 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 });
 ```
 
-여러분은 원하는 만큼 이슈를 추가할 수 있습니다. 만약 함수 실행 중에 `ctx.addIssue`가 호출되지 않으면, 검증은 통과됩니다.
+可以添加任意数量的 issue。如果函数执行期间没有调用 `ctx.addIssue`，验证就会通过。
 
-일반적으로 리파인먼트는 항상 `ZodIssueCode.custom` 에러 코드를 가진 이슈를 생성하지만, `superRefine`을 사용하면 어떤 `ZodIssueCode`의 이슈든 던질 수 있습니다. 각 이슈 코드는 [ERROR_HANDLING.md](ERROR_HANDLING.md) 문서에서 자세히 설명되어 있습니다.
+通常，refinements 始终会创建错误代码为 `ZodIssueCode.custom` 的 issue，但使用 `superRefine` 时，可以抛出任意 `ZodIssueCode` 的 issue。每个 issue code 都在 [ERROR_HANDLING.md](ERROR_HANDLING.md) 文档中进行了详细说明。
 
-#### 조기 중단
+#### 提前中止
 
-기본적으로, 파싱은 검증 체크가 실패한 후에도 계속 진행됩니다. 예를 들어, 여러 개의 검증을 연쇄적으로 연결하면 모든 검증이 실행됩니다. 하지만, 이후의 검증이 실행되지 않도록 **조기 중단**하는 것이 바람직할 수 있습니다. 이를 위해 `ctx.addIssue`에 `fatal` 플래그를 전달하고 `z.NEVER`를 반환하면 됩니다.
+默认情况下，即使验证检查失败，解析也会继续进行。例如，将多个验证串联起来时，所有验证都会执行。不过，有时最好**提前中止**，避免执行后续验证。为此，可以向 `ctx.addIssue` 传递 `fatal` 标志，并返回 `z.NEVER`。
 
 ```ts
 const schema = z.number().superRefine((val, ctx) => {
@@ -2305,9 +2293,9 @@ const schema = z.number().superRefine((val, ctx) => {
 });
 ```
 
-#### 타입 정제
+#### 类型 refinements
 
-`.refine()` 또는 `.superRefine()`에 [타입 술어(type predicate)](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)를 제공하면, 결과 타입이 해당 술어의 타입으로 좁혀집니다. 이는 여러 체이닝된 정제와 변환을 혼합하여 사용할 때 유용합니다:
+如果向 `.refine()` 或 `.superRefine()` 提供[类型谓词（type predicate）](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)，结果类型会缩小为该谓词的类型。这在混合使用多个链式 refinements 和转换时很有用：
 
 ```ts
 const schema = z
@@ -2330,11 +2318,11 @@ const schema = z
   .refine((arg) => arg.first === "bob", "`first`가 `bob`이 아닙니다!");
 ```
 
-> ⚠️ 검증이 통과되었는지 여부를 나타내기 위해 불리언 값을 반환하는 대신 **반드시** `ctx.addIssue()`를 사용해야 합니다. 함수 실행 중에 `ctx.addIssue`가 호출되지 않으면 검증이 통과됩니다.
+> ⚠️ 必须使用 `ctx.addIssue()` 来表示验证是否通过，而不是返回表示验证结果的布尔值。如果函数执行期间没有调用 `ctx.addIssue`，验证就会通过。
 
 ### `.transform`
 
-데이터를 파싱한 후 변환하려면 `transform` 메서드를 사용합니다.
+要在解析数据后进行转换，请使用 `transform` 方法。
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
@@ -2342,11 +2330,11 @@ const stringToNumber = z.string().transform((val) => val.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-이 예제에서는 문자열의 길이를 반환하는 변환 함수를 적용했습니다. `"string"`이라는 문자열을 파싱하면 그 길이인 `6`이 반환됩니다.
+在此示例中，应用了一个返回字符串长度的转换函数。解析字符串 `"string"` 后，会返回其长度 `6`。
 
-#### 체이닝 순서
+#### 链式调用顺序
 
-위의 `stringToNumber`는 `ZodEffects` 서브클래스의 인스턴스입니다. 이는 `ZodString`의 인스턴스가 아닙니다. 만약 `ZodString`의 내장 메서드(예: `.email()`)를 사용하려면, **변환(transform)을 적용하기 전에** 해당 메서드를 먼저 적용해야 합니다.
+上面的 `stringToNumber` 是 `ZodEffects` 子类的实例，而不是 `ZodString` 的实例。如果想使用 `ZodString` 的内置方法（例如 `.email()`），必须在应用**转换（transform）之前**先调用这些方法。
 
 ```ts
 const emailToDomain = z
@@ -2357,11 +2345,11 @@ const emailToDomain = z
 emailToDomain.parse("colinhacks@example.com"); // => example.com
 ```
 
-#### 변환 중에 유효성 검사하기
+#### 在转换期间进行验证
 
-`.transform` 메서드는 값을 변환하면서 동시에 유효성을 검사할 수 있습니다. 이 방법은 `transform`과 `refine`을 체이닝하는 것보다 간단하고 중복을 줄일 수 있습니다.
+`.transform` 方法可以在转换值的同时进行验证。这比将 `transform` 和 `refine` 链式调用在一起更简单，也能减少重复。
 
-`.superRefine`과 마찬가지로, 변환 함수는 `addIssue` 메서드를 포함한 `ctx` 객체를 받습니다. 이 메서드를 사용해 유효성 검사 문제를 등록할 수 있습니다.
+与 `.superRefine` 一样，转换函数会接收包含 `addIssue` 方法的 `ctx` 对象。可以使用该方法注册验证问题。
 
 ```ts
 const numberInString = z.string().transform((val, ctx) => {
@@ -2381,9 +2369,9 @@ const numberInString = z.string().transform((val, ctx) => {
 });
 ```
 
-#### 변환과 정제의 관계
+#### transform 与 refinements 的关系
 
-변환(transform)과 정제(refine)는 서로 교차하여 사용할 수 있습니다. 이들은 선언된 순서대로 실행됩니다.
+转换（transform）和 refinements（refine）可以交替使用，并会按照声明顺序执行。
 
 ```ts
 const nameToGreeting = z
@@ -2394,11 +2382,11 @@ const nameToGreeting = z
   .refine((val) => val.indexOf("!") === -1); // 값에 "!"가 포함되지 않았는지 검증
 ```
 
-위 예제에서 각 단계는 순차적으로 실행됩니다. 먼저 문자열을 대문자로 변환한 후, 길이를 검증하고, 다시 문자열을 변환한 뒤, 마지막으로 특정 문자가 포함되지 않았는지 검증합니다.
+在上面的示例中，各个步骤会依次执行。首先将字符串转换为大写，然后验证长度，再次转换字符串，最后验证是否包含特定字符。
 
-#### 비동기 변환(Async Transforms)
+#### 异步转换（Async Transforms）
 
-변환(transform)은 비동기로도 동작할 수 있습니다.
+转换（transform）也可以异步执行。
 
 ```ts
 const IdToUser = z
@@ -2409,11 +2397,11 @@ const IdToUser = z
   });
 ```
 
-> ⚠️ 스키마에 비동기 변환이 포함된 경우, 데이터를 파싱할 때 반드시 `.parseAsync()` 또는 `.safeParseAsync()`를 사용해야 합니다. 그렇지 않으면 Zod가 에러를 발생시킵니다.
+> ⚠️ 如果 schema 包含异步转换，解析数据时必须使用 `.parseAsync()` 或 `.safeParseAsync()`。否则 Zod 会抛出错误。
 
 ### `.default`
 
-Zod에서 "기본값" 개념을 구현하기 위해 변환(transforms)을 사용할 수 있습니다.
+可以使用转换（transforms）在 Zod 中实现“默认值”概念。
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
@@ -2421,7 +2409,7 @@ const stringWithDefault = z.string().default("tuna");
 stringWithDefault.parse(undefined); // => "tuna"
 ```
 
-선택적으로, `.default`에 함수를 전달할 수도 있습니다. 이 함수는 기본값이 필요할 때마다 다시 실행됩니다.
+也可以选择将函数传递给 `.default`。每次需要默认值时，都会重新执行该函数。
 
 ```ts
 const numberWithRandomDefault = z.number().default(Math.random);
@@ -2431,14 +2419,14 @@ numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
 numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 ```
 
-개념적으로, Zod는 기본값을 다음과 같이 처리합니다:
+从概念上说，Zod 会按以下方式处理默认值：
 
-1. 입력값이 `undefined`인 경우, 기본값을 반환합니다.
-2. 그렇지 않으면, 기본 스키마를 사용해 데이터를 파싱합니다.
+1. 如果输入值为 `undefined`，则返回默认值。
+2. 否则，使用基础 schema 解析数据。
 
 ### `.describe`
 
-`.describe()`를 사용하면 결과 스키마에 `description` 속성을 추가할 수 있습니다.
+使用 `.describe()` 可以向结果 schema 添加 `description` 属性。
 
 ```ts
 const documentedString = z
@@ -2447,11 +2435,11 @@ const documentedString = z
 documentedString.description; // 유용한 텍스트 조각…
 ```
 
-이 기능은 필드를 문서화할 때 유용합니다. 예를 들어, [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)와 같은 라이브러리를 사용해 JSON 스키마를 생성할 때 활용할 수 있습니다.
+此功能在记录字段时很有用。例如，可以在使用 [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema) 等库生成 JSON schema 时使用它。
 
 ### `.catch`
 
-`.catch()`를 사용하면 파싱 오류가 발생했을 때 반환할 "기본값"을 지정할 수 있습니다.
+使用 `.catch()` 可以指定发生解析错误时要返回的“默认值”。
 
 ```ts
 const numberWithCatch = z.number().catch(42);
@@ -2460,7 +2448,7 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-선택적으로, `.catch`에 함수를 전달할 수도 있습니다. 이 함수는 기본값이 필요할 때마다 다시 실행됩니다. 이때, 발생한 오류를 담고 있는 `ctx` 객체가 함수에 전달됩니다.
+也可以选择将函数传递给 `.catch`。每次需要默认值时，都会重新执行该函数。此时，函数会接收包含所发生错误的 `ctx` 对象。
 
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
@@ -2473,14 +2461,14 @@ numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
 numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
-Zod가 "기본값"을 처리하는 방식은 다음과 같습니다:
+Zod 按以下方式处理“默认值”：
 
-1. 기본 스키마를 사용해 데이터를 파싱합니다.
-2. 파싱이 실패하면 "기본값"을 반환합니다.
+1. 使用基础 schema 解析数据。
+2. 如果解析失败，则返回“默认值”。
 
 ### `.optional`
 
-스키마의 옵셔널 버전을 반환하는 편의 메서드입니다.
+这是一个返回 schema 可选版本的便捷方法。
 
 ```ts
 const optionalString = z.string().optional(); // string | undefined
@@ -2491,7 +2479,7 @@ z.optional(z.string());
 
 ### `.nullable`
 
-이 메서드는 스키마의 nullable 버전을 반환하는 편의 기능입니다.
+这是一个返回 schema nullable 版本的便捷方法。
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
@@ -2500,11 +2488,11 @@ const nullableString = z.string().nullable(); // string | null
 z.nullable(z.string());
 ```
 
-이 메서드를 사용하면 특정 타입에 `null`을 허용하는 스키마를 쉽게 정의할 수 있습니다. 예를 들어, `z.string().nullable()`은 문자열 또는 `null` 값을 허용하는 스키마를 생성합니다. 이는 `z.nullable(z.string())`과 동일한 결과를 제공합니다.
+使用此方法可以轻松定义允许特定类型为 `null` 的 schema。例如，`z.string().nullable()` 会创建一个允许字符串或 `null` 值的 schema。它与 `z.nullable(z.string())` 的结果相同。
 
 ### `.nullish`
 
-스키마의 "nullish" 버전을 반환하는 편의 메서드입니다. Nullish 스키마는 `undefined`와 `null`을 모두 허용합니다. "nullish" 개념에 대해 더 자세히 알아보려면 [TypeScript 3.7 릴리스 노트](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing)를 참고하세요.
+这是一个返回 schema “nullish”版本的便捷方法。Nullish schema 同时允许 `undefined` 和 `null`。如需进一步了解“nullish”概念，请参考 [TypeScript 3.7 发布说明](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing)。
 
 ```ts
 const nullishString = z.string().nullish(); // string | null | undefined
@@ -2515,7 +2503,7 @@ z.string().nullable().optional();
 
 ### `.array()`
 
-주어진 타입에 대한 배열 스키마를 반환하는 편의 메서드입니다.
+这是一个返回给定类型数组 schema 的便捷方法。
 
 ```ts
 const stringArray = z.string().array(); // string[]
@@ -2524,11 +2512,11 @@ const stringArray = z.string().array(); // string[]
 z.array(z.string());
 ```
 
-이 메서드를 사용하면 특정 타입의 배열을 간단하게 정의할 수 있습니다. 예를 들어, 문자열 배열을 만들고 싶다면 `z.string().array()`를 사용하면 됩니다. 이는 `z.array(z.string())`과 동일한 결과를 반환합니다.
+使用此方法可以简单地定义特定类型的数组。例如，如果想创建字符串数组，可以使用 `z.string().array()`。它与 `z.array(z.string())` 的结果相同。
 
 ### `.promise`
 
-Promise 타입을 위한 편의 메서드입니다:
+这是用于 Promise 类型的便捷方法：
 
 ```ts
 const stringPromise = z.string().promise(); // Promise<string>
@@ -2537,11 +2525,11 @@ const stringPromise = z.string().promise(); // Promise<string>
 z.promise(z.string());
 ```
 
-이 메서드는 주어진 스키마를 Promise로 감싸는 역할을 합니다. 예를 들어, `z.string().promise()`는 `Promise<string>` 타입을 반환합니다. 이는 `z.promise(z.string())`과 동일한 결과를 제공합니다.
+此方法用于将给定 schema 包装为 Promise。例如，`z.string().promise()` 会返回 `Promise<string>` 类型。它与 `z.promise(z.string())` 的结果相同。
 
 ### `.or`
 
-[유니온 타입](#유니온-타입)을 편리하게 사용할 수 있는 메서드입니다.
+这是便捷使用[联合类型](#联合类型)的方法。
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
@@ -2550,12 +2538,12 @@ const stringOrNumber = z.string().or(z.number()); // string | number
 z.union([z.string(), z.number()]);
 ```
 
-- `z.string().or(z.number())`는 문자열 또는 숫자 타입을 허용하는 유니온 타입을 생성합니다.
-- 이 메서드는 `z.union([z.string(), z.number()])`와 동일한 기능을 제공하지만, 더 간결하게 작성할 수 있습니다.
+- `z.string().or(z.number())` 会创建一个允许字符串或数字类型的联合类型
+- 此方法提供与 `z.union([z.string(), z.number()])` 相同的功能，但写法更加简洁
 
 ### `.and`
 
-교차 타입(intersection type)을 쉽게 만들 수 있는 편의 메서드입니다.
+这是用于轻松创建交叉类型（intersection type）的便捷方法。
 
 ```ts
 const nameAndAge = z
@@ -2570,7 +2558,7 @@ z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 
 `.brand<T>() => ZodBranded<this, B>`
 
-TypeScript의 타입 시스템은 구조적(structural)입니다. 이는 구조적으로 동일한 두 타입을 같은 타입으로 간주한다는 의미입니다.
+TypeScript 的类型系统是结构化的（structural）。这意味着结构相同的两个类型会被视为相同类型。
 
 ```ts
 type Cat = { name: string };
@@ -2581,7 +2569,7 @@ const fido: Dog = { name: "fido" };
 petCat(fido); // 문제 없이 동작
 ```
 
-어떤 경우에는 TypeScript 내에서 `명목적 타이핑(nominal typing)`을 흉내 내고 싶을 수 있습니다. 예를 들어, Zod로 검증된 입력만 받는 함수를 작성하고 싶을 수 있습니다. 이는 `브랜드 타입(branded types)`(또는 `불투명 타입(opaque types)`)을 사용하여 달성할 수 있습니다.
+有时，你可能希望在 TypeScript 中模拟**名义类型（nominal typing）**。例如，可能希望编写一个只接收经过 Zod 验证的输入的函数。这可以通过使用**品牌类型（branded types）**（或**不透明类型（opaque types）**）实现。
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand();
@@ -2597,7 +2585,7 @@ petCat(simba);
 petCat({ name: "fido" });
 ```
 
-내부적으로 이는 교차 타입(intersection type)을 사용하여 추론된 타입에 "브랜드"를 붙이는 방식으로 동작합니다. 이렇게 하면 일반적인/브랜드가 없는 데이터 구조는 더 이상 스키마의 추론된 타입에 할당할 수 없게 됩니다.
+在内部，它通过使用交叉类型（intersection type）为推断出的类型添加“品牌”来实现。这样，普通的／没有品牌的数据结构就无法再赋值给 schema 的推断类型。
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand();
@@ -2605,13 +2593,13 @@ type Cat = z.infer<typeof Cat>;
 // {name: string} & {[symbol]: "Cat"}
 ```
 
-브랜드 타입은 `.parse`의 런타임 결과에 영향을 미치지 않는다는 점에 유의하세요. 이는 오직 정적(static) 구조일 뿐입니다.
+请注意，品牌类型不会影响 `.parse` 的运行时结果。它只是一种静态（static）结构。
 
 ### `.readonly`
 
 `.readonly() => ZodReadonly<this>`
 
-이 메서드는 기본 스키마를 사용해 입력을 파싱한 후, 결과에 `Object.freeze()`를 호출하는 `ZodReadonly` 스키마 인스턴스를 반환합니다. 추론된 타입도 `readonly`로 표시됩니다.
+此方法会返回一个 `ZodReadonly` schema 实例：它使用基础 schema 解析输入，然后对结果调用 `Object.freeze()`。推断出的类型也会标记为 `readonly`。
 
 ```ts
 const schema = z.object({ name: z.string() }).readonly();
@@ -2622,7 +2610,7 @@ const result = schema.parse({ name: "fido" });
 result.name = "simba"; // 오류 발생
 ```
 
-추론된 타입은 관련된 경우 TypeScript의 내장 `readonly` 타입을 사용합니다.
+在适用的情况下，推断出的类型会使用 TypeScript 内置的 `readonly` 类型。
 
 ```ts
 z.array(z.string()).readonly();
@@ -2640,7 +2628,7 @@ z.set(z.string()).readonly();
 
 ### `.pipe`
 
-스키마는 유효성 검사 "파이프라인"으로 연결할 수 있습니다. 이는 `.transform()` 이후의 결과를 쉽게 검증하는 데 유용합니다:
+可以将 schema 连接成验证“管道”。这对于轻松验证 `.transform()` 之后的结果很有用：
 
 ```ts
 z.string()
@@ -2648,13 +2636,13 @@ z.string()
   .pipe(z.number().min(5)); // 길이가 5 이상인지 검증
 ```
 
-`.pipe()` 메서드는 `ZodPipeline` 인스턴스를 반환합니다.
+`.pipe()` 方法会返回一个 `ZodPipeline` 实例。
 
-#### `.pipe()`를 사용하여 `z.coerce`의 일반적인 문제를 해결할 수 있습니다.
+#### 使用 `.pipe()` 解决 `z.coerce` 的常见问题
 
-입력을 원하는 타입으로 제한한 후 `.pipe()`를 사용하여 강제 변환을 적용할 수 있습니다.
+可以先将输入限制为所需类型，再使用 `.pipe()` 应用强制转换。
 
-**입력이 제한되지 않은 경우:**
+**输入未受限制时：**
 
 ```ts
 const toDate = z.coerce.date();
@@ -2666,7 +2654,7 @@ console.log(toDate.safeParse("2023-01-01").success); // true
 console.log(toDate.safeParse(null).success); // true
 ```
 
-**입력이 제한된 경우:**
+**输入受限时：**
 
 ```ts
 const datelike = z.union([z.number(), z.string(), z.date()]);
@@ -2679,9 +2667,9 @@ console.log(datelikeToDate.safeParse("2023-01-01").success); // true
 console.log(datelikeToDate.safeParse(null).success); // false
 ```
 
-이 기법을 사용하면 잡히지 않는 오류를 던지는 강제 변환을 피할 수도 있습니다.
+使用此技术还可以避免强制转换抛出无法捕获的错误。
 
-**입력이 제한되지 않은 경우:**
+**输入未受限制时：**
 
 ```ts
 const toBigInt = z.coerce.bigint();
@@ -2693,7 +2681,7 @@ console.log(toBigInt.safeParse("42")); // true
 console.log(toBigInt.safeParse(null)); // 잡히지 않는 오류 발생
 ```
 
-**입력이 제한된 경우:**
+**输入受限时：**
 
 ```ts
 const toNumber = z.number().or(z.string()).pipe(z.coerce.number());
@@ -2706,13 +2694,13 @@ console.log(toBigInt.safeParse("42").success); // true
 console.log(toBigInt.safeParse(null).success); // false
 ```
 
-이렇게 `.pipe()`를 사용하면 입력을 제한하고, 원하는 타입으로 안전하게 변환할 수 있습니다.
+通过这种方式使用 `.pipe()`，可以限制输入并安全地将其转换为所需类型。
 
-## Guides and concepts
+## 指南与概念
 
-### 타입 추론
+### 类型推断
 
-여러분은 `z.infer<typeof mySchema>`를 사용하여 어떤 스키마의 TypeScript 타입도 추출할 수 있습니다.
+可以使用 `z.infer<typeof mySchema>` 提取任意 schema 的 TypeScript 类型。
 
 ```ts
 const A = z.string();
@@ -2722,11 +2710,11 @@ const u: A = 12; // TypeError
 const u: A = "asdf"; // 컴파일 성공
 ```
 
-**변환(transform)은 어떻게 될까요?**
+**转换（transform）会怎样？**
 
-실제로 각 Zod 스키마는 내부적으로 **두 가지** 타입을 추적합니다: 입력 타입과 출력 타입입니다. 대부분의 스키마(예: `z.string()`)에서는 이 두 타입이 동일합니다. 하지만 변환을 추가하면 이 두 값이 달라질 수 있습니다. 예를 들어, `z.string().transform(val => val.length)`는 입력 타입이 `string`이고 출력 타입이 `number`입니다.
+实际上，每个 Zod schema 在内部都会追踪**两种**类型：输入类型和输出类型。对于大多数 schema（例如 `z.string()`），这两种类型相同。但添加转换后，这两个类型可能会不同。例如，`z.string().transform(val => val.length)` 的输入类型是 `string`，输出类型是 `number`。
 
-입력 타입과 출력 타입을 따로 추출할 수 있습니다:
+可以分别提取输入类型和输出类型：
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
@@ -2739,11 +2727,11 @@ type output = z.output; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-### 제네릭 함수 작성하기
+### 编写泛型函数
 
-TypeScript의 제네릭을 사용하면 Zod 스키마를 매개변수로 받는 재사용 가능한 함수를 작성할 수 있습니다. 이를 통해 타입 안전성과 타입 추론을 유지하면서 커스텀 유효성 검사 로직이나 스키마 변환 등을 만들 수 있습니다.
+使用 TypeScript 的泛型，可以编写接收 Zod schema 作为参数的可复用函数。这样可以在保持类型安全和类型推断的同时，创建自定义验证逻辑或 schema 转换。
 
-Zod 스키마를 입력으로 받는 함수를 작성하려고 할 때, 다음과 같은 코드를 시도해볼 수 있습니다:
+在尝试编写一个接收 Zod schema 作为输入的函数时，可能会写出如下代码：
 
 ```ts
 function inferSchema(schema: z.ZodType) {
@@ -2751,16 +2739,16 @@ function inferSchema(schema: z.ZodType) {
 }
 ```
 
-하지만 이 방법은 올바르지 않으며, TypeScript가 인자의 타입을 제대로 추론하는 데 제한을 줍니다. 무엇을 전달하든 `schema`의 타입은 `ZodType`의 인스턴스로 고정됩니다.
+但这种方式并不正确，并且会限制 TypeScript 正确推断参数类型。无论传入什么内容，`schema` 的类型都会固定为 `ZodType` 的实例。
 
 ```ts
 inferSchema(z.string());
 // => ZodType
 ```
 
-이 방식은 타입 정보를 잃어버리게 됩니다. 특히 입력이 실제로 어떤 하위 클래스(`ZodString` 등)인지 알 수 없기 때문에, 결과값에서 `.min()`과 같은 문자열 전용 메서드를 호출할 수 없습니다.
+这种方式会丢失类型信息。尤其是由于无法知道输入实际上属于哪个子类（如 `ZodString`），因此无法在结果值上调用 `.min()` 等字符串专用方法。
 
-더 나은 방법은 스키마의 추론된 타입만이 아니라 **스키마 전체를 추론**하는 것입니다. 이를 위해 `z.ZodTypeAny`라는 유틸리티 타입을 사용할 수 있습니다.
+更好的方法是不仅推断 schema 的类型，还要**推断整个 schema**。为此，可以使用 `z.ZodTypeAny` 工具类型。
 
 ```ts
 function inferSchema<T extends z.ZodTypeAny>(schema: T) {
@@ -2771,13 +2759,13 @@ inferSchema(z.string());
 // => ZodString
 ```
 
-> `ZodTypeAny`는 `ZodType<any, any, any>`의 축약형으로, 모든 Zod 스키마와 일치할 수 있을 만큼 넓은 타입입니다.
+> `ZodTypeAny` 是 `ZodType<any, any, any>` 的缩写，是一个足够宽泛、可以匹配所有 Zod schema 的类型。
 
-이제 결과는 완전히 타입이 지정되며, 타입 시스템은 스키마의 특정 하위 클래스를 정확히 추론할 수 있습니다.
+现在，结果具有完整的类型定义，类型系统可以准确推断 schema 的具体子类。
 
-#### 추론된 타입 유추하기
+#### 推断推断出的类型
 
-스키마의 제네릭 매개변수로 `z.ZodTypeAny`를 사용하는 것이 권장 사항이지만, 이 경우 파싱된 데이터가 스키마의 추론된 타입 대신 `any`로 타입 지정되는 문제가 발생할 수 있습니다.
+虽然建议将 `z.ZodTypeAny` 用作 schema 的泛型参数，但这种方式可能导致解析后的数据被指定为 `any`，而不是 schema 推断出的类型。
 
 ```ts
 function parseData(data: unknown, schema: T) {
@@ -2788,7 +2776,7 @@ parseData("sup", z.string());
 // => any
 ```
 
-TypeScript의 타입 추론 방식 때문에 `schema`가 추론된 타입이 아닌 `ZodTypeAny`로 처리됩니다. 이 문제는 `z.infer`를 사용한 타입 캐스팅으로 해결할 수 있습니다.
+由于 TypeScript 的类型推断方式，`schema` 会被当作 `ZodTypeAny` 处理，而不是推断出的类型。可以使用 `z.infer` 进行类型转换来解决此问题。
 
 ```ts
 function parseData(data: unknown, schema: T) {
@@ -2800,9 +2788,9 @@ parseData("sup", z.string());
 // => string
 ```
 
-#### 허용 가능한 입력 제한하기
+#### 限制可接受的输入
 
-`ZodType` 클래스는 세 가지 제네릭 매개변수를 가지고 있습니다.
+`ZodType` 类具有三个泛型参数。
 
 ```ts
 class ZodType<
@@ -2812,7 +2800,7 @@ class ZodType<
 > { ... }
 ```
 
-이 제네릭 매개변수를 제한함으로써, 여러분의 함수에 허용 가능한 스키마 입력을 제한할 수 있습니다:
+通过限制这些泛型参数，可以限制函数所接受的 schema 输入：
 
 ```ts
 function makeSchemaOptional<T extends ZodType>(schema: T) {
@@ -2826,9 +2814,9 @@ makeSchemaOptional(z.number());
 // 오류: 'ZodNumber'는 'ZodType' 타입의 매개변수에 할당할 수 없음
 ```
 
-### 에러 처리
+### 错误处理
 
-Zod는 `ZodError`라는 Error의 하위 클래스를 제공합니다. ZodError는 유효성 검사 문제에 대한 상세 정보를 담고 있는 `issues` 배열을 포함합니다.
+Zod 提供了一个名为 `ZodError` 的 Error 子类。ZodError 包含一个 `issues` 数组，其中包含验证问题的详细信息。
 
 ```ts
 const result = z
@@ -2851,13 +2839,13 @@ if (!result.success) {
 }
 ```
 
-> 가능한 에러 코드와 에러 메시지를 커스터마이징하는 방법에 대한 자세한 정보는 전용 에러 처리 가이드를 참고하세요: [ERROR_HANDLING.md](ERROR_HANDLING.md)
+> 有关可能的错误代码以及自定义错误消息的方法，请参考专门的错误处理指南：[ERROR_HANDLING.md](ERROR_HANDLING.md)
 
-Zod의 에러 보고는 **완전성**과 **정확성**을 강조합니다. 최종 사용자에게 유용한 에러 메시지를 제공하려면, 에러 맵을 사용해 Zod의 에러 메시지를 재정의하거나, [`zod-validation-error`](https://github.com/causaly/zod-validation-error)와 같은 서드파티 라이브러리를 사용하는 것이 좋습니다.
+Zod 的错误报告强调**完整性**和**准确性**。为了向最终用户提供有用的错误消息，建议使用错误映射重写 Zod 的错误消息，或使用 [`zod-validation-error`](https://github.com/causaly/zod-validation-error) 等第三方库。
 
-### 에러 포맷팅
+### 错误格式化
 
-`.format()` 메서드를 사용하여 이 에러를 중첩된 객체로 변환할 수 있습니다.
+可以使用 `.format()` 方法将此错误转换为嵌套对象。
 
 ```ts
 const result = z
@@ -2877,90 +2865,90 @@ if (!result.success) {
 }
 ```
 
-이 코드는 `zod` 라이브러리를 사용하여 객체의 유효성을 검사하고, 에러가 발생했을 때 해당 에러를 포맷팅하는 예제입니다. `name` 필드에 숫자 대신 문자열이 입력되어야 하는데, 숫자가 입력되면 에러 메시지가 반환됩니다.
+这段代码展示了如何使用 `zod` 库验证对象，并在发生错误时对错误进行格式化。`name` 字段应输入字符串而不是数字，如果输入数字，就会返回错误消息。
 
-## 비교
+## 比较
 
-다양한 검증 라이브러리가 널리 사용되고 있지만, 대부분 개발자 경험을 저해하는 설계상의 한계를 가지고 있습니다.
+虽然各种验证库被广泛使用，但大多数都存在会损害开发者体验的设计限制。
 
 <!-- 아래 표는 주요 기능 차이를 요약한 것입니다. 필요한 경우, 표 아래에서 특정 대안에 대해 더 자세히 논의합니다. -->
 
-<!-- | 기능                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
+<!-- | 功能                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
 | ---------------------------------------------------------------------------------------------------------------------- | :-----------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: | :-------------------------------------------------------------: |
-| <abbr title='검증자 인스턴스에서 TypeScript 타입을 추출할 수 있는 모든 기능을 포함합니다.'>타입 추론</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
-| <abbr title="Yup의 경우 특정 상황에서 타입 추론이 정확하지 않습니다. 아래에서 자세히 논의합니다.">정확한 타입 추론</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <abbr title='包含可以从验证器实例中提取 TypeScript 类型的所有功能'>类型推断</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <abbr title="Yup 在特定情况下的类型推断并不准确。下文将对此进行详细讨论。">准确的类型推断</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
 
-<abbr title="숫자, 문자열, 불리언, null, undefined">기본 타입</abbr>
-<abbr title="'이것이 문자열인가?'와 같은 기본 검사 외에도, 최소/최대 길이, 이메일 형식, URL 형식, 대소문자 검사 등을 포함합니다.">문자열 검증</abbr>
-<abbr title="'이것이 숫자인가?'와 같은 기본 검사 외에도, 최소/최대 값, 양수 여부, 정수 vs 실수 등을 포함합니다.">숫자 검증</abbr>
-날짜
+<abbr title="数字、字符串、布尔值、null、undefined">基本类型</abbr>
+<abbr title="除了“这是字符串吗？”这样的基本检查外，还包括最小/最大长度、电子邮件格式、URL 格式、大小写检查等。">字符串验证</abbr>
+<abbr title="除了“这是数字吗？”这样的基本检查外，还包括最小/最大值、是否为正数、整数 vs 浮点数等。">数字验证</abbr>
+日期
 
-기본 리터럴
-객체 리터럴
-튜플 리터럴
-객체
-배열
-비어 있지 않은 배열
-유니온
-옵셔널
-널러블
-열거형
-열거형 자동완성
-교차 타입
-객체 병합
-튜플
-재귀 타입
-함수 스키마
+基本字面量
+对象字面量
+元组字面量
+对象
+数组
+非空数组
+联合
+可选
+可空
+枚举
+枚举自动补全
+交叉类型
+对象合并
+元组
+递归类型
+函数 schema
 
-<abbr title="예를 들어, Yup은 `yup.number().min(5, '숫자는 5보다 커야 합니다!')`와 같은 구문으로 커스텀 에러 메시지를 허용합니다.">검증 메시지</abbr>
-불변 인스턴스
-타입 가드
-유효성 검사
-캐스팅
-기본값
-풍부한 에러
-브랜드 -->
+<abbr title="例如，Yup 允许使用类似 `yup.number().min(5, '数字必须大于 5！')` 的语法来自定义错误消息。">验证消息</abbr>
+不可变实例
+类型守卫
+有效性验证
+类型转换
+默认值
+丰富的错误信息
+品牌 -->
 
-<!-- - 누락된 객체 메서드: (pick, omit, partial, deepPartial, merge, extend)
+<!-- - 缺少的对象方法：（pick、omit、partial、deepPartial、merge、extend）
 
-* 적절한 타이핑이 없는 비어 있지 않은 배열 (`[T, ...T[]]`)
-* 지연/재귀 타입 누락
-* Promise 스키마 누락
-* 함수 스키마 누락
-* 유니온 및 교차 타입 스키마 누락
-* 순환 데이터 파싱 지원 누락 (아마도)
-* 에러 커스터마이징 지원 누락 -->
+* 缺少具有适当类型的非空数组（`[T, ...T[]]`）
+* 缺少延迟/递归类型
+* 缺少 Promise schema
+* 缺少函数 schema
+* 缺少联合及交叉类型 schema
+* 缺少对循环数据解析的支持（可能）
+* 缺少对错误自定义的支持 -->
 
-이 표와 설명은 각 라이브러리의 기능을 비교하며, 개발자가 프로젝트에 적합한 도구를 선택할 때 도움을 줍니다. 각 라이브러리의 강점과 약점을 이해하면 더 나은 결정을 내릴 수 있습니다.
+此表格和说明比较了各个库的功能，帮助开发者选择适合项目的工具。了解各个库的优势和劣势后，可以做出更好的决定。
 
 ### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-정적 타입 추적을 지원하지 않습니다 😕
+不支持静态类型追踪 😕
 
 ### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
-Yup은 처음에 바닐라 자바스크립트로 구현되었고, 이후 타입스크립트로 다시 작성된 기능이 풍부한 라이브러리입니다.
+Yup 是一个功能丰富的库，最初使用原生 JavaScript 实现，之后又使用 TypeScript 重写。
 
-- 캐스팅(casting)과 변환(transforms)을 지원합니다.
-- 모든 객체 필드는 기본적으로 선택 사항(optional)입니다.
-<!-- - 적절한 타입을 가진 비어 있지 않은 배열(`[T, ...T[]]`)을 지원하지 않습니다. -->
-- Promise 스키마를 지원하지 않습니다.
-- 함수 스키마를 지원하지 않습니다.
-- 유니온(union) 및 인터섹션(intersection) 스키마를 지원하지 않습니다.
+- 支持类型转换（casting）和转换（transforms）。
+- 默认情况下，所有对象字段都是可选的（optional）。
+<!-- - 不支持具有适当类型的非空数组（`[T, ...T[]]`）。 -->
+- 不支持 Promise schema。
+- 不支持函数 schema。
+- 不支持联合（union）和交叉（intersection）schema。
 
-<!-- ¹Yup은 `required`라는 단어를 독특하게 해석합니다. "undefined가 아님"을 의미하는 대신, Yup은 이를 "비어 있지 않음"을 의미하는 것으로 사용합니다. 따라서 `yup.string().required()`는 빈 문자열을 허용하지 않으며, `yup.array(yup.string()).required()`는 빈 배열을 허용하지 않습니다. 대신, Yup에서는 Zod 배열과 같이 전용 `.nonempty()` 메서드를 사용하거나 커스텀 리파인먼트(custom refinement)를 통해 이를 구현할 수 있습니다. -->
+<!-- ¹Yup 对 `required` 一词有独特的解释。Yup 并不将其理解为“不是 undefined”，而是将其用于表示“不为空”。因此，`yup.string().required()` 不允许空字符串，而 `yup.array(yup.string()).required()` 不允许空数组。相反，在 Yup 中，可以像 Zod 数组一样使用专用的 `.nonempty()` 方法，或通过自定义细化（custom refinement）来实现这一点。 -->
 
 ### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
-io-ts는 gcanti가 만든 훌륭한 라이브러리입니다. io-ts의 API는 Zod의 디자인에 큰 영감을 주었습니다.
+io-ts 是由 gcanti 创建的优秀库。io-ts 的 API 为 Zod 的设计提供了很大启发。
 
-우리의 경험상, io-ts는 많은 경우에 개발자 경험보다 함수형 프로그래밍의 순수성을 우선시합니다. 이는 타당하고 존경할 만한 디자인 목표이지만, io-ts를 기존의 절차적 또는 객체 지향적 코드베이스에 통합하기 어렵게 만듭니다. 예를 들어, io-ts에서 선택적 속성을 가진 객체를 정의하는 방법을 살펴보겠습니다.
+根据我们的经验，io-ts 在许多情况下优先考虑函数式编程的纯粹性，而不是开发者体验。这是合理且值得尊敬的设计目标，但也使得 io-ts 难以集成到现有的过程式或面向对象代码库中。例如，让我们看看如何在 io-ts 中定义带有可选属性的对象。
 
 ```ts
 import * as t from "io-ts";
@@ -2970,7 +2958,7 @@ const A = t.type({
 });
 
 const B = t.partial({
-  bar: t.number,
+  bar: t.number(),
 });
 
 const C = t.intersection([A, B]);
@@ -2979,9 +2967,9 @@ type C = t.TypeOf;
 // 반환 타입: { foo: string; bar?: number | undefined }
 ```
 
-필수 속성과 선택적 속성을 별도의 객체 검증기로 정의하고, 선택적 속성을 `t.partial`을 통해 표시한 후, `t.intersection`으로 결합해야 합니다.
+必须将必需属性和可选属性定义在单独的对象验证器中，通过 `t.partial` 标记可选属性，然后使用 `t.intersection` 将它们合并。
 
-Zod에서 동일한 작업을 수행하는 방법은 다음과 같습니다.
+以下是在 Zod 中执行相同操作的方法：
 
 ```ts
 const C = z.object({
@@ -2993,40 +2981,40 @@ type C = z.infer<typeof C>;
 // 반환 타입: { foo: string; bar?: number | undefined }
 ```
 
-이러한 선언적 API는 스키마 정의를 훨씬 더 간결하게 만듭니다.
+这种声明式 API 使 schema 定义更加简洁。
 
-`io-ts`는 또한 결과를 파싱하고 오류를 처리하기 위해 gcanti의 함수형 프로그래밍 라이브러리인 `fp-ts`를 사용해야 합니다. 이는 코드베이스를 엄격하게 함수형으로 유지하려는 개발자에게 훌륭한 리소스입니다. 하지만 `fp-ts`에 의존하는 것은 필연적으로 많은 지적 부담을 동반합니다. 개발자는 함수형 프로그래밍 개념과 `fp-ts`의 명명법에 익숙해야 라이브러리를 사용할 수 있습니다.
+`io-ts` 还必须使用 gcanti 的函数式编程库 `fp-ts` 来解析结果并处理错误。对于希望严格保持代码库函数式的开发者来说，这是一个很好的资源。但是，依赖 `fp-ts` 不可避免地会带来大量认知负担。开发者必须熟悉函数式编程概念和 `fp-ts` 的命名法，才能使用该库。
 
-- 직렬화 및 역직렬화 변환을 지원하는 코덱 지원
-- 브랜드 타입 지원
-- 고급 함수형 프로그래밍, 고차 타입, `fp-ts` 호환성 지원
-- 객체 메서드 부재: (pick, omit, partial, deepPartial, merge, extend)
-- 적절한 타입을 가진 비어 있지 않은 배열 부재 (`[T, ...T[]]`)
-- Promise 스키마 부재
-- 함수 스키마 부재
+- 支持序列化和反序列化转换的 codec
+- 支持品牌类型
+- 支持高级函数式编程、高阶类型和 `fp-ts` 兼容性
+- 缺少对象方法：（pick、omit、partial、deepPartial、merge、extend）
+- 缺少具有适当类型的非空数组（`[T, ...T[]]`）
+- 缺少 Promise schema
+- 缺少函数 schema
 
 ### Runtypes
 
-[Runtypes GitHub 페이지](https://github.com/pelotom/runtypes)
+[Runtypes GitHub 页面](https://github.com/pelotom/runtypes)
 
-Runtypes는 **좋은 타입 추론**을 지원합니다.
+Runtypes 支持**良好的类型推断**。
 
-- **패턴 매칭** 지원: 유니온 타입에 대해 분배되는 계산된 속성
-- **누락된 객체 메서드**: `deepPartial`, `merge`와 같은 기능이 없음
-- **비어 있지 않은 배열**에 대한 적절한 타입 지원 부재 (`[T, ...T[]]` 형태)
-- **Promise 스키마** 지원 미흡
-- **에러 커스터마이징** 기능 부재
+- 支持**模式匹配**：针对联合类型进行分发的计算属性
+- **缺少的对象方法**：没有 `deepPartial`、`merge` 等功能
+- 缺少对**非空数组**的适当类型支持（`[T, ...T[]]` 形式）
+- **Promise schema** 支持不足
+- 缺少**错误自定义**功能
 
-Runtypes는 타입 추론에 강점이 있지만, 몇 가지 기능이 아직 구현되지 않았습니다. 특히 객체 메서드와 비어 있지 않은 배열에 대한 타입 지원, Promise 스키마, 그리고 에러 커스터마이징 기능이 추가되면 더욱 완벽한 라이브러리가 될 것입니다.
+Runtypes 在类型推断方面具有优势，但仍有一些功能尚未实现。尤其是，如果增加对象方法和非空数组的类型支持、Promise schema 以及错误自定义功能，它将成为更加完善的库。
 
 ### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
-Ow는 함수 입력값 검증에 초점을 맞춘 라이브러리입니다. 복잡한 조건문을 쉽게 표현할 수 있게 해주지만, 타입이 없는 데이터를 파싱하는 기능은 제공하지 않습니다. Ow는 다양한 타입을 지원하며, Zod가 TypeScript의 타입 시스템과 거의 일대일로 매핑되는 반면, Ow는 `int32Array`와 같은 매우 구체적인 타입들을 바로 사용할 수 있게 해줍니다. (자세한 목록은 README에서 확인할 수 있습니다.)
+Ow 是一个专注于验证函数输入值的库。它可以轻松表达复杂条件，但不提供解析无类型数据的功能。Ow 支持多种类型，与 Zod 几乎一一对应到 TypeScript 的类型系统不同，Ow 可以直接使用 `int32Array` 等非常具体的类型。（详细列表请参阅 README。）
 
-함수 입력값을 검증하고 싶다면, Zod의 함수 스키마를 사용해보세요. 이 방법은 함수 타입 선언을 재사용할 수 있게 해주며, 매번 함수 시작 부분에 Ow 검증문을 복사해 붙여넣는 번거로움을 줄여줍니다. 또한 Zod는 반환 타입도 검증할 수 있기 때문에, 예상치 못한 데이터가 전달되지 않도록 보장할 수 있습니다.
+如果你想验证函数输入值，请尝试使用 Zod 的函数 schema。这种方法可以复用函数类型声明，减少每次在函数开头复制粘贴 Ow 验证语句的麻烦。此外，Zod 还可以验证返回类型，因此可以确保不会传入意外的数据。
 
-## 변경 내역
+## 变更记录
 
-변경 내역은 [CHANGELOG.md](CHANGELOG.md)에서 확인할 수 있습니다.
+变更记录可以在 [CHANGELOG.md](CHANGELOG.md) 中查看。

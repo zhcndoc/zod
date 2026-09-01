@@ -1,6 +1,6 @@
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
-import { isValidBase64URL, isValidJWT, parseValidURL } from "zod/v4/core";
+import { isValidBase64URL, isValidJWT, parseURLObject, urlHostnameOk, urlProtocolOk } from "zod/v4/core";
 import { metabench } from "./metabench.js";
 
 const DATA = Array.from({ length: 1000 }, () => "SGVsbG8gV29ybGQ");
@@ -9,15 +9,15 @@ const URL_DATA = Array.from({ length: 1000 }, () => "  https://example.com/path?
 
 const base64url = z.string().base64url();
 const compiledBase64url = zcore.compile(base64url);
-const fastBase64url = zcore.compileFastpass(base64url);
+const fastBase64url = zcore.compileFn(base64url);
 
 const jwt = z.jwt();
 const compiledJwt = zcore.compile(jwt);
-const fastJwt = zcore.compileFastpass(jwt);
+const fastJwt = zcore.compileFn(jwt);
 
 const url = z.url();
 const compiledUrl = zcore.compile(url);
-const fastUrl = zcore.compileFastpass(url);
+const fastUrl = zcore.compileFn(url);
 
 function makeScopedValidator(extraConstants: number) {
   const names = ["helper"];
@@ -49,7 +49,7 @@ await metabench("compiled string-format helpers", {
   "base64url direct helper"() {
     for (const d of DATA) isValidBase64URL(d);
   },
-  "base64url compileFastpass"() {
+  "base64url compileFn"() {
     for (const d of DATA) fastBase64url(d);
   },
   "base64url compiled.safeParse"() {
@@ -61,7 +61,7 @@ await metabench("compiled string-format helpers", {
   "jwt direct helper"() {
     for (const d of JWT_DATA) isValidJWT(d);
   },
-  "jwt compileFastpass"() {
+  "jwt compileFn"() {
     for (const d of JWT_DATA) fastJwt(d);
   },
   "jwt compiled.safeParse"() {
@@ -71,9 +71,16 @@ await metabench("compiled string-format helpers", {
     for (const d of JWT_DATA) jwt.safeParse(d);
   },
   "url direct helper"() {
-    for (const d of URL_DATA) parseValidURL(d, url._zod.def as any);
+    // the runtime's own sequence: trim, parse, then the hostname and protocol predicates
+    const def = url._zod.def;
+    for (const d of URL_DATA) {
+      const u = parseURLObject(d.trim(), def);
+      if (typeof u !== "object") continue;
+      if (def.hostname) urlHostnameOk(u, def.hostname);
+      if (def.protocol) urlProtocolOk(u, def.protocol);
+    }
   },
-  "url compileFastpass"() {
+  "url compileFn"() {
     for (const d of URL_DATA) fastUrl(d);
   },
   "url compiled.safeParse"() {

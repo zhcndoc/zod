@@ -357,7 +357,14 @@ z.config(z.locales.en());
 </Tab>
 </Tabs>
 
-### 语言包列表
+使用你自己的翻译函数时，`error` 参数会在 `.parse()` 期间调用，而不是在构造模式时调用——只定义一次的模式会在每次解析时获取当前语言。要在渲染时进行翻译，请直接翻译 issue：`code` 是键，而 issue 的其他属性是插值值。
+
+```ts
+z.string().min(5, { error: (iss) => t("too_short", iss) }); // at parse time
+result.error?.issues.map((iss) => t(iss.code, iss)); // at render time
+```
+
+### 语言包
 
 可用语言包如下：
 
@@ -367,7 +374,7 @@ z.config(z.locales.en());
 - `bg` — 保加利亚语
 - `bn` — 孟加拉语
 - `ca` — 加泰罗尼亚语
-- `ckb` — 库尔德语（中部）
+- `ckb` — 中库尔德语
 - `cs` — 捷克语
 - `da` — 丹麦语
 - `de` — 德语
@@ -379,6 +386,7 @@ z.config(z.locales.en());
 - `fi` — 芬兰语
 - `fr` — 法语
 - `frCA` — 加拿大法语
+- `gu` — 古吉拉特语
 - `he` — 希伯来语
 - `hi` — 印地语
 - `hr` — 克罗地亚语
@@ -395,10 +403,11 @@ z.config(z.locales.en());
 - `lt` — 立陶宛语
 - `mk` — 马其顿语
 - `ms` — 马来语
+- `ne` — 尼泊尔语
 - `nl` — 荷兰语
-- `nn` — 挪威尼诺斯克语
+- `nn` — 新挪威语
 - `no` — 挪威语
-- `ota` — 土耳其语
+- `ota` — 奥斯曼土耳其语
 - `ps` — 普什图语
 - `pl` — 波兰语
 - `pt` — 葡萄牙语

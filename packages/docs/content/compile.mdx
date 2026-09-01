@@ -3,46 +3,55 @@ title: AOT 编译
 description: "针对高频验证路径的提前模式编译"
 ---
 
-对于高频验证路径，Zod 可以提前将模式编译为专用验证器，结果和错误完全一致
+import { Callout } from "fumadocs-ui/components/callout";
+import { ThemedImage } from "@/components/themed-image";
 
-在包含 55 个模式的基准测试中，中位速度提升为 **2.4 倍**。速度提升取决于每次解析中模式执行的工作量，因为编译移除的是每个节点的分派和分配，而不是检查本身：
-
-| 模式 | 速度提升 |
-| ------ | ------- |
-| `z.array(z.string())`，100 个项目 | 约 14 倍 |
-| `z.array(z.object({…}))`，50 个项目 | 约 9 倍 |
-| 20 个键的对象 | 约 9 倍 |
-| 嵌套对象 | 约 4.5 倍 |
-| 可辨识联合 | 约 4 倍 |
-| 5 个键的对象 | 约 2.5 倍 |
-| `z.string().min(3).max(64).regex(…)` | 约 2.8 倍 |
-| 裸 `z.string()` | 无提升 |
-
-如果一个模式的全部内容只是一个 `typeof`，那么没有可移除的分派，因此编译不会带来任何收益。所有由这类模式构建的模式仍然可以受益——叶节点会被内联到其父级的编译代码中
-
-有两种启用方式
-
-## `z.compile()`
-
-立即编译单个模式，并返回一个已安装快速路径的克隆
+Zod 可以提前将模式编译成扁平、无循环的验证器，其运行速度比标准解析器快数倍。结果和错误完全一致。
 
 ```ts
 import * as z from "zod";
 
 const Player = z.object({
   username: z.string(),
+  bio: z.string(),
   xp: z.number(),
+  // ...20 more properties...
 });
 
 const CompiledPlayer = z.compile(Player);
-
-CompiledPlayer.parse({ username: "billie", xp: 100 });
-CompiledPlayer.safeParse({ username: "billie", xp: 100 });
 ```
 
-该克隆是一个常规的 Zod 模式——`.parse()`、`.safeParse()`、类型推断、Standard Schema 集成和组合都照常工作。原始模式不会改变
+像使用 `Player` 一样使用它：
 
-需要注意的一点是：派生出*新*模式的方法（`.refine()`、`.extend()`、`.optional()`、`.meta()`、……）会返回未编译的模式。请编译最终模式，而不是中间模式：
+```ts
+Player.parse({ ... });
+CompiledPlayer.parse({ ... }); // ~9x faster
+```
+
+像 `CompiledPlayer` 这样的已编译模式和其他任何 Zod 模式一样。*已编译模式没有特殊规则。*
+
+- 相同的方法：`.parse()`、`.safeParse()`、`.extend()`、`.optional()` 等
+- 相同的推断输入和输出类型
+- 相同的问题和错误消息
+
+Zod 的完整测试套件会运行两次——一次正常运行，另一次则全局启用自动编译——以确保完全一致。
+
+对象和元组等容器受益最大，因为编译会将运行时逐键遍历展开为扁平、无循环的验证逻辑，从而可以由 JS 引擎进行优化。
+
+<ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="在共享的纳秒坐标轴上显示每次解析所需时间，标准解析器为灰色条，编译后的时间为其中的蓝色条：包含 10 个对象的数组从 377 ns 降至 68 ns（5.5 倍），20 键对象从 301 ns 降至 38 ns（7.8 倍），包含 10 个字符串的数组从 241 ns 降至 33 ns（7.3 倍），包含 3 个对象的联合从 190 ns 降至 36 ns（5.3 倍），3 元素元组从 119 ns 降至 33 ns（3.6 倍），5 键严格对象从 117 ns 降至 32 ns（3.7 倍），可辨识联合从 92 ns 降至 27 ns（3.4 倍），5 键对象从 76 ns 降至 28 ns（2.8 倍）；编译后最高快 7.8 倍"
+  caption={<>每次解析所需时间，标准解析器与编译后对比——越低越好（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">基准测试</a>）</>}
+/>
+
+有两种启用方式。
+
+## `z.compile()`
+
+编译单个模式并返回一个编译后的副本。原模式不会改变。
+
+派生出*新*模式的方法（`.refine()`、`.extend()`、`.optional()`、`.meta()`……）会返回未编译的模式。请编译最终模式，而不是中间模式：
 
 ```ts
 // ❌ the .refine() result is not compiled
@@ -54,7 +63,7 @@ const schema2 = z.compile(z.string().refine((val) => val.length > 1));
 
 ## `import "zod/compile"`
 
-全局启用编译。在此导入*之后*构造的每个模式，都会在首次解析时自动编译
+全局启用编译。在此导入之后构造的每个模式，都会在首次解析时自动编译。
 
 ```ts
 import "zod/compile"; // must come before modules that define schemas
@@ -64,43 +73,113 @@ const schema = z.object({ name: z.string() });
 schema.parse({ name: "ok" }); // compiled on first parse
 ```
 
-模块求值顺序很重要：在该导入之前构造的模式不会受到影响。请将该导入放在应用程序入口点的顶部
+编译是惰性的，因此只有实际进行解析的模式才会被编译。
 
-编译是延迟执行的（首次解析时），因此在构建器链中创建的中间模式不会产生额外开销
+它也可以作为 Node.js CLI 标志使用，这样可以确保它在任何模块定义模式之前运行：
 
-## 错误一致性
+```sh
+node --import zod/compile app.js   # ESM
+node --require zod/compile app.cjs # CommonJS
+```
 
-编译后的快速路径是一个成功路径验证器。当输入未通过验证，或需要快速路径不支持的任何功能时，Zod 会透明地回退到标准解析器，该解析器会生成与未编译模式完全相同的 `ZodError`。不存在单独的编译错误路径，因此不会出现两者逐渐不同步的情况
+或者在 [`bunfig.toml`](https://bun.com/docs/runtime/bunfig#preload) 或 [`nub.jsonc`](https://nubjs.com/docs/config#preload) 中设置 `preload`。
 
-有两个值得了解的后果：
+```jsonc title="nub.jsonc"
+{
+  "preload": ["zod/compile"]
+}
+```
 
-- 无效输入需要同时付出快速路径和回退路径的开销。如果你的工作负载主要由无效输入构成，编译不会带来帮助（也不会改变任何行为）
-- 对于无效输入，细化和转换可能会运行两次——一次在快速路径中，一次在回退路径中。对于有效输入，它们恰好运行一次，且不会超过两次
+此导入方式用于应用程序，而不是库。
+
+## 工作原理
+
+在底层，`z.compile()` 会遍历整个模式一次，并生成一段高度优化的扁平、无循环 JavaScript 代码，其验证输入的速度远快于标准运行时验证器。这段代码可以通过 `new Function()` 执行（实际上是功能更强大的 `eval`），作为快速路径验证器使用。模式会利用它来“快速检查”有效性，在验证失败时回退到常规运行时逻辑，以提供详细的错误信息。
+
+<include>../snippets/how-z-compile-works.mdx</include>
+
+对于无效输入，回退逻辑会运行未编译的模式，因此错误来自未编译模式。由此带来两个结果：
+
+- 无效输入需要同时经过快速路径和回退逻辑，因此编译不会加快失败情况。
+- 对于有效输入，细化和转换只会运行一次；对于无效输入，最多运行两次。
 
 ## 不支持的模式
 
-编译是同步且仅向前的。如果模式无法完全建模，`z.compile()` 会抛出异常：
+有些功能无法编译，或者从编译中无法受益。在这些情况下，`z.compile()` 会退出编译并原样返回原模式：
 
-- **`ZodCompileAsyncError`** —— 模式包含异步细化、转换或检查
-- **`ZodCompileUnsupportedError`** —— 模式使用了快速路径无法精确复现的构造：
-  - `z.xor()`，其恰好一个匹配的规则要求每个分支都因与标准解析器相同的原因而拒绝
-  - 带有自定义 `when` 条件的检查
-  - 递归模式，需要标准解析器来解析输入中的引用循环
-  - 强制转换（`z.coerce.*`），快速路径不会对其建模
-  - 使用*回调*作为参数的 `.catch()`。回调接收的是根据调用方错误映射最终确定的 issues，而编译代码无法看到这些内容。使用常量的 `.catch(value)` 可以正常编译
+```ts
+const Schema = z.string().refine(async (val) => isAvailable(val));
 
-在容器内部（对象、数组、元组、记录、交集），不支持的*子模式*不会阻止编译——子模式会使用标准解析器运行，而周围的结构仍保持编译状态
+z.compile(Schema); // returns Schema itself, uncompiled
+```
 
-在全局模式下，编译失败的模式会静默地继续使用标准解析器。行为没有差异——只有速度提升会丢失。因此，请避免在库中代表用户启用全局模式；将选择权留给应用程序
+- `async` 细化、转换和检查
+- `z.xor()`
+- 递归模式
+- `z.coerce.*`
+- 带有自定义 `when` 的检查
+- 使用回调作为参数的 `.catch()`（带常量的 `.catch(value)` 会正常编译）
 
-编码操作（`z.encode()`、编解码器的 `"backward"` 方向）和异步解析始终使用标准解析器
+在对象、数组、元组、记录或交集中，不支持的子模式会使用标准解析器运行，而外围结构仍会保持编译状态。包含不支持成员的联合、`.catch()` 回调，或子树中任意位置存在异步逻辑，都会使整个模式回退。
+
+编码（`z.encode()`、“backward”方向的 codec）和异步解析始终使用标准解析器。
+
+传入 `strict` 可以让其抛出错误而不是回退——例如，用于确认热路径上的模式确实完成了编译：
+
+```ts
+z.compile(Schema, { strict: true }); // throws ZodCompileAsyncError
+```
+
+对于异步模式会抛出 `ZodCompileAsyncError`，其他所有情况会抛出 `ZodCompileUnsupportedError`。这两种错误都只会在 `strict` 下抛出。
 
 ## 内容安全策略
 
-编译使用 `new Function`，而它在 CSP／禁止 `eval` 的环境中不可用。当设置了 `jitless` 时，全局模式会自动停用：
+编译使用 `new Function`，而它在 CSP／不允许使用 `eval` 的环境中不可用。设置 `jitless` 后，全局模式会停用：
 
 ```ts
 z.config({ jitless: true });
 ```
 
-直接调用 `z.compile()` 会被视为显式选择启用；如果代码生成不可用，则会抛出 `ZodCompileUnsupportedError`
+直接调用 `z.compile()` 是显式选择启用，因此无论 `jitless` 的设置如何，它都会尝试生成代码。如果环境拒绝 `new Function`，该模式会像其他拒绝编译的情况一样，以未编译状态返回。
+
+## 包体积
+
+编译器包含大量代码，通过 `z.compile()` 或 `"zod/compile"` 调用它意味着编译器会被包含在你的包中。它会增加约 7 KB 的 gzip 压缩体积（压缩后 28 KB）。从未调用 `z.compile()` 或导入 `zod/compile` 的包无需承担任何开销；打包时它会被完全 tree-shaking。
+
+| 包（四键对象模式） | 不含编译器 | 含编译器 |
+| --- | --- | --- |
+| Zod | 24.1 KB | 31.1 KB |
+| Zod Mini | 4.6 KB | 13.2 KB |
+
+## 基准测试
+
+收益会随着模式复杂度增加而提升。这里的每个模式都是在紧密循环中单独测量的——这是标准解析器的最佳情况——因此其倍数低于页面顶部图表中的结果（[基准测试](https://github.com/colinhacks/zod/blob/main/packages/bench/compile-scaling.ts)）。
+
+| 模式 | 加速比 |
+| --- | --- |
+| 对象，5 个键 | 1.8 倍 |
+| 对象，10 个键 | 2.2 倍 |
+| 对象，20 个键 | 5.0 倍 |
+| 对象，50 个键 | 10.2 倍 |
+| 元组，1 个项 | 2.2 倍 |
+| 元组，3 个项 | 2.5 倍 |
+| 元组，5 个项 | 3.0 倍 |
+| 元组，10 个项 | 3.7 倍 |
+
+基于 [Moltar 基准测试](https://github.com/moltar/typescript-runtime-type-benchmarks) fixture 的结果，将编译和未编译的 Zod 与其他库进行比较。`parseSafe` 类别会返回一个剥离未知键的新对象。
+
+<ThemedImage
+  lightSrc="/blog/moltar-light.svg"
+  darkSrc="/blog/moltar-dark.svg"
+  alt="Moltar 基准测试 fixture 上每秒操作次数的柱状图，parseSafe 类别：Zod 4 编译后 47.5M，typia 45.3M，Zod 4 11.6M，valibot 1.8M，effect 1.7M，Zod 3 1.2M，arktype 152k，yup 121k"
+  caption={<>Moltar 基准测试 fixture 上的吞吐量（parseSafe：返回一个剥离未知键的新对象）——越高越好（<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">基准测试</a>）</>}
+/>
+
+`assertLoose` 类别返回布尔值并允许未知键。Zod 会通过 [`z.validate()`](/basics#handling-errors) 运行它。
+
+<ThemedImage
+  lightSrc="/blog/moltar-assertLoose-light.svg"
+  darkSrc="/blog/moltar-assertLoose-dark.svg"
+  alt="Moltar 基准测试 fixture 上每秒操作次数的柱状图，assertLoose 类别：typia 74.9M，arktype 66.2M，Zod 4 编译后 60.6M，Zod 4 6.5M，valibot 1.9M，effect 1.7M，Zod 3 1.2M，yup 124k"
+  caption={<>Moltar 基准测试 fixture 上的吞吐量（assertLoose：返回布尔值，允许未知键）——越高越好（<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">基准测试</a>）</>}
+/>

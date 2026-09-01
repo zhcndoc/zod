@@ -327,6 +327,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Environment variable validation from editor to runtime, for Next.js, Nuxt, Node.js, Vite, Bun, and more.",
     slug: "yamcodes/arkenv",
   },
+  {
+    name: "fullproduct.dev",
+    url: "https://fullproduct.dev",
+    description: "Zod & TS-first approach to building Universal Expo + Next.js apps using schemas as single source of truth",
+    slug: "FullProduct-dev/green-stack-starter-demo",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -389,6 +395,12 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/samchungy/oxlint-plugin-import-zod",
     description: "Oxlint plugin to enforce namespace imports for Zod.",
     slug: "samchungy/oxlint-plugin-import-zod",
+  },
+  {
+    name: "shorn",
+    url: "https://shorn.dev",
+    description: "Compact binary serialization that uses your Zod schema as the wire format. No IDL or codegen.",
+    slug: "ChiChuRita/shorn",
   },
 ];
 

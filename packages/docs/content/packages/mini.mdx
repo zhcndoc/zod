@@ -22,7 +22,17 @@ npm install zod@^4.0.0
 import * as z from "zod/mini";
 ```
 
-Zod Mini 实现了与 `zod` 完全相同的功能，但采用了*函数式*、*支持 tree-shaking* 的 API。如果你熟悉 `zod`，这意味着你通常会使用*函数*代替方法。
+相同的 API 也作为独立软件包 `@zod/mini` 发布，该软件包通过对 `zod` 的 peer dependency 重新导出 `zod/mini`。其版本与 `zod` 保持同步。
+
+```sh
+npm install zod @zod/mini
+```
+
+```ts
+import * as z from "@zod/mini";
+```
+
+Zod Mini 使用*函数式*、*可 tree-shaking* 的 API 实现了与 `zod` 完全相同的功能。如果你从 `zod` 转来，这意味着通常需要使用*函数*来替代方法。
 
 ```ts
 // 常规 Zod

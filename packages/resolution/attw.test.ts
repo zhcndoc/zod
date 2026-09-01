@@ -33,8 +33,14 @@ describe("Are The Types Wrong (attw) tests", () => {
       reject: false, // Don't throw on non-zero exit codes
     });
 
-    // Combine stdout and stderr for comprehensive output
-    const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
+    // drop pnpm's warnings — under CI setup-node leaves an unresolved ${NODE_AUTH_TOKEN} in the .npmrc and pnpm complains on every run
+    const stderr = result.stderr
+      .split("\n")
+      // pnpm pads WARN with U+2009 thin spaces, so \s is load-bearing — startsWith(" WARN") misses it
+      .filter((line) => !/^\s*WARN\b/.test(line))
+      .join("\n")
+      .trim();
+    const output = result.stdout + (stderr ? "\n" + stderr : "");
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
     expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
@@ -150,4 +156,55 @@ describe("Are The Types Wrong (attw) tests", () => {
       ***********************************"
     `);
   }, 120000); // 30 second timeout for the command
+
+  it("should run attw --pack node_modules/@zod/mini and check output", async () => {
+    const miniIndexPath = path.join(__dirname, "node_modules", "@zod", "mini", "index.js");
+    if (!existsSync(miniIndexPath)) {
+      // @zod/mini has not been built
+      return;
+    }
+
+    try {
+      await execa("pnpm", ["attw", "--version"], { cwd: __dirname, timeout: 5000 });
+    } catch (_: any) {
+      console.warn("attw not available, skipping test");
+      return;
+    }
+
+    const miniPackagePath = path.join(__dirname, "node_modules", "@zod", "mini");
+    const result = await execa("pnpm", ["attw", "--pack", miniPackagePath, "--format", "ascii"], {
+      cwd: __dirname,
+      reject: false,
+    });
+
+    const stderr = result.stderr
+      .split("\n")
+      .filter((line) => !/^\s*WARN\b/.test(line))
+      .join("\n")
+      .trim();
+    const output = result.stdout + (stderr ? "\n" + stderr : "");
+    const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
+    expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
+      "🎭 Import resolved to a CommonJS type declaration file, but an ESM JavaScript file. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseCJS.md
+
+
+      "@zod/mini/package.json"
+
+      node10: 🟢 (JSON)
+      node16 (from CJS): 🟢 (JSON)
+      node16 (from ESM): 🟢 (JSON)
+      bundler: 🟢 (JSON)
+
+      ***********************************
+
+      "@zod/mini"
+
+      node10: 🟢 
+      node16 (from CJS): 🟢 (CJS)
+      node16 (from ESM): 🎭 Masquerading as CJS
+      bundler: 🟢 
+
+      ***********************************"
+    `);
+  }, 120000);
 });

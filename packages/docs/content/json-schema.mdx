@@ -71,6 +71,7 @@ z.set(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
+z.number().multipleOf(0); // ❌ the divisor must be finite and non-zero
 ```
 
 ## 配置
@@ -109,7 +110,7 @@ interface ToJSONSchemaParams {
   /** 如何处理不可表示的类型。
    * - `"throw"` — 默认。不可表示的类型会抛出错误
    * - `"any"` — 不可表示的类型会变为 `{}`
-   * - 函数 — 返回要使用的 JSON Schema，或 `"any"`/`"throw"` */
+   * 函数 — 返回要使用的 JSON Schema，或 `"any"`/`"throw"` */
   unrepresentable?:
     | "throw"
     | "any"
@@ -239,6 +240,7 @@ z.set(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
+z.number().multipleOf(0); // ❌ the divisor must be finite and non-zero
 ```
 
 默认情况下，Zod 遇到它们会抛出错误。
@@ -248,11 +250,14 @@ z.toJSONSchema(z.bigint());
 // => 抛出错误
 ```
 
-你可以通过设置 `unrepresentable` 选项为 `"any"` 来改变此行为。这会将所有不可表示的类型转换为 `{}`（JSON Schema 中等价于 `unknown`）。
+你可以将 `unrepresentable` 选项设置为 `"any"` 来改变此行为。这会将任何不可表示的类型转换为 `{}`（JSON Schema 中 `unknown` 的等价形式），并从包含该类型的 schema 中移除不可表示的校验。
 
 ```ts
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
+
+z.toJSONSchema(z.number().multipleOf(0), { unrepresentable: "any" });
+// => { type: "number" }
 ```
 
 如果要逐个决定处理方式，请传入一个函数。每遇到一个不可表示的 schema，该函数就会被调用一次。返回要替代使用的 JSON Schema、`"any"` 或 `"throw"`（未返回任何内容时的默认值）。
@@ -416,7 +421,9 @@ z.guid(); // => { type: "string", format: "uuid" }
 z.url(); // => { type: "string", format: "uri" }
 ```
 
-这些 schema 通过 `contentEncoding` 支持：
+`z.iso.datetime()` 的 `local: true` 和 `precision: -1` 变体会回退到 `pattern`，因为 RFC 3339 `date-time` 要求同时包含偏移量和秒数。
+
+以下 schema 通过 `contentEncoding` 支持：
 
 ```ts
 z.base64(); // => { type: "string", contentEncoding: "base64" }
@@ -532,11 +539,14 @@ z.null();
 
 注意，`z.undefined()` 在 JSON Schema 中是不可表示的（见下文[不可表示](#unrepresentable)部分）。
 
-类似地，`nullable` 通过与 `null` 的联合表示：
+同样，`nullable` 会将 `"null"` 添加到可接受类型集合中。无法写成裸类型的内部 schema 会回退为 `anyOf`：
 
 ```ts
 z.nullable(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
+// => { type: ["string", "null"] }
+
+z.nullable(z.string().min(5));
+// => { anyOf: [{ type: "string", minLength: 5 }, { type: "null" }] }
 ```
 
 可选的 schema 则按原样表示，同时附带一个 `optional` 注解。

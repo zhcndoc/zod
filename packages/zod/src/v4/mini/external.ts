@@ -7,10 +7,12 @@ export { input, output } from "./in-out.js";
 
 export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
+export type { CompileOptions } from "../core/index.js";
 export {
   globalRegistry,
   registry,
   config,
+  memoizer,
   $output,
   $input,
   $brand,
@@ -23,9 +25,11 @@ export {
   TimePrecision,
   util,
   NEVER,
+  toZod,
   compile,
   ZodCompileAsyncError,
   ZodCompileUnsupportedError,
+  getDiscriminatedOption,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 

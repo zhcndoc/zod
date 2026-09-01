@@ -617,3 +617,104 @@ test("resolves a recursive reference once, however it is written", () => {
   expect(getterCalls).toBe(1);
   expect(lazyCalls).toBe(1);
 });
+
+// The second visitor of a shared node must not prefix onto the first visitor's path.
+test.each([false, true])("prefixes a shared node's issues once per reference (jitless: %s)", (jitless) => {
+  z.config({ jitless });
+  try {
+    const Node: any = z.object({
+      name: z.string(),
+      get left() {
+        return z.optional(Node);
+      },
+      get right() {
+        return z.optional(Node);
+      },
+    });
+
+    const shared: any = { name: 123 };
+    const result = Node.safeParse({ name: "root", left: shared, right: shared });
+
+    expect(result.success).toBe(false);
+    expect(result.error.issues.map((iss: any) => iss.path)).toEqual([
+      ["left", "name"],
+      ["right", "name"],
+    ]);
+  } finally {
+    z.config({ jitless: false });
+  }
+});
+
+test("the default memoizer is installed before the first container reads it", () => {
+  // the delete manufactures the fresh-process state; a container with only getter keys then constructs no leaf before the config read
+  delete z.config().memoizer;
+  const Node: any = z.object({
+    get self() {
+      return Node;
+    },
+  });
+  const input: any = {};
+  input.self = input;
+  const out = Node.parse(input);
+  expect(out.self).toBe(out);
+});
+
+test("guards a transform built before any container", () => {
+  // the guard attaches at construction, so a transform predating the first container must still get the default
+  delete z.config().memoizer;
+  const wrap = z.transform((value: any) => ({ wrapped: value }));
+  const Inner: any = z.object({
+    name: z.string(),
+    get self() {
+      return Wrapped;
+    },
+  });
+  const Wrapped: any = z.pipe(Inner, wrap);
+
+  const input: any = { name: "x" };
+  input.self = input;
+
+  expect(() => Wrapped.parse(input)).toThrow(/reference cycle/);
+});
+
+test("detects a cycle reachable only through a merged catchall", () => {
+  const Cyclic: any = z.object({
+    id: z.string(),
+    get next() {
+      return z.optional(Root);
+    },
+  });
+  const Root: any = z.object({ tag: z.string() }).merge(z.object({}).catchall(Cyclic));
+
+  const input: any = { tag: "root" };
+  input.child = { id: "1", next: input };
+
+  const out: any = Root.parse(input);
+  expect(out.child.next).toBe(out);
+});
+
+// the per-type switch can only enumerate kinds Zod ships, so an unknown `def.type` falls back to scanning the def; without it a cycle through a third-party container overflows the stack
+test("detects a cycle through a user-defined container type", () => {
+  const MyBox: any = z.core.$constructor("MyBox", (inst: any, def: any) => {
+    z.core.$ZodType.init(inst, def);
+    inst._zod.parse = (payload: any, ctx: any) => {
+      if (payload.value === null || typeof payload.value !== "object") return payload;
+      const inner = def.inner._zod.run({ value: payload.value.v, issues: [] }, ctx);
+      payload.value = { v: inner.value };
+      return payload;
+    };
+  });
+
+  const Node: any = z.object({
+    id: z.string(),
+    get boxed() {
+      return z.optional(new MyBox({ type: "mybox", inner: z.lazy(() => Node) }));
+    },
+  });
+
+  const input: any = { id: "1" };
+  input.boxed = { v: input };
+
+  const out: any = Node.parse(input);
+  expect(out.boxed.v).toBe(out);
+});

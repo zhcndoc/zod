@@ -1,4 +1,5 @@
 import * as core from "../core/index.js";
+import type { $ZodBigIntFormats } from "../core/index.js";
 import * as util from "../core/util.js";
 import * as parse from "./parse.js";
 
@@ -34,13 +35,13 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
-  apply<T>(fn: (schema: this) => T): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodMiniType<any, any, Internals> {}
 
-export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
+export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor<ZodMiniType>(
   "ZodMiniType",
   (inst, def) => {
     if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
@@ -49,15 +50,15 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
-
-    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
+  },
+  {
     // `with` is an alias for `check`: the same function object, not a wrapper.
-    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
-  }
-);
-
-function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
-  return {
+    get with(): ZodMiniType["check"] {
+      return this.check;
+    },
+    set with(value: ZodMiniType["check"]) {
+      util.own(this, "with", value);
+    },
     parse(data, params) {
       return parse.parse(this, data, params, { callee: this.parse });
     },
@@ -91,15 +92,15 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
     brand() {
       return this as any;
     },
-    register(reg: any, meta: any) {
+    register(reg: any, meta: any): any {
       reg.add(this, meta);
       return this;
     },
-    apply(fn) {
-      return fn(this);
+    apply(fn: any, ...args: any[]) {
+      return args.length === 0 ? fn(this) : fn(this, ...args);
     },
-  };
-}
+  }
+);
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,
@@ -593,7 +594,9 @@ export function number(params?: string | core.$ZodNumberParams): ZodMiniNumber<n
 }
 
 // ZodMiniNumberFormat
-export interface ZodMiniNumberFormat extends _ZodMiniNumber<core.$ZodNumberFormatInternals>, core.$ZodNumberFormat {}
+export interface ZodMiniNumberFormat<Format extends core.$ZodNumberFormats = core.$ZodNumberFormats>
+  extends _ZodMiniNumber<core.$ZodNumberFormatInternals<Format>>,
+    core.$ZodNumberFormat<Format> {}
 export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__PURE__*/ core.$constructor(
   "ZodMiniNumberFormat",
   (inst, def) => {
@@ -605,36 +608,41 @@ export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__
 // int
 
 // @__NO_SIDE_EFFECTS__
-export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._int(ZodMiniNumberFormat, params);
+export interface ZodMiniInt extends ZodMiniNumberFormat<"safeint"> {}
+export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniInt {
+  return core._int(ZodMiniNumberFormat, params) as ZodMiniInt;
 }
 
 // float32
 
 // @__NO_SIDE_EFFECTS__
-export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._float32(ZodMiniNumberFormat, params);
+export interface ZodMiniFloat32 extends ZodMiniNumberFormat<"float32"> {}
+export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniFloat32 {
+  return core._float32(ZodMiniNumberFormat, params) as ZodMiniFloat32;
 }
 
 // float64
 
 // @__NO_SIDE_EFFECTS__
-export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._float64(ZodMiniNumberFormat, params);
+export interface ZodMiniFloat64 extends ZodMiniNumberFormat<"float64"> {}
+export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniFloat64 {
+  return core._float64(ZodMiniNumberFormat, params) as ZodMiniFloat64;
 }
 
 // int32
 
 // @__NO_SIDE_EFFECTS__
-export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._int32(ZodMiniNumberFormat, params);
+export interface ZodMiniInt32 extends ZodMiniNumberFormat<"int32"> {}
+export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniInt32 {
+  return core._int32(ZodMiniNumberFormat, params) as ZodMiniInt32;
 }
 
 // uint32
 
 // @__NO_SIDE_EFFECTS__
-export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._uint32(ZodMiniNumberFormat, params);
+export interface ZodMiniUInt32 extends ZodMiniNumberFormat<"uint32"> {}
+export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniUInt32 {
+  return core._uint32(ZodMiniNumberFormat, params) as ZodMiniUInt32;
 }
 
 // ZodMiniBoolean
@@ -674,8 +682,9 @@ export function bigint(params?: string | core.$ZodBigIntParams): ZodMiniBigInt<b
 // bigint formats
 
 // ZodMiniBigIntFormat
-export interface ZodMiniBigIntFormat extends _ZodMiniType<core.$ZodBigIntFormatInternals> {
-  // _zod: core.$ZodBigIntFormatInternals;
+export interface ZodMiniBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends _ZodMiniType<core.$ZodBigIntFormatInternals<Format>> {
+  // _zod: core.$ZodBigIntFormatInternals<Format>;
 }
 export const ZodMiniBigIntFormat: core.$constructor<ZodMiniBigIntFormat> = /*@__PURE__*/ core.$constructor(
   "ZodMiniBigIntFormat",
@@ -688,15 +697,17 @@ export const ZodMiniBigIntFormat: core.$constructor<ZodMiniBigIntFormat> = /*@__
 // int64
 
 // @__NO_SIDE_EFFECTS__
-export function int64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
-  return core._int64(ZodMiniBigIntFormat, params);
+export interface ZodMiniInt64 extends ZodMiniBigIntFormat<"int64"> {}
+export function int64(params?: string | core.$ZodBigIntFormatParams): ZodMiniInt64 {
+  return core._int64(ZodMiniBigIntFormat, params) as ZodMiniInt64;
 }
 
 // uint64
 
 // @__NO_SIDE_EFFECTS__
-export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
-  return core._uint64(ZodMiniBigIntFormat, params);
+export interface ZodMiniUInt64 extends ZodMiniBigIntFormat<"uint64"> {}
+export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodMiniUInt64 {
+  return core._uint64(ZodMiniBigIntFormat, params) as ZodMiniUInt64;
 }
 
 // ZodMiniSymbol
@@ -881,7 +892,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
   (inst, def) => {
     core.$ZodObject.init(inst, def);
     ZodMiniType.init(inst, def);
-    util.defineLazy(inst, "shape", () => def.shape);
+    util.installLazyProp(inst, "shape", (self) => self._zod.def.shape, false);
   }
 );
 // @__NO_SIDE_EFFECTS__
@@ -1001,8 +1012,19 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function partial(schema: ZodMiniObject, mask?: object) {
-  return util.partial(ZodMiniOptional, schema, mask);
+export function partial<T extends util.TupleItems, Rest extends SomeType | null>(
+  schema: ZodMiniTuple<T, Rest>
+): ZodMiniTuple<{ -readonly [k in keyof T]: ZodMiniOptional<T[k]> }, Rest>;
+// @__NO_SIDE_EFFECTS__
+export function partial(schema: ZodMiniObject | ZodMiniTuple, mask?: object) {
+  const def = schema._zod.def;
+  if (def.type !== "tuple") return util.partial(ZodMiniOptional, schema as ZodMiniObject, mask);
+  // a refinement was authored against the full arity; partialing would run it on a shorter array
+  if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+  return util.clone(schema, {
+    ...def,
+    items: def.items.map((item) => new ZodMiniOptional({ type: "optional", innerType: item as core.$ZodType })),
+  });
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -1142,7 +1164,7 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
 
 // @__NO_SIDE_EFFECTS__
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   discriminator: Disc,
@@ -1151,10 +1173,10 @@ export function discriminatedUnion<
 ): ZodMiniDiscriminatedUnion<Types, Disc> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
-    options,
+    options: options as any as core.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
-  }) as ZodMiniDiscriminatedUnion<Types, Disc>;
+  }) as any as ZodMiniDiscriminatedUnion<Types, Disc>;
 }
 
 // ZodMiniIntersection
@@ -1340,7 +1362,8 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> = /*@__PURE__*/ core.$c
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
 
-    inst.options = Object.values(def.entries);
+    // reuse the parsed value set so a numeric TS enum's reverse-mapping keys stay out
+    inst.options = [...inst._zod.values] as util.EnumValue[];
   }
 );
 
@@ -1826,6 +1849,25 @@ export const ZodMiniCustom: core.$constructor<ZodMiniCustom> = /*@__PURE__*/ cor
     ZodMiniType.init(inst, def);
   }
 );
+
+// ZodMiniProperties
+export interface ZodMiniProperties<Shape extends core.$ZodShape = core.$ZodShape>
+  extends _ZodMiniType<core.$ZodPropertiesInternals<Shape>>,
+    core.$ZodProperties<Shape> {}
+export const ZodMiniProperties: core.$constructor<ZodMiniProperties> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniProperties",
+  (inst, def) => {
+    core.$ZodProperties.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+export function properties<Shape extends core.$ZodShape>(
+  shape: Shape,
+  params?: string | core.$ZodPropertiesParams
+): ZodMiniProperties<Shape> {
+  return core._properties(ZodMiniProperties, shape, params) as any;
+}
 
 // custom checks
 // @__NO_SIDE_EFFECTS__

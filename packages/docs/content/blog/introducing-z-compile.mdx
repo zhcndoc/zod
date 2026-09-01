@@ -1,0 +1,122 @@
+---
+title: 介绍 `z.compile()`
+author: Colin McDonnell
+date: 2026-08-25
+description: z.compile() 只遍历一次模式，并生成一个扁平、无循环的 JavaScript 验证器，其运行速度远快于标准解析器。数组、联合类型以及嵌套对象或宽对象的解析速度提升 3 到 7 倍，同时输出和错误完全一致。
+---
+
+import { ThemedImage } from "@/components/themed-image";
+import { Callout } from "fumadocs-ui/components/callout";
+
+在底层，`z.compile()` 会遍历整个 schema 一次，并生成一段经过超级优化的扁平、无循环 JavaScript 代码，其验证输入的速度远快于标准运行时验证器。这段代码可以通过 `new Function()`（本质上是功能更强大的 `eval`）执行，从而作为快速验证路径。Schema 会利用这一点来“快速检查”有效性，在验证失败时回退到常规运行时逻辑，以提供详细的错误信息。
+
+这可以带来显著的速度提升，尤其是对于对象、数组、联合类型和元组等容器类型。
+
+```ts
+import * as z from "zod";
+
+const Player = z.object({
+  username: z.string(),
+  bio: z.string(),
+  xp: z.number(),
+  // ...20 more properties...
+});
+
+const CompiledPlayer = z.compile(Player);
+```
+
+像 `CompiledPlayer` 这样的已编译 schema 和其他任何 Zod schema 一样。*已编译 schema 没有任何特殊规则。*
+
+- 相同的方法：`.parse()`、`.safeParse()`、`.extend()`、`.optional()` 等
+- 相同的推断输入和输出类型
+- 相同的问题和错误信息
+
+像使用 `Player` 一样使用它：
+
+```ts
+Player.parse({ ... });
+CompiledPlayer.parse({ ... }); // ~9x faster
+```
+
+Zod 的整个测试套件会运行两次——一次正常运行，另一次则全局启用自动编译——以确保完全一致。
+
+## 工作原理
+
+<include>../../snippets/how-z-compile-works.mdx</include>
+
+对于无效输入，回退逻辑会运行未编译的 schema，因此错误来自未编译的 schema。
+
+## 编译所有内容！
+
+如果你在应用程序的入口点导入 `"zod/compile"`，Zod 就会启用默认编译——你声明的所有 schema 都会在第一次使用时自行编译。只需一行代码，就能让整个应用程序获得编译带来的性能提升。
+
+```ts
+// in your entrypoint (or before any schemas are defined)
+import "zod/compile";
+```
+
+然后像平常一样使用 Zod：
+
+```ts
+import * as z from "zod";
+
+z.string().min(1).max(10).optional().parse("hello"); // compiled
+```
+
+编译是惰性的，因此只有实际用于解析的 schema 才会被编译。
+
+它也支持 Node.js CLI 标志，这可以确保它在任何模块定义 schema 之前运行：
+
+```sh
+node --import zod/compile app.js   # ESM
+node --require zod/compile app.cjs # CommonJS
+```
+
+或者在 [`bunfig.toml`](https://bun.com/docs/runtime/bunfig#preload) 或 [`nub.jsonc`](https://nubjs.com/docs/config#preload) 中设置 `preload`。
+
+```jsonc title="nub.jsonc"
+{
+  "preload": ["zod/compile"]
+}
+```
+
+> 如果内容安全策略阻止了 `new Function()`（例如在 Cloudflare Workers 环境中），默认启用的编译模式会优雅地停用并变为空操作。
+
+## 速度提升
+
+对象和元组等容器受益最大，因为编译会将运行时逐个键遍历的过程展开为扁平、无循环的验证逻辑，从而能够被 JS 引擎优化
+
+<ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="在共享的纳秒轴上显示每次解析所需的时间，标准解析器为灰色条，编译后的时间为其中的蓝色条：包含 10 个对象的数组从 377 纳秒降至 68 纳秒（5.5 倍），包含 20 个键的对象从 301 纳秒降至 38 纳秒（7.8 倍），包含 10 个字符串的数组从 241 纳秒降至 33 纳秒（7.3 倍），包含 3 个对象的联合类型从 190 纳秒降至 36 纳秒（5.3 倍），包含 3 个元素的元组从 119 纳秒降至 33 纳秒（3.6 倍），包含 5 个键的严格对象从 117 纳秒降至 32 纳秒（3.7 倍），可区分联合类型从 92 纳秒降至 27 纳秒（3.4 倍），包含 5 个键的对象从 76 纳秒降至 28 纳秒（2.8 倍）；编译后最高可提升 7.8 倍"
+  caption={<>每次解析所需的时间，标准解析器与编译后对比——越低越好（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">基准测试</a>）</>}
+/>
+
+性能收益会随着 schema 复杂度提升。这里的每个 schema 都是在紧密循环中单独测量的——这是标准解析器的最佳情况——因此其比率低于上方混合工作负载图表中的比率（[基准测试](https://github.com/colinhacks/zod/blob/main/packages/bench/compile-scaling.ts)）。
+
+| object | speedup |
+| --- | --- |
+| 5 个键 | 1.8x |
+| 10 个键 | 2.2x |
+| 20 个键 | 5.0x |
+| 50 个键 | 10.2x |
+
+| tuple | speedup |
+| --- | --- |
+| 1 个项 | 2.2x |
+| 3 个项 | 2.5x |
+| 5 个项 | 3.0x |
+| 10 个项 | 3.7x |
+
+## 权衡
+
+编译器以包体积换取性能。编译器包含大量代码，通过 `z.compile()` 或 `"zod/compile"` 调用它意味着这些代码会被包含在你的包中。它会增加约 7 KB 的 gzip 压缩体积（28 KB 的压缩后体积）：包含一个四键对象 schema 的 Zod 包，其 gzip 压缩体积会从 24.1 KB 增加到 31.1 KB，而 Zod Mini 包则会从 4.6 KB 增加到 13.2 KB。完全不调用 `z.compile()` 或导入 `zod/compile` 的包无需承担任何成本；在打包过程中，它会被完全 tree-shaking 掉。
+
+## 试试看
+
+```sh
+npm install zod@^4.5.0
+```
+
+然后对热路径中的任意 schema 使用 `z.compile()`，或者在入口点顶部使用 `import "zod/compile"`。

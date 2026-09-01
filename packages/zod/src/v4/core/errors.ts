@@ -213,7 +213,7 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssue<T>;
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
-  // biome-ignore lint:
+  // biome-ignore lint/style/useShorthandFunctionType: interface form is public API
   (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
 }
 
@@ -293,7 +293,9 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
 interface $ZodRealError<T = any> extends $ZodError<T> {}
-export const $ZodRealError: $constructor<$ZodRealError> = $constructor("$ZodError", initializer, { Parent: Error });
+export const $ZodRealError: $constructor<$ZodRealError> = $constructor("$ZodError", initializer, undefined, {
+  Parent: Error,
+});
 
 ///////////////////    ERROR UTILITIES   ////////////////////////
 

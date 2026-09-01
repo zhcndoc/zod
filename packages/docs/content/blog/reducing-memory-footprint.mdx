@@ -1,0 +1,115 @@
+---
+title: 通过方法记忆化将 Zod 的内存占用降低一个数量级
+author: Colin McDonnell
+date: 2026-08-26
+description: 在 Zod 4.4 中，一个 bare z.string() 会保留 7.5kb 的堆内存。在 Zod 4.5 中，它仅保留 784 bytes。模式方法所处位置的一项变更几乎解释了其中的全部差异
+---
+
+import { ThemedImage } from "@/components/themed-image";
+import { Tweet } from "react-tweet";
+
+Zod 4.5 实现了一种“方法记忆化”模式，使其能够延迟为绑定方法分配内存，直到这些方法被使用（如果确实会被使用）。本文将讨论这一模式。
+
+在 Zod 4.4 中，一个裸的 `z.string()` 会保留 7.5kb 的堆内存。在 Zod 4.5 中，它只保留 784 字节的堆内存。
+
+<ThemedImage
+  lightSrc="/blog/memory-light.svg"
+  darkSrc="/blog/memory-dark.svg"
+  alt="在共享千字节坐标轴上由一个模式实例保留的堆内存，Zod 4.4.3 为灰色柱，4.5 的大小显示为其中的蓝色柱：一个包含 10 个键的对象从 82.0kb 降至 11.0kb（7.4 倍），一个联合从 17.5kb 降至 2.13kb（8.3 倍），z.string().min(1) 从 16.7kb 降至 3.37kb（5.0 倍），一个 record 从 16.4kb 降至 2.64kb（6.2 倍），z.string().optional() 从 12.6kb 降至 1.50kb（8.4 倍），一个字符串数组从 11.2kb 降至 1.93kb（5.8 倍），z.string() 从 7.53kb 降至 784b（9.8 倍），z.number() 从 4.44kb 降至 706b（6.4 倍）；相比 4.4.3，内存最多减少 9.8 倍"
+  caption={<>每个模式实例保留的堆内存，Zod 4.4.3 对比 4.5（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">基准测试</a>）</>}
+/>
+
+## 问题
+
+默认情况下，Zod 模式上的所有方法都是*自动绑定*的，这意味着它们不依赖隐式的 `this` 语义来正常工作。这使得以下模式成为可能；如果依赖未绑定的原型方法，否则可能会发生故障或出现意外行为。
+
+```ts
+const { parse } = z.string();
+
+parse("some data");
+```
+
+这通常有助于防止某些不常见情况下的意外行为。npm 上有一个[软件包](https://www.npmjs.com/package/auto-bind)，专门实现了一些自动绑定工具。但它也有一个缺点，即每个方法现在都是一个占用内存空间的绑定闭包。多个类实例不再能够通过常规的原型链继承来共享一个方法。
+
+## 修复方案
+
+现在，Zod 4.5 通过一种我称为“方法记忆化”的模式，彻底解决了这个问题。
+
+Zod 类在标准 `prototype` 上将其方法定义为*getter*。第一次访问实例的方法时，它会通过标准的原型继承机制回溯到原型。getter 返回一个绑定到访问它的实例的方法实现，并将其作为一个[自有属性](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty)分配给该实例，从而永久记忆化该方法。因此，对同一方法的后续访问会避免调用 getter 的开销，并直接从自有属性中解析。
+
+这是我之前描述过的自覆盖 getter 的一种更复杂变体。
+
+<Tweet id="1865002498332795032" />
+
+从未使用过的实例方法（而且大多数方法确实不会被使用！）永远不会被实例化，也不会作为自有属性存储在实例上。
+
+## 结果
+
+
+| 模式 | 4.4.3 | 4.5 | 缩减 |
+| --- | --- | --- | --- |
+| `z.string()` | 7.5kb | 784b | **9.8 倍** |
+| `z.number()` | 4.4kb | 706b | **6.4 倍** |
+| `z.boolean()` | 3.6kb | 594b | **6.3 倍** |
+| `z.literal("a")` | 5.1kb | 1.7kb | **3.0 倍** |
+| `z.enum([...])` | 5.3kb | 1.5kb | **3.5 倍** |
+| `z.email()` | 5.8kb | 2.2kb | **2.7 倍** |
+| `z.uuid()` | 5.9kb | 2.2kb | **2.6 倍** |
+| `z.iso.datetime()` | 6.1kb | 2.5kb | **2.4 倍** |
+| `z.string().min(1)` | 16.7kb | 3.4kb | **5.0 倍** |
+| `z.string().min(1).max(5)` | 25.8kb | 6.0kb | **4.3 倍** |
+| `z.string().optional()` | 12.6kb | 1.5kb | **8.4 倍** |
+| `z.string().nullable()` | 13.1kb | 1.5kb | **8.8 倍** |
+| `z.string().default("")` | 13.1kb | 1.9kb | **7.1 倍** |
+| `z.string().brand()` | 7.6kb | 872b | **8.9 倍** |
+| `z.string().refine(...)` | 20.5kb | 4.4kb | **4.7 倍** |
+| `z.string().transform(...)` | 17.5kb | 2.0kb | **8.5 倍** |
+| `z.string().pipe(...)` | 21.4kb | 2.2kb | **9.6 倍** |
+| `z.array(z.string())` | 11.2kb | 1.9kb | **5.8 倍** |
+| `z.tuple([...])`，3 个项目 | 15.7kb | 2.8kb | **5.7 倍** |
+| `z.record(...)` | 16.4kb | 2.6kb | **6.2 倍** |
+| `z.object({})` | 6.6kb | 3.3kb | **2.0 倍** |
+| `z.object({...})`，3 个键 | 22.2kb | 5.3kb | **4.2 倍** |
+| `z.object({...})`，10 个键 | 82.0kb | 11.0kb | **7.5 倍** |
+| `z.union([...])`，2 个选项 | 17.5kb | 2.1kb | **8.3 倍** |
+| `z.discriminatedUnion(...)`，2 个选项 | 42.0kb | 12.7kb | **3.3 倍** |
+| `z.lazy(...)` | 5.9kb | 1.3kb | **4.5 倍** |
+| `zod/mini` `z.string()` | 2.5kb | 577b | **4.4 倍** |
+| `zod/mini` `z.object({...})`，3 个键 | 11.8kb | 3.2kb | **3.7 倍** |
+
+
+## 自有属性与 V8
+
+旧方法的问题因 V8 围绕对象自有属性进行内存分配的一个细节而更加严重。
+
+- 少于 13 个自有属性时，V8 会在一个紧凑的 128 字节后备存储中跟踪它们
+- 达到 13 个或更多时，V8 会将存储空间提升至 848 字节
+- 达到 21 个或更多时，它会再次提升至 1616 字节
+
+`zod@4.4.3` 中的常规字符串模式携带了 49 个自有属性（40 个方法和 9 个属性），因此每个实例都会获得 1616 字节的后备存储。
+
+```ts
+// zod@4.4.3
+const s = z.string();
+Object.getOwnPropertyNames(s).length; // 49
+Object.getOwnPropertyNames(s).filter((k) => typeof s[k] === "function").length; // 40
+```
+
+在新系统下，只有六个属性会被急切绑定：`_zod`、`def`、`type`、`format`、`minLength` 和 `maxLength`。其他所有内容都位于具有记忆化功能的原型上。
+
+```ts
+// zod@4.5.0
+const s = z.string();
+Object.getOwnPropertyNames(s).length; // 6
+Object.getOwnPropertyNames(Object.getPrototypeOf(s)).length; // 86
+```
+
+## 测量方法
+
+保留字节数可能很难测量。上面的数字来自仓库中的 [`packages/bench/memory/schema-footprint.ts`](https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts)。
+
+升级到 Zod 4.5 以获得这些增强功能。
+
+```sh
+npm upgrade zod@latest
+```

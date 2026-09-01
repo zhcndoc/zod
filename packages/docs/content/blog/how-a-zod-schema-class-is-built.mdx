@@ -1,0 +1,110 @@
+---
+title: Zod 模式类是如何构建的
+author: Colin McDonnell
+date: 2026-08-24
+description: Zod 的模式类并不是普通类。它们由可组合且类型安全的 trait 构建而成，使一个类能够同时继承 Zod Core 和 Zod 的流畅 API
+draft: true
+---
+
+import { ThemedImage } from "@/components/themed-image";
+
+Zod 和 Zod Mini 都是基于一组共享的内部验证器 Zod Core（`"zod/core"`）构建的面向用户的“API 前端”。
+
+Zod 采用流畅式（方法优先）设计，注重可读性和可发现性，而 Zod Mini 采用函数式设计，针对 tree-shaking 能力和包体积进行了优化。
+
+这带来了一些棘手的问题。Zod 的类结构并不是纯粹的层级结构。一个常规的 Zod 字符串 schema 必须在功能上同时扩展 Zod Core 的 `$ZodString` 类（实现所有字符串验证），以及 `ZodType` 类（定义 Zod 的基础方法，如 `.optional()`、`.nullable()` 等）。这就是经典的“菱形继承”问题。
+
+<ThemedImage
+  lightSrc="/blog/diamond-light.png"
+  darkSrc="/blog/diamond-dark.png"
+  alt="菱形继承：顶部是 $ZodType，向下分为 $ZodString（Zod Core，字符串验证）和 ZodType（经典 Zod，.optional() / .nullable()），最终在 ZodString 处汇合。"
+  caption="ZodString 的继承菱形"
+/>
+
+由于 JavaScript 不支持多重继承，Zod 实现了一种*类型安全的 trait 模式*。每个“trait”都是一个与初始化函数相配套的接口。
+
+```ts
+import { $constructor } from "zod/v4/core";
+
+interface Pet {
+  _zod: { def: { name: string } };
+  name: string;
+  greet(): string;
+}
+
+const Pet: $constructor<Pet> = $constructor("Pet", (inst, def) => {
+  inst.name = def.name;
+  inst.greet = () => `${inst.name} says hi`;
+});
+```
+
+如果到目前为止，这听起来完全就像一个普通的类，那么你说得对。你可以像往常一样通过 `new Pet({...})` 创建实例。
+
+```ts
+new Pet({ name: "Rex" }).greet(); // "Rex says hi"
+```
+
+你还可以通过静态 `.init()` 方法，为现有对象追溯性地添加该 trait 的功能。可以把它理解为构造函数，只不过你可以将它“应用”到预先存在的对象上。
+
+```ts
+const obj = {};
+
+Pet.init(obj, { name: "Rex" });
+obj.greet(); // => "Rex says hi"
+```
+
+这使得类似多重继承的模式成为可能。你不再受限于只能在类构造函数中调用一次 `super()`，而是可以定义由多个其他 trait 自身组合而成的 trait。
+
+来看一个例子。下面我们定义简单的 `Swimmer` 和 `Flyer` trait。
+
+```ts
+interface Swimmer extends Pet {
+  swim(): string;
+}
+const Swimmer: $constructor<Swimmer> = $constructor("Swimmer", (inst, def) => {
+  Pet.init(inst, def);
+  inst.swim = () => `${inst.name} swims`;
+});
+
+interface Flyer extends Pet {
+  fly(): string;
+}
+const Flyer: $constructor<Flyer> = $constructor("Flyer", (inst, def) => {
+  Pet.init(inst, def);
+  inst.fly = () => `${inst.name} flies`;
+});
+```
+
+现在我们可以定义 `Duck`，这是一个同时扩展两者的新类（实际上是一个“组合 trait”）：
+
+```ts
+interface Duck extends Swimmer, Flyer {}
+
+const Duck: $constructor<Duck> = $constructor("Duck", (inst, def) => {
+  Swimmer.init(inst, def);
+  Flyer.init(inst, def);
+});
+```
+
+这样我们就可以像往常一样使用 Duck 构造函数创建实例，但生成的实例会以类型安全的方式继承多个父类的运行时功能。
+
+```ts
+const duck = new Duck({ name: "Rex" });
+duck.greet(); // "Rex says hi"
+duck.swim(); // "Rex swims"
+duck.fly(); // "Rex flies"
+
+duck._zod.traits; // a Set of implemented traits
+// => Set(['Duck', 'Swimmer', 'Pet', 'Flyer'])
+```
+
+这正是 Zod 使用的菱形继承模式。
+
+
+```
+                  Pet
+               /       \
+        Swimmer         Flyer
+               \       /
+                  Duck
+```

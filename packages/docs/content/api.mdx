@@ -219,7 +219,15 @@ z.string().check(z.lowercase());
 </Tab>
 </Tabs>
 
-执行简单的字符串转换：
+长度按照 Unicode 码点而不是 UTF-16 代码单元进行测量。基本多文种平面之外的 emoji 计为一个码点，而组合标记和 ZWJ 序列计为多个码点。
+
+```ts
+z.string().length(1).parse("😀"); // one code point, two UTF-16 units
+z.string().length(2).parse("e\u0301"); // "é" — an e plus a combining acute
+z.string().length(3).parse("🧑‍🍼"); // person + ZWJ + baby bottle
+```
+
+要执行一些简单的字符串转换：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -339,7 +347,7 @@ z.guid();
 
 ### URL
 
-验证任意 WHATWG 兼容 URL：
+验证任意符合 WHATWG 标准的 URL：
 
 ```ts
 const schema = z.url();
@@ -413,7 +421,7 @@ phone.parse("555-555-5555"); // ❌
 
 正如您可能注意到的，Zod 字符串包含了一些与日期/时间相关的验证。这些验证是基于正则表达式的，因此它们没有完整的日期/时间库那么严格。然而，它们对于验证用户输入非常方便。
 
-`z.iso.datetime()` 方法强制执行 ISO 8601；默认情况下，不允许时区偏移：
+`z.iso.datetime()` 方法接受 ISO 8601 的严格子集；默认情况下，不允许时区偏移：
 
 ```ts
 const datetime = z.iso.datetime();
@@ -446,14 +454,16 @@ datetime.parse("2020-01-01T06:15:00Z"); // ✅
 ```ts
 const schema = z.iso.datetime({ local: true });
 schema.parse("2020-01-01T06:15:01"); // ✅
-schema.parse("2020-01-01T06:15"); // ✅ 秒可选
+schema.parse("2020-01-01T06:15"); // ✅ seconds optional
+schema.parse("2020-01-01T06:15:00Z"); // ✅
+schema.parse("2020-01-01T06:15Z"); // ❌ (a `Z` requires seconds)
 ```
 
-限制允许的时间 `precision`。默认情况下，秒数为可选且允许任意亚秒级精度。
+要限制允许的时间 `precision`。默认情况下，需要秒，并且允许任意子秒精度。RFC 3339 要求在存在 `Z` 或偏移时必须包含秒，因此只有未限定的 `local` 形式可以省略秒。
 
 ```ts
 const a = z.iso.datetime();
-a.parse("2020-01-01T06:15Z"); // ✅
+a.parse("2020-01-01T06:15Z"); // ❌ (seconds required)
 a.parse("2020-01-01T06:15:00Z"); // ✅
 a.parse("2020-01-01T06:15:00.123Z"); // ✅
 
@@ -473,7 +483,16 @@ d.parse("2020-01-01T06:15:00Z"); // ❌
 d.parse("2020-01-01T06:15:00.123Z"); // ✅
 ```
 
-### ISO 日期
+要同时接受分钟精度和其他精度，请将两个模式联合起来——没有单个 `precision` 可以同时涵盖这两种情况。
+
+```ts
+const mixed = z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
+mixed.parse("2020-01-01T06:15Z"); // ✅
+mixed.parse("2020-01-01T06:15:00.123Z"); // ✅
+mixed.parse("2020-01-01T06:15"); // ❌ (仍然只允许带限定符的形式)
+```
+
+### ISO dates
 
 `z.iso.date()` 方法验证格式为 `YYYY-MM-DD` 的字符串。
 
@@ -1025,31 +1044,36 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
-## 精确可选属性
+<Callout>
+  **精确可选属性** — 要允许缺少某个键，但不允许显式传入 `undefined`，请根据 TypeScript 的 [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes) 使用 `.exactOptional()`。
 
-允许缺少键，但不允许显式传入 `undefined`，符合 TypeScript 的[`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes)：
+  <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+  <Tab value="Zod">
+  ```ts
+  const User = z.object({
+    name: z.string().optional(),
+    nick: z.string().exactOptional(),
+  });
+  // { name?: string | undefined; nick?: string }
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-z.exactOptional(z.string()); // or z.string().exactOptional()
-```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-z.exactOptional(z.string());
-```
-</Tab>
-</Tabs>
+  User.parse({ name: undefined }); // ✅
+  User.parse({ nick: undefined }); // ❌
+  ```
+  </Tab>
+  <Tab value="Zod Mini">
+  ```ts
+  const User = z.object({
+    name: z.optional(z.string()),
+    nick: z.exactOptional(z.string()),
+  });
+  // { name?: string | undefined; nick?: string }
 
-```ts
-const User = z.object({ name: z.string().exactOptional() });
-// { name?: string }
-
-User.parse({}); // ✅
-User.parse({ name: "yoda" }); // ✅
-User.parse({ name: undefined }); // ❌
-```
+  z.parse(User, { name: undefined }); // ✅
+  z.parse(User, { nick: undefined }); // ❌
+  ```
+  </Tab>
+  </Tabs>
+</Callout>
 
 ## 可空值
 
@@ -1461,7 +1485,7 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 
 ### `.exactPartial()`
 
-与 `.partial()` 相同，但它会将每个字段包装在 [`exactOptional()`](#exact-optionals) 中，而不是 `optional()`：
+与 `.partial()` 相同，但使用 [`exactOptional()`](#optionals) 而不是 `optional()` 包装每个字段：
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -1531,7 +1555,20 @@ const RecipeRequiredDescription = z.required(Recipe, {description: true});
 </Tab>
 </Tabs>
 
+### 符号键
 
+一个 shape 可以声明一个符号键。`const` 符号会推断为 `unique symbol`，因此该键会被记录在推断出的类型中，并且其值会像其他值一样进行验证：
+
+```ts
+const TAG = Symbol("tag");
+const Post = z.object({ title: z.string(), [TAG]: z.number() });
+// { title: string; [TAG]: number }
+
+Post.parse({ title: "hello", [TAG]: 42 }); // ✅
+Post.parse({ title: "hello" });            // ❌ the symbol key is required
+```
+
+声明的符号键可以与 `.partial()`、`.pick()`、`.omit()`、`.extend()` 以及其他 API 一起使用。shape 未声明的符号键会被忽略——`z.looseObject()` 不会将它们传递出去，而 `z.strictObject()` 也不会标记它们。
 
 ## 递归对象
 
@@ -1549,9 +1586,34 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
-<Callout type="warn"> 
-  虽支持递归模式，但传入循环数据将导致无限循环。
-</Callout>
+Zod 开箱即用地支持循环输入。出于包体积方面的考虑，Zod Mini 要求您显式注册一个记忆器（请参见代码示例）。
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+
+// the output graph mirrors the input graph
+result.subcategories[0].subcategories[0] === result; // true
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+// Zod Mini requires a memoizer, registered before schemas are defined
+z.config({ memoizer: z.memoizer() });
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+</Tab>
+</Tabs>
 
 也可以表示*互相递归的类型*：
 
@@ -1747,6 +1809,29 @@ const variadicTuple = z.tuple([z.string()], z.number());
 // => [string, ...number[]];
 ```
 
+使每个元素都可选：
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts zod
+const PartialTuple = z.tuple([z.string(), z.number()]).partial();
+// => [(string | undefined)?, (number | undefined)?]
+
+z.tuple([z.string()], z.number()).partial();
+// => [(string | undefined)?, ...number[]]
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const PartialTuple = z.partial(z.tuple([z.string(), z.number()]));
+// => [(string | undefined)?, (number | undefined)?]
+
+z.partial(z.tuple([z.string()], z.number()));
+// => [(string | undefined)?, ...number[]]
+```
+</Tab>
+</Tabs>
+
 ## 联合类型
 
 联合类型（`A | B`）表示逻辑上的“或”。Zod 联合模式按顺序检查输入，并返回第一个验证成功的选项。
@@ -1893,6 +1978,20 @@ const MyResult = z.discriminatedUnion("status", [
 </Accordion>
 </Accordions>
 
+### `z.getDiscriminatedOption()`
+
+用于根据分辨字段的值获取单个选项。该值必须是联合声明的值之一；其他任何值都会导致 TypeScript 错误。
+
+```ts
+const Success = z.object({ status: z.literal("success"), data: z.string() });
+const Failed = z.object({ status: z.literal("failed"), error: z.string() });
+const MyResult = z.discriminatedUnion("status", [Success, Failed]);
+
+z.getDiscriminatedOption(MyResult, "success"); // typeof Success
+z.getDiscriminatedOption(MyResult, "pending"); // ❌ not a declared discriminator
+```
+
+该选项会原样返回，因此 `.shape` 和其他对象方法仍可正常使用。
 
 ## 交叉类型
 
@@ -1977,6 +2076,15 @@ intKeys.parse({
   12: "twelve", // ❌
   abc: "one" // ❌
 });
+```
+
+可以代替缺失键的值模式——`.default()`、`.prefault()`、`.optional()`——会使该键在输入侧变为可选，和在 `z.object()` 中的行为相同：
+
+```ts
+const Person = z.record(z.enum(["id", "name"]), z.string().default(""));
+
+type Input = z.input<typeof Person>; // { id?: string; name?: string }
+type Output = z.output<typeof Person>; // { id: string; name: string }
 ```
 
 ### `z.partialRecord`
@@ -2176,13 +2284,13 @@ z.instanceof(URL);
 z.instanceof(Error);
 ```
 
-### 属性
+### `z.property()` [#property]
 
 要验证类实例的特定属性是否符合 Zod 模式：
 
 ```ts
 const blobSchema = z.instanceof(URL).check(
-  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
+  z.property("protocol", z.literal("https:", "Only HTTPS allowed"))
 );
 
 blobSchema.parse(new URL("https://example.com")); // ✅
@@ -2200,7 +2308,38 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-## 精炼验证
+### `.properties()`
+
+使用 `.properties()` 可一次检查多个属性。每次调用都会缩小推断出的类型。
+
+```ts
+const okResponse = z.instanceof(Response).properties({
+  status: z.number().min(200).max(299),
+  redirected: z.literal(false),
+});
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+
+type OkResponse = z.infer<typeof okResponse>;
+// => Response & { status: number; redirected: false }
+```
+
+底层的 `z.properties()` 是一个独立的模式。它会在原位置断言指定属性，并原样返回输入值——与 `z.object()` 不同，它不会创建新对象，因此原型、未列出的键和对象标识都会保留。模式中的模式会经过验证，但其结果会被丢弃，因此 transform 或 default 永远不会改变解析后的值。
+
+```ts
+const Named = z.properties({ name: z.string() });
+
+class Dog {
+  constructor(public name: string) {}
+}
+const rex = new Dog("Rex");
+Named.parse(rex); // => rex (the same instance)
+```
+
+展开到 `.check()` 中同样有效：`z.instanceof(Response).check(...z.properties({ ... }))`。作为检查，它会断言基础模式产生的任何值，因此 `z.string().check(...z.properties({ length: z.number().min(3) }))` 会读取字符串的长度；作为独立模式时，它要求输入为对象。
+
+## 精炼
 
 每个 Zod 模式都存有一组*精炼*数组。精炼用于执行 Zod 本身无内置 API 的自定义验证。
 
@@ -2771,7 +2910,9 @@ z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
 z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
 ```
 
-只有 codecs 具有两个真正的端。对单向 [transform](#transforms) 使用 `z.output()` 时，会返回该 transform，而它不会验证任何内容。
+只有编解码器具有两个真正的端。对单向 [transform](#transforms) 使用 `z.output()` 会返回该转换器，而它不验证任何内容；对 `z.preprocess()` 使用 `z.input()` 会返回预处理器所馈送的模式。
+
+包装器存储的值只会在其所属的一侧保留，因此当底层使用编解码器时，`z.input()` 会丢弃 `.default()` 或 `.catch()`，而 `z.output()` 会丢弃 `.prefault()`。
 
 ## 转换（Transforms）
 
@@ -3326,3 +3467,72 @@ z.parse(schema, null); // => null
 ```
 </Tab>
 </Tabs>
+
+其他参数会传递给该函数：
+
+```ts
+function withDefault<T extends z.ZodType>(schema: T, value: z.output<T>) {
+  return schema.nullish().transform((val) => val ?? value);
+}
+
+const schema = z.string().apply(withDefault, "anonymous");
+
+schema.parse(undefined); // => "anonymous"
+schema.parse("sandwich"); // => "sandwich"
+```
+
+## 匹配现有类型
+
+有时类型先于模式存在：数据库模型、生成的客户端中的类型，或不由你拥有的接口。将其传递给 `z.toZod<T>()`，TypeScript 会检查模式的输出类型是否与 `T` 完全一致。
+
+```ts
+type Player = {
+  username: string;
+  xp: number;
+};
+
+const Player = z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+  })
+);
+
+Player.shape.username; // ZodString — 模式原样返回
+```
+
+检查要求类型完全一致，因此类型的任何偏差都会导致编译错误：
+
+```ts
+z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+    admin: z.boolean(), // ❌ 多余键
+  })
+);
+```
+
+通常的替代方案是 `satisfies z.ZodType<Player>`，它只检查可赋值性。它可以发现缺失的必需键，但多余键、省略的可选键以及单独使用的 `z.any()` 都会被放过：
+
+```ts
+z.object({
+  username: z.string(),
+  xp: z.number(),
+  admin: z.boolean(),
+}) satisfies z.ZodType<Player>; // ✅ 无错误
+
+z.any() satisfies z.ZodType<Player>; // ✅ 无错误
+```
+
+枚举目标与 `z.enum(...)` 匹配，并且保持标称性——普通字面量联合类型无法满足它：
+
+```ts
+enum Level {
+  Noob = "noob",
+  Pro = "pro",
+}
+
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(Level) })); // ✅
+z.toZod<{ level: Level }>()(z.object({ level: z.enum(["noob", "pro"]) })); // ❌
+```

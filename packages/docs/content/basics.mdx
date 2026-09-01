@@ -6,7 +6,9 @@ description: "基本使用指南，包括模式定义、数据解析、错误处
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
 
-本页将引导你了解创建 schema、解析数据和使用推断类型的基础知识。有关 Zod schema API 的完整文档，请参阅 [定义 schema](/api)。
+{/* This page is a carefully curated introduction: the one workflow every new user walks through (define a schema, parse, infer, handle errors), shown once, in its simplest form. Edge cases, carve-outs, exceptions, and behavior notes for specific input shapes do NOT belong here, however true or recently fixed — they go on the relevant API reference page. If an addition explains when something *doesn't* work, it doesn't go on this page. */}
+
+本页面将带你了解创建 schema、解析数据以及使用推断类型的基础知识。有关 Zod schema API 的完整文档，请参阅[定义 schema](/api)
 
 ## 定义 schema
 
@@ -127,6 +129,15 @@ if (!result.success) {
 await schema.safeParseAsync("hello");
 ```
 </Callout>
+
+当你只需要知道某个输入是否可接受时，请使用顶层的 `z.validate()` 函数。它返回一个布尔值，从不构建错误，并充当 schema 输入类型的类型守卫。对于无效输入，其速度比 `.safeParse().success` 快至 16 倍。
+
+```ts
+z.validate(Player, { username: "billie", xp: 100 }); // true
+z.validate(Player, { username: 42, xp: "100" });     // false
+```
+
+对于包含异步细化或转换的 schema，请使用 `z.validateAsync()`。对于[已编译的 schema](/compile)，`z.validate()` 会直接通过编译后的快速路径返回结果。
 
 ## 推断类型
 

@@ -1,0 +1,537 @@
+---
+title: Zod 4.5
+author: Colin McDonnell
+date: 2026-08-28
+description: Zod 4.5 现已推出，支持 z.compile() 提前编译、每个 schema 的内存占用最多减少 9 倍，以及一批期待已久的功能
+---
+
+import { ThemedImage } from "@/components/themed-image";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zod 4.5 现已发布
+
+```sh
+npm install zod@latest
+```
+
+概览：
+
+- [`z.compile()`](#zcompile) — Zod 4.5 的旗舰功能
+- [`z.creditCard()`](#zcreditcard) — 12–19 位数字加上 Luhn 校验和
+- [`z.properties()`](#zproperties) — `z.property()` 的多属性对应项
+- [`z.deepPartial()`](#zdeeppartial)/[`.exactPartial()`](#exactpartial)
+- [`z.validate(): boolean`](#zvalidate) — 无需完整解析即可验证输入有效性的快速路径（对无效数据最多快 16 倍）
+- [Schema 内存占用减少 9 倍](#9x-reduction-in-schema-memory-footprint)
+- [新增 locale](https://zod.dev/error-customization#locales)：Bengali（`bn`）、Central Kurdish（`ckb`）、Hindi（`hi`）、Kannada（`kn`）、Norwegian Nynorsk（`nn`）、Brazilian Portuguese（`pt-BR`）、Slovak（`sk`）、Turkmen（`tk`）
+
+## `z.compile()`
+
+现在可以使用 `z.compile(schema)` 预编译任意 Zod schema。这会显著提升解析性能。
+
+```ts
+import * as z from "zod";
+
+const Player = z.object({
+  username: z.string(),
+  bio: z.string(),
+  xp: z.number(),
+  // ...20 more properties...
+});
+
+const CompiledPlayer = z.compile(Player);
+```
+
+编译后的 schema 可以*完全*像未编译的 schema 一样使用。对于编译后的 schema 没有任何特殊规则。它们只是更快。
+
+```ts
+Player.parse({ ... });
+CompiledPlayer.parse({ ... }); // ~9x faster
+```
+
+对于对象、数组和联合类型，解析速度可提升约 3–9 倍。越复杂的 schema，收益通常越大。
+
+<ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="在共享的纳秒坐标轴上显示每次解析耗时，标准解析器为灰色条，编译后的耗时显示为其中的蓝色条：包含 10 个对象的数组从 377 ns 降至 68 ns（5.5 倍），20 键对象从 301 ns 降至 38 ns（7.8 倍），包含 10 个字符串的数组从 241 ns 降至 33 ns（7.3 倍），3 个对象的联合类型从 190 ns 降至 36 ns（5.3 倍），3 元组从 119 ns 降至 33 ns（3.6 倍），5 键严格对象从 117 ns 降至 32 ns（3.7 倍），判别联合从 92 ns 降至 27 ns（3.4 倍），5 键对象从 76 ns 降至 28 ns（2.8 倍）；编译后最多快 7.8 倍"
+  caption={<>按 schema 类型划分的每次解析耗时，标准解析器与编译后对比——越低越好（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">基准测试</a>）</>}
+/>
+
+下面是 Moltar 基准测试结果，将 Zod（编译和未编译）与 [**Moltar ParseSafe**](https://github.com/moltar/typescript-runtime-type-benchmarks) 基准进行比较。
+
+<ThemedImage
+  lightSrc="/blog/moltar-light.svg"
+  darkSrc="/blog/moltar-dark.svg"
+  alt="Moltar 基准测试 fixture 上每秒操作数的柱状图，parseSafe 类别：Zod 4 编译后 47.5M，typia 45.3M，Zod 4 11.6M，valibot 1.8M，effect 1.7M，Zod 3 1.2M，arktype 152k，yup 121k"
+  caption={<>Moltar 基准测试 fixture 上的吞吐量（parseSafe：返回一个移除未知键的新对象）——越高越好（<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">基准测试</a>）</>}
+/>
+
+以下是 Moltar AssertLoose 基准的对应结果。测试使用了新的 `z.validate(schema, input)` 函数（将在本文后面详细介绍）。
+
+<ThemedImage
+  lightSrc="/blog/moltar-assertLoose-light.svg"
+  darkSrc="/blog/moltar-assertLoose-dark.svg"
+  alt="Moltar 基准测试 fixture 上每秒操作数的柱状图，assertLoose 类别：typia 74.9M，arktype 66.2M，Zod 4 编译后 60.6M，Zod 4 6.5M，valibot 1.9M，effect 1.7M，Zod 3 1.2M，yup 124k"
+  caption={<>Moltar 基准测试 fixture 上的吞吐量（assertLoose：返回一个布尔值，允许未知键）——越高越好（<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">基准测试</a>）</>}
+/>
+
+Zod 的整个测试套件会运行两次——一次正常运行，另一次在全局启用自动编译的情况下运行，以确保完全一致。
+
+<Accordions type="single">
+<Accordion title="工作原理">
+
+在底层，`z.compile()` 会遍历整个 schema 一次，并生成一段经过高度优化的扁平、无循环 JavaScript 代码片段，其验证输入的速度远快于标准运行时验证器。这段代码可以通过 `new Function()`（本质上是功能更强大的 `eval`）执行，作为快速路径验证器。Schemas 会使用它“快速检查”有效性；如果验证失败，则回退到常规运行时逻辑，以提供细粒度的错误信息。
+
+<include>../../snippets/how-z-compile-works.mdx</include>
+
+</Accordion>
+</Accordions>
+
+### `import "zod/compile"`
+
+要在应用中编译每个 schema，请在入口点顶部导入一次 `zod/compile`。在该导入之后构造的每个 schema，都会在第一次用于解析数据时*自动编译*。
+
+```ts
+import "zod/compile"; // must come before modules that define schemas
+import * as z from "zod";
+
+const schema = z.object({ name: z.string() });
+schema.parse({ name: "ok" }); // compiled on first parse
+```
+
+它也可以作为 Node.js CLI 标志使用，这可以保证它在任何模块定义 schema 之前运行：
+
+```sh
+node --import zod/compile app.js
+```
+
+或者在 [`bunfig.toml`](https://bun.com/docs/runtime/bunfig#preload) 或 [`nub.jsonc`](https://nubjs.com/docs/config#preload) 中设置 `preload`。
+
+```jsonc title="nub.jsonc"
+{
+  "preload": ["zod/compile"]
+}
+```
+
+所有 schema 都会在不同程度上受益，不过复杂的对象／元组／数组 schema 比简单的标量验证器受益更多。
+
+<Callout>阅读[文档](https://zod.dev/compile)，或完整的技术文章：[Introducing `z.compile()`](https://zod.dev/blog/introducing-z-compile)</Callout>
+
+## `z.creditCard()`
+
+一种新的字符串格式：12–19 位数字，可选择使用单个空格或连字符分隔，并带有有效的 Luhn 校验和。（[#5931](https://github.com/colinhacks/zod/pull/5931)）
+
+```ts
+z.creditCard().parse("4111 1111 1111 1111"); // ✅
+z.creditCard().parse("4111 1111 1111 1112"); // ❌ bad checksum
+```
+
+## `z.properties()`
+
+`z.property()` 的多属性对应项。（[#5912](https://github.com/colinhacks/zod/pull/5912)）
+
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    status: z.number().min(200).max(299),
+    redirected: z.literal(false),
+  })
+);
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+
+## `z.deepPartial()`
+
+在从 Zod 4 中移除为方法后，以函数形式回归。（[#5928](https://github.com/colinhacks/zod/pull/5928)）
+
+```ts
+const Post = z.object({
+  title: z.string(),
+  author: z.object({ name: z.string(), email: z.string() }),
+});
+
+const PartialPost = z.deepPartial(Post);
+type PartialPost = z.output<typeof PartialPost>;
+// => { title?: string; author?: { name?: string; email?: string } }
+
+PartialPost.parse({ author: {} }); // ✅
+```
+
+结果仍然是一个 `ZodObject`，因此 `.shape` 和 `.extend()` 仍可继续使用。
+
+## `.exactPartial()`
+
+类似于 `.partial()`，但会将每个字段包装在 `z.exactOptional()` 而非 `z.optional()` 中：键可以省略，但显式的 `undefined` 会被拒绝。这与启用 `exactOptionalPropertyTypes` 时 TypeScript 的 `Partial<>` 相匹配。（[#6065](https://github.com/colinhacks/zod/pull/6065)）
+
+```ts
+const Recipe = z.object({ title: z.string(), servings: z.number() });
+
+const PartialRecipe = Recipe.exactPartial();
+PartialRecipe.parse({});                    // ✅
+PartialRecipe.parse({ title: undefined });  // ❌
+```
+
+在 Zod Mini 中，它是一个顶层函数：`z.exactPartial(Recipe)`。
+
+## `z.validate()`
+
+独立的布尔值验证功能，适用于 Zod、Zod Mini 和 Zod Core。它无需构造 `ZodError`，即可回答“这个输入是否有效？”，因此拒绝输入的成本很低：对于无效输入，其速度最多比 `.safeParse().success` 快 16 倍。返回类型是针对 schema 输入类型的类型守卫，而 `z.validateAsync()` 则覆盖带有异步 refinement 的 schema。（[#6471](https://github.com/colinhacks/zod/pull/6471)）
+
+```ts
+z.validate(z.string(), "hi"); // true
+z.validate(z.string(), 42);   // false
+```
+
+## `z.input()` / `z.output()`
+
+将 schema 投影到其输入端或输出端。适用于独立验证 codec 的两端。（[#5928](https://github.com/colinhacks/zod/pull/5928)）
+
+```ts
+const isoDate = z.codec(z.iso.datetime(), z.date(), {
+  decode: (s) => new Date(s),
+  encode: (d) => d.toISOString(),
+});
+
+const Event = z.object({ name: z.string(), at: isoDate });
+
+z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
+z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
+```
+
+对于不包含 codecs／pipes 的 schema，这是一个空操作。
+
+## `z.toZod<T>()`
+
+用于定义一个与静态类型完全一致的 Zod schema，通常适用于手写或外部定义的类型。（[#5913](https://github.com/colinhacks/zod/pull/5913)）
+
+```ts
+type Player = { username: string; xp: number };
+
+const Player = z.toZod<Player>()(
+  z.object({
+    username: z.string(),
+    xp: z.number(),
+  })
+);
+
+Player.shape.username; // ZodString — the schema is returned unchanged
+```
+
+## `z.getDiscriminatedOption()`
+
+根据 discriminator 值提取判别联合成员。（[#5947](https://github.com/colinhacks/zod/pull/5947)）
+
+```ts
+const Fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
+const Veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
+const Produce = z.discriminatedUnion("type", [Fruit, Veg]);
+
+z.getDiscriminatedOption(Produce, "fruit"); // typeof Fruit
+z.getDiscriminatedOption(Produce, "meat");  // ❌ TypeScript error
+```
+
+## 循环输入
+
+Zod 的递归 schema 现在支持循环数据。出于 bundle 大小的考虑，Zod Mini 要求显式注册 memoizer。（[#6387](https://github.com/colinhacks/zod/pull/6387)、[#6482](https://github.com/colinhacks/zod/pull/6482)）
+
+<Tabs>
+<Tab title="Zod">
+
+```ts
+const Category = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(Category);
+  },
+});
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+
+</Tab>
+<Tab title="Zod Mini">
+
+```ts
+// register a memoizer before defining any schemas
+z.config({ memoizer: z.memoizer() });
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+
+</Tab>
+</Tabs>
+
+## Schema 内存占用减少 9 倍
+
+在 Zod 4.4 中，一个简单的 `z.string()` 会保留 7.5kb 的堆内存。在 Zod 4.5 中，它只保留 784 字节。
+
+<ThemedImage
+  lightSrc="/blog/memory-light.svg"
+  darkSrc="/blog/memory-dark.svg"
+  alt="在共享的千字节坐标轴上显示一个 schema 实例保留的堆内存，zod 4.4.3 为灰色条，4.5 的大小显示为其中的蓝色条：10 键对象从 82.0kb 降至 11.0kb（7.4 倍），联合类型从 17.5kb 降至 2.13kb（8.3 倍），z.string().min(1) 从 16.7kb 降至 3.37kb（5.0 倍），record 从 16.4kb 降至 2.64kb（6.2 倍），z.string().optional() 从 12.6kb 降至 1.50kb（8.4 倍），字符串数组从 11.2kb 降至 1.93kb（5.8 倍），z.string() 从 7.53kb 降至 784b（9.8 倍），z.number() 从 4.44kb 降至 706b（6.4 倍）；相比 4.4.3 最多减少 9.8 倍内存"
+  caption={<>每个 schema 实例保留的堆内存，Zod 4.4.3 与 4.5 对比（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">基准测试</a>）</>}
+/>
+
+在 Zod 4.4 及更早版本中，所有 schema 方法都会自动绑定到实例自身。这使用户可以从 schema 中提取方法，而不会因 `this` 绑定造成问题。
+
+```ts
+const { parse } = z.string();
+
+parse("some data");
+```
+
+这样做的一个后果是每个绑定的方法都会在堆上分配空间；正如预期的那样，方法实现不会通过 `prototype` 在所有实例之间共享。Zod 4.5 实现了一种方法 memoization 模式，避免在绑定方法实际被访问之前分配它们。
+
+<Callout>阅读深度解析：[Reducing Zod's memory footprint by an order of magnitude](https://zod.dev/blog/reducing-memory-footprint)</Callout>
+
+## 更快的失败处理
+
+Zod 的 `.parse()`／`.safeParse()` 会实例化一个 JavaScript `Error`，该操作会捕获堆栈跟踪。在验证失败的情况下，这通常比解析逻辑本身慢得多。使用 `.safeParse()` 时，Zod 不再捕获此堆栈跟踪，使失败路径上的解析速度提升约 7.5 倍。（[#6316](https://github.com/colinhacks/zod/pull/6316)、[#6450](https://github.com/colinhacks/zod/pull/6450)）
+
+```ts
+const result = Player.safeParse({ username: 42, bio: "hello", xp: 12 });
+result.success; // false — ~7.5x faster than Zod 4.4
+```
+
+<ThemedImage
+  lightSrc="/blog/fail-light.svg"
+  darkSrc="/blog/fail-dark.svg"
+  alt="失败的 safeParse 每次耗时柱状图：zod 4.4 为 6.3 微秒，zod 4.5 为 840 纳秒——快 7.6 倍"
+  caption={<>Player schema（<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/failing-safeparse.ts">基准测试</a>）</>}
+/>
+
+## `z.object()` 中的 Symbol 键
+
+现在 shape 可以声明 Symbol 键。TypeScript 会对其进行跟踪：`const` Symbol 会推断为 `unique symbol`，因此 `z.infer` 会将该键推断为必需键，并检查其值类型。未声明的 Symbol 键仍会被忽略。（[#6448](https://github.com/colinhacks/zod/pull/6448)）
+
+```ts
+const TAG = Symbol("tag");
+const schema = z.object({ name: z.string(), [TAG]: z.number() });
+
+schema.parse({ name: "alice", [TAG]: 42 }); // ✅ { name: "alice", [TAG]: 42 }
+schema.safeParse({ name: "alice" });        // ❌ the symbol key is required
+```
+
+## Bug 修复
+
+以下修复都解决了 soundness 问题，因此依赖旧行为的 schema 现在可能会拒绝过去能够接受的输入。
+
+### ⚠️ `z.iso.datetime()` 要求秒
+
+RFC 3339 强制要求秒。`z.iso.datetime()` 和 `z.iso.datetime({ offset: true })` 不再接受类似 `2020-01-01T06:15Z` 的分钟精度输入。`local: true` 仍然接受 `2020-01-01T06:15`，因为无限定的 datetime 无论如何都不属于 RFC 3339。（[#6457](https://github.com/colinhacks/zod/pull/6457)）
+
+```ts
+z.iso.datetime().parse("2020-01-01T06:15:00Z"); // ✅
+z.iso.datetime().parse("2020-01-01T06:15Z");    // ❌ was accepted in 4.4
+```
+
+要接受这两种形式，请联合两种精度：
+
+```ts
+z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
+```
+
+### ⚠️ 字符串长度按 code point 计算
+
+`.min()`、`.max()` 和 `.length()` 之前按 UTF-16 code unit 计数，因此 `z.string().max(5)` 会拒绝五个 emoji。现在它们按 Unicode code point 计数，这也是所有非 JS 消费者处理长度限制时采用的方式（Postgres、MySQL、Go、Python，以及 `z.toJSONSchema()` 生成的 `maxLength`）。对于 astral 输入，`.max()` 只会放宽限制；`.min()` 和 `.length()` 则会收紧限制。Grapheme 不变——一个 ZWJ 序列仍然包含多个 code point。（[#6441](https://github.com/colinhacks/zod/pull/6441)）
+
+```ts
+z.string().max(5).parse("😀😀😀😀😀"); // was too_big, now passes
+z.string().min(5).parse("😀😀😀");     // was fine, now too_small
+```
+
+关闭 [#3355](https://github.com/colinhacks/zod/issues/3355)。
+
+### ⚠️ Record 键和交集与 TypeScript 保持一致
+
+Record 的键 schema 现在只约束与其匹配的键，就像 TypeScript 对待 index signature 的方式一样。将对象与 pattern-keyed record 求交集时，不再拒绝对象自身的键。（[#6412](https://github.com/colinhacks/zod/pull/6412)）
+
+```ts
+z.object({ name: z.string() })
+  .and(z.record(z.string().regex(/^S_/), z.string()))
+  .parse({ name: "a", S_a: "s" });
+// 4.4: throws invalid_key on "name"
+// 4.5: { name: "a", S_a: "s" }
+```
+
+另外，`unrecognized_keys` issue 不再中止产生它的 schema，因此带有额外键和错误值的严格对象现在会报告两个 issue，而不只是第一个。关闭 [#2200](https://github.com/colinhacks/zod/issues/2200)、[#2573](https://github.com/colinhacks/zod/issues/2573)、[#4017](https://github.com/colinhacks/zod/issues/4017)、[#5663](https://github.com/colinhacks/zod/issues/5663)。
+
+### ⚠️ `__proto__` 始终会被移除
+
+对象和 record parser 现在会丢弃 `__proto__` 键，无论它来自输入、由 schema 声明，还是由 record key transform 生成。被 record 的 key schema *规范化*为 `__proto__` 的键也会被丢弃。`.strict()` 会将自有的 `__proto__` 输入键报告为 `unrecognized_keys`，而不是静默吞掉它。错误格式化器和两个 JSON Schema 转换器都会使用 own-property 写入，因此 `toString` 或 `constructor` 路径片段无法遍历到 `Object.prototype`（[#6213](https://github.com/colinhacks/zod/pull/6213)、[#6367](https://github.com/colinhacks/zod/pull/6367)、[#6346](https://github.com/colinhacks/zod/pull/6346)）。（[#6386](https://github.com/colinhacks/zod/pull/6386)、[#6354](https://github.com/colinhacks/zod/pull/6354)、[#6355](https://github.com/colinhacks/zod/pull/6355)、[#6221](https://github.com/colinhacks/zod/pull/6221)）
+
+### ⚠️ 更严格的字符串格式
+
+- `z.ipv6()` 之前通过将字符串传递给 `new URL()` 进行验证，这会让 `::@1\` 和 `::1\n` 通过。现在它会直接检查地址字符集（[#6442](https://github.com/colinhacks/zod/pull/6442)）。
+- `z.ulid()` 将第一个字符限制为 `0`–`7`；任何更大的值都会导致 48 位时间戳溢出。现在，不以真实时间戳开头的 fixture（例如以字母开头的 fixture）会被拒绝（[#6095](https://github.com/colinhacks/zod/pull/6095)）。
+- `z.httpUrl()` 强制执行 RFC 1035 对 host 的长度限制，与 `z.hostname()` 保持一致（[#6035](https://github.com/colinhacks/zod/pull/6035)）。
+- `z.emoji()` 在匹配失败时不再发生指数级回溯（[#6347](https://github.com/colinhacks/zod/pull/6347)）。
+- `z.string().includes(sub, { position: N })` 会生成一个允许至少 N 个前导字符的 JSON Schema pattern，与 `String.prototype.includes` 保持一致（[#6024](https://github.com/colinhacks/zod/pull/6024)）。
+
+## Commits
+
+Zod 4.5 汇总了 155 个 commit。感谢所有贡献者：[[@dokson](https://github.com/dokson)](https://github.com/dokson)、[[@deepshekhardas](https://github.com/deepshekhardas)](https://github.com/deepshekhardas)、[[@zirkelc](https://github.com/zirkelc)](https://github.com/zirkelc)、[[@francisjohnjohnston-web](https://github.com/francisjohnjohnston-web)](https://github.com/francisjohnjohnston-web)、[[@MerlijnW70](https://github.com/MerlijnW70)](https://github.com/MerlijnW70)、[[@codinsonn](https://github.com/codinsonn)](https://github.com/codinsonn)、[[@oimo23](https://github.com/oimo23)](https://github.com/oimo23)、[[@JSap0914](https://github.com/JSap0914)](https://github.com/JSap0914)、[[@zelinewang](https://github.com/zelinewang)](https://github.com/zelinewang)、[[@abhishek-chaudhary2003](https://github.com/abhishek-chaudhary2003)](https://github.com/abhishek-chaudhary2003)、[[@spokodev](https://github.com/spokodev)](https://github.com/spokodev)、[[@Mohammad-Faiz-Cloud-Engineer](https://github.com/Mohammad-Faiz-Cloud-Engineer)](https://github.com/Mohammad-Faiz-Cloud-Engineer)、[[@hamed-bavar](https://github.com/hamed-bavar)](https://github.com/hamed-bavar)、[[@MGPOCKY](https://github.com/MGPOCKY)](https://github.com/MGPOCKY)、[[@ChiChuRita](https://github.com/ChiChuRita)](https://github.com/ChiChuRita)、[[@dinwwwh](https://github.com/dinwwwh)](https://github.com/dinwwwh)、[[@thristhart](https://github.com/thristhart)](https://github.com/thristhart)、[[@tsmartin9](https://github.com/tsmartin9)](https://github.com/tsmartin9)、[[@vedanshshetti](https://github.com/vedanshshetti)](https://github.com/vedanshshetti)、[[@belicam](https://github.com/belicam)](https://github.com/belicam)、[[@frastefanini](https://github.com/frastefanini)](https://github.com/frastefanini)、[[@andersk](https://github.com/andersk)](https://github.com/andersk)、[[@musaddiq-rafi](https://github.com/musaddiq-rafi)](https://github.com/musaddiq-rafi)、[[@tachmyratsaparmyradov](https://github.com/tachmyratsaparmyradov)](https://github.com/tachmyratsaparmyradov)、[[@arvindfroi](https://github.com/arvindfroi)](https://github.com/arvindfroi)、[[@KUMachine](https://github.com/KUMachine)](https://github.com/KUMachine)、[[@spidersouris](https://github.com/spidersouris)](https://github.com/spidersouris)、[[@catdalfonso](https://github.com/catdalfonso)](https://github.com/catdalfonso)、[[@mneetika](https://github.com/mneetika)](https://github.com/mneetika)、[[@gwagjiug](https://github.com/gwagjiug)](https://github.com/gwagjiug)、[[@MahinAnowar](https://github.com/MahinAnowar)](https://github.com/MahinAnowar)、[[@MaksZhukov](https://github.com/MaksZhukov)](https://github.com/MaksZhukov)、[[@emmayusufu](https://github.com/emmayusufu)](https://github.com/emmayusufu)、[[@agcty](https://github.com/agcty)](https://github.com/agcty)、[[@devareddy05](https://github.com/devareddy05)](https://github.com/devareddy05)、[[@Vish05](https://github.com/Vish05)](https://github.com/Vish05)、[[@yamcodes](https://github.com/yamcodes)](https://github.com/yamcodes)、[[@mattiasahlsen](https://github.com/mattiasahlsen)](https://github.com/mattiasahlsen)、[[@samchungy](https://github.com/samchungy)](https://github.com/samchungy)、[[@ozzyfromspace](https://github.com/ozzyfromspace)](https://github.com/ozzyfromspace)、[[@udohjeremiah](https://github.com/udohjeremiah)](https://github.com/udohjeremiah)、[[@patrickwehbe](https://github.com/patrickwehbe)](https://github.com/patrickwehbe)、[[@gajus](https://github.com/gajus)](https://github.com/gajus)、[[@Harm-Nullix](https://github.com/Harm-Nullix)](https://github.com/Harm-Nullix)、[[@thwbh](https://github.com/thwbh)](https://github.com/thwbh)、[[@IdanGonen](https://github.com/IdanGonen)](https://github.com/IdanGonen)、[[@irfanfandi](https://github.com/irfanfandi)](https://github.com/irfanfandi)、[[@JuerGenie](https://github.com/JuerGenie)](https://github.com/JuerGenie)、[[@marcalexiei](https://github.com/marcalexiei)](https://github.com/marcalexiei)、[[@itsahmedbilal](https://github.com/itsahmedbilal)](https://github.com/itsahmedbilal)、[[@DucMinhNe](https://github.com/DucMinhNe)](https://github.com/DucMinhNe)、[[@meliharik](https://github.com/meliharik)](https://github.com/meliharik)。
+
+- [`9782f87c`](https://github.com/colinhacks/zod/commit/9782f87c) 性能（v4）：在不构建输出的情况下进行验证，并使 schemas 脱离 dictionary 模式（[#6480](https://github.com/colinhacks/zod/pull/6480)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`773a4867`](https://github.com/colinhacks/zod/commit/773a4867) 重构（v4）：在 $constructor 上声明 trait 的成员（[#6478](https://github.com/colinhacks/zod/pull/6478)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`68fb3f13`](https://github.com/colinhacks/zod/commit/68fb3f13) 功能（v4）：让 z.compile() 回退而不是抛出异常（[#6479](https://github.com/colinhacks/zod/pull/6479)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`37b01501`](https://github.com/colinhacks/zod/commit/37b01501) 功能（v4）：添加 z.isValid 和 z.isValidAsync（[#6471](https://github.com/colinhacks/zod/pull/6471)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`749f5452`](https://github.com/colinhacks/zod/commit/749f5452) 文档：将 fullproduct.dev 添加到 v4 生态页面（[#6001](https://github.com/colinhacks/zod/pull/6001)），作者：[ @codinsonn](https://github.com/codinsonn)
+- [`24cdb7fd`](https://github.com/colinhacks/zod/commit/24cdb7fd) 性能（v4）：将 fastpass 绑定封装到已编译的解析器中（[#6464](https://github.com/colinhacks/zod/pull/6464)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`8d896186`](https://github.com/colinhacks/zod/commit/8d896186) 修复（v4）：停止生成会被 JSON Schema 拒绝的 multipleOf（[#6468](https://github.com/colinhacks/zod/pull/6468)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`43f729db`](https://github.com/colinhacks/zod/commit/43f729db) 功能（v4）：通过 .partial() 使 tuple 的 items 可选（[#6465](https://github.com/colinhacks/zod/pull/6465)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`97edaf7d`](https://github.com/colinhacks/zod/commit/97edaf7d) 修复（v4）：不要因 bigint multipleOf(0n) 从 safeParse 中抛出异常（[#6466](https://github.com/colinhacks/zod/pull/6466)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`21a6f0cb`](https://github.com/colinhacks/zod/commit/21a6f0cb) 功能（v4）：让 z.nanoid() 接受自定义长度（[#4004](https://github.com/colinhacks/zod/pull/4004)），作者：[ @oimo23](https://github.com/oimo23)
+- [`9d5b20ef`](https://github.com/colinhacks/zod/commit/9d5b20ef) 修复（v4）：将第一个 ULID 字符限制为 [0-7]（[#6095](https://github.com/colinhacks/zod/pull/6095)），作者：[ @JSap0914](https://github.com/JSap0914)
+- [`1cf9cd09`](https://github.com/colinhacks/zod/commit/1cf9cd09) 文档：记录 error maps 按每次解析运行，以及如何在渲染时进行翻译，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7ce3e77d`](https://github.com/colinhacks/zod/commit/7ce3e77d) 修复（v4）：让 wrapper 的内部 schema 在其自身 payload 上运行（[#6462](https://github.com/colinhacks/zod/pull/6462)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7b612b53`](https://github.com/colinhacks/zod/commit/7b612b53) 修复（v4）：将 object schemas 的交集合并为一个 object（[#6461](https://github.com/colinhacks/zod/pull/6461)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`1c43b774`](https://github.com/colinhacks/zod/commit/1c43b774) 文档（v4）：记录为什么 failure path 不值得编译，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`badf0b78`](https://github.com/colinhacks/zod/commit/badf0b78) 修复（v4）：根据失败的 input 构建 catch context（[#6192](https://github.com/colinhacks/zod/pull/6192)），作者：[ @zelinewang](https://github.com/zelinewang)
+- [`a87ac366`](https://github.com/colinhacks/zod/commit/a87ac366) 修复（v4）！：在类型层面区分 number 和 bigint 格式（[#6052](https://github.com/colinhacks/zod/pull/6052)），作者：[ @abhishek-chaudhary2003](https://github.com/abhishek-chaudhary2003)
+- [`6726c1dd`](https://github.com/colinhacks/zod/commit/6726c1dd) 文档：记录 z.input 和 z.output 如何处理 transforms 和 wrappers，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7cfc0122`](https://github.com/colinhacks/zod/commit/7cfc0122) 修复（v4）：仅在所属的一侧保留 wrapper 存储的值，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`a825c1b0`](https://github.com/colinhacks/zod/commit/a825c1b0) 修复（v4）：空 enums 和 literals 不匹配任何内容（[#6459](https://github.com/colinhacks/zod/pull/6459)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7c070db9`](https://github.com/colinhacks/zod/commit/7c070db9) 功能（v4）：在 .implement() 结果上公开 function schema（[#6267](https://github.com/colinhacks/zod/pull/6267)），作者：[ @deepshekhardas](https://github.com/deepshekhardas)
+- [`3a496968`](https://github.com/colinhacks/zod/commit/3a496968) 修复（v4）：当 value 可以填充 record input keys 时，使其可选（[#6460](https://github.com/colinhacks/zod/pull/6460)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`53cec2a0`](https://github.com/colinhacks/zod/commit/53cec2a0) 修复（v4）：解析 preprocess transform 之后的 z.input，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`2125d30c`](https://github.com/colinhacks/zod/commit/2125d30c) 修复（v4）：在 multipleOf 中接受精确的十进制倍数（[#6223](https://github.com/colinhacks/zod/pull/6223)），作者：[ @spokodev](https://github.com/spokodev)
+- [`168122fc`](https://github.com/colinhacks/zod/commit/168122fc) 修复（v4）：通过 z.output 传递 pipe 自身的 checks，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`51a1368a`](https://github.com/colinhacks/zod/commit/51a1368a) 修复（v4）：让 includes(position) 模式在 offset 处或之后进行匹配（[#6024](https://github.com/colinhacks/zod/pull/6024)），作者：[ @francisjohnjohnston-web](https://github.com/francisjohnjohnston-web)
+- [`72a05c4f`](https://github.com/colinhacks/zod/commit/72a05c4f) 功能（v4）：通过 _zod.bag 公开 stringbool 的 truthy/falsy/case（[#6357](https://github.com/colinhacks/zod/pull/6357)），作者：[ @hamed-bavar](https://github.com/hamed-bavar)
+- [`036b39f4`](https://github.com/colinhacks/zod/commit/036b39f4) 修复（v4）！：当 datetime 带有 Z 或 offset 时要求 seconds（[#6457](https://github.com/colinhacks/zod/pull/6457)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`5825605e`](https://github.com/colinhacks/zod/commit/5825605e) 性能（v4）：构建 ZodError 时跳过急切的堆栈捕获（[#6450](https://github.com/colinhacks/zod/pull/6450)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`d85472c4`](https://github.com/colinhacks/zod/commit/d85472c4) 功能（v4）：支持 z.object() 中声明的 symbol keys（[#6448](https://github.com/colinhacks/zod/pull/6448)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`d4108872`](https://github.com/colinhacks/zod/commit/d4108872) 修复（v4）：修正两个 JSON Schema 方向中的 date/time format keywords（[#6452](https://github.com/colinhacks/zod/pull/6452)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`555e5f46`](https://github.com/colinhacks/zod/commit/555e5f46) 添加 z.toZod helper（[#5913](https://github.com/colinhacks/zod/pull/5913)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`e0e51a55`](https://github.com/colinhacks/zod/commit/e0e51a55) 文档（v4）：将 compile 注释精简到其解释的内容（[#6449](https://github.com/colinhacks/zod/pull/6449)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`6574e784`](https://github.com/colinhacks/zod/commit/6574e784) 修复（v4）：停止 catch 重新激活 optional 已经解决的问题（[#6440](https://github.com/colinhacks/zod/pull/6440)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`937b5d01`](https://github.com/colinhacks/zod/commit/937b5d01) 性能（v4）：在 object JIT failure path 中原地添加 issue paths 前缀（[#6445](https://github.com/colinhacks/zod/pull/6445)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`b63db248`](https://github.com/colinhacks/zod/commit/b63db248) 修复（v4）：将 memoized node 的 cached issues 保持为 cache 私有（[#6443](https://github.com/colinhacks/zod/pull/6443)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`6ec3d043`](https://github.com/colinhacks/zod/commit/6ec3d043) 修复（resolution）：将 pnpm 自身的 warnings 排除在 attw snapshot 之外（[#6446](https://github.com/colinhacks/zod/pull/6446)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`830ba314`](https://github.com/colinhacks/zod/commit/830ba314) 修复（v4）：验证 address，并返回已验证的字符串（[#6442](https://github.com/colinhacks/zod/pull/6442)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`f101d8ca`](https://github.com/colinhacks/zod/commit/f101d8ca) 在 parse 堆栈跟踪中保留 callsites（[#5910](https://github.com/colinhacks/zod/pull/5910)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`6c77d028`](https://github.com/colinhacks/zod/commit/6c77d028) 功能：在 toJSONSchema 中将简单的 anyOf unions 压缩为 type array（[#6339](https://github.com/colinhacks/zod/pull/6339)），作者：[ @deepshekhardas](https://github.com/deepshekhardas)
+- [`28e1ebd8`](https://github.com/colinhacks/zod/commit/28e1ebd8) 修复（v4）：以 Unicode code points 计算字符串长度（[#6441](https://github.com/colinhacks/zod/pull/6441)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`060bc9f3`](https://github.com/colinhacks/zod/commit/060bc9f3) 重构：为 size/length checks 共享默认的 when-clauses（[#6394](https://github.com/colinhacks/zod/pull/6394)），作者：[ @zirkelc](https://github.com/zirkelc)
+- [`2848177d`](https://github.com/colinhacks/zod/commit/2848177d) 文档：将 flattened/formatted error 弃用指向一个存在的 symbol，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`3c2dee9e`](https://github.com/colinhacks/zod/commit/3c2dee9e) 为 instanceof schemas 添加 properties checks（[#5912](https://github.com/colinhacks/zod/pull/5912)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`87ffeb0f`](https://github.com/colinhacks/zod/commit/87ffeb0f) 修复（v4）：中间层级中缺失的 key 不提供任何内容（[#6434](https://github.com/colinhacks/zod/pull/6434)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7785fc82`](https://github.com/colinhacks/zod/commit/7785fc82) 功能（v4）：添加 z.getDiscriminatedOption（[#5947](https://github.com/colinhacks/zod/pull/5947)），作者：[ @dokson](https://github.com/dokson)
+- [`0135c85a`](https://github.com/colinhacks/zod/commit/0135c85a) 功能（v4）：允许向 apply() 传递额外参数（[#6337](https://github.com/colinhacks/zod/pull/6337)），作者：[ @deepshekhardas](https://github.com/deepshekhardas)
+- [`ca246d26`](https://github.com/colinhacks/zod/commit/ca246d26) 修复（v4）：从 datetime pattern 中移除空的 alternation branch（[#6439](https://github.com/colinhacks/zod/pull/6439)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`e073d55b`](https://github.com/colinhacks/zod/commit/e073d55b) 文档：z.iso.datetime() 接受 ISO 8601 的子集，而不是全部内容，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`d6ca12ae`](https://github.com/colinhacks/zod/commit/d6ca12ae) 修复（v4）：在 discriminatedUnion 中推断递归 getter options（[#6422](https://github.com/colinhacks/zod/pull/6422)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`dc51404b`](https://github.com/colinhacks/zod/commit/dc51404b) 将 shorn 添加到 Zod Utilities（[#6398](https://github.com/colinhacks/zod/pull/6398)），作者：[ @ChiChuRita](https://github.com/ChiChuRita)
+- [`580111da`](https://github.com/colinhacks/zod/commit/580111da) 文档：标记 AOT compilation 仅供 canary 使用，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`6b0dae79`](https://github.com/colinhacks/zod/commit/6b0dae79) 文档：说明 catch callback 不会被 islanded，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`898c4461`](https://github.com/colinhacks/zod/commit/898c4461) 重构（v4）：让 runtime 和 compiled code 使用一个 URL implementation，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`260e5d4b`](https://github.com/colinhacks/zod/commit/260e5d4b) 修复（v4）：停止 islanding catch callback，因为它会悄然产生偏差，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`11c9268b`](https://github.com/colinhacks/zod/commit/11c9268b) 回退（core）：移除 #6432 中 exactOptional parse prototype（[#6438](https://github.com/colinhacks/zod/pull/6438)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`a38ab4a8`](https://github.com/colinhacks/zod/commit/a38ab4a8) 修复（core）：可省略的 discriminator 声称 undefined（[#6432](https://github.com/colinhacks/zod/pull/6432)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`c9ec89e0`](https://github.com/colinhacks/zod/commit/c9ec89e0) 性能（core）：从 lazy internals 中移除 seal 和每个 key 的 WeakSet（[#6435](https://github.com/colinhacks/zod/pull/6435)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`3c9ca1d9`](https://github.com/colinhacks/zod/commit/3c9ca1d9) 功能（json-schema）：当根 schema 有 id 时生成根 $ref（[#6029](https://github.com/colinhacks/zod/pull/6029)），作者：[ @dinwwwh](https://github.com/dinwwwh)
+- [`fa77a4d7`](https://github.com/colinhacks/zod/commit/fa77a4d7) 功能（v4）：z.compile — ahead-of-time schema compilation（[#6085](https://github.com/colinhacks/zod/pull/6085)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`f300476d`](https://github.com/colinhacks/zod/commit/f300476d) 修复（v4）：让 schema 的 error map 覆盖其自身 checks 产生的问题（[#6426](https://github.com/colinhacks/zod/pull/6426)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`9f0a3d81`](https://github.com/colinhacks/zod/commit/9f0a3d81) 修复（core）：恢复 internals 移动时丢失的 defineLazy 语义（[#6429](https://github.com/colinhacks/zod/pull/6429)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`604464c3`](https://github.com/colinhacks/zod/commit/604464c3) 修复（locales）：da/nn/no/sv 将 IP address 称为 range（[#6430](https://github.com/colinhacks/zod/pull/6430)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7378e7cd`](https://github.com/colinhacks/zod/commit/7378e7cd) 修复（locales）：补充 mac 和 Sizable.map 的缺失项，并固定 dictionary parity（[#6427](https://github.com/colinhacks/zod/pull/6427)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`b1077f05`](https://github.com/colinhacks/zod/commit/b1077f05) 性能（memory）：在每个 constructor prototype 上安装 derived internals（[#6415](https://github.com/colinhacks/zod/pull/6415)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`ccc15144`](https://github.com/colinhacks/zod/commit/ccc15144) 修复（locales）：为缺少 credit_card key 的七个 locales 添加该 key（[#6424](https://github.com/colinhacks/zod/pull/6424)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`73bacbbb`](https://github.com/colinhacks/zod/commit/73bacbbb) 修复（from-json-schema）：移除 draft-04 exclusive ranges 中多余的 inclusive bound（[#6022](https://github.com/colinhacks/zod/pull/6022)），作者：[ @francisjohnjohnston-web](https://github.com/francisjohnjohnston-web)
+- [`86b2e6da`](https://github.com/colinhacks/zod/commit/86b2e6da) 文档：在支持的 locales 中列出 el 和 hr，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`45fdeda5`](https://github.com/colinhacks/zod/commit/45fdeda5) 修复（v4）：将 refine optin 细化为三级阶梯，弃用 fallback payload flag（[#6419](https://github.com/colinhacks/zod/pull/6419)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`5b34c0ce`](https://github.com/colinhacks/zod/commit/5b34c0ce) 改进 Portuguese localization 并添加 Brazilian Portuguese（pt-BR）（[#6076](https://github.com/colinhacks/zod/pull/6076)），作者：[ @thristhart](https://github.com/thristhart)
+- [`dc1a40a5`](https://github.com/colinhacks/zod/commit/dc1a40a5) 修复（locales）：改进 French translation（[#6120](https://github.com/colinhacks/zod/pull/6120)），作者：[ @tsmartin9](https://github.com/tsmartin9)
+- [`0175a043`](https://github.com/colinhacks/zod/commit/0175a043) 功能（locales）：添加 Hindi 和 Kannada locale 支持（[#6315](https://github.com/colinhacks/zod/pull/6315)），作者：[ @vedanshshetti](https://github.com/vedanshshetti)
+- [`536ee3b0`](https://github.com/colinhacks/zod/commit/536ee3b0) Locales：添加 Slovak（sk）语言（[#6041](https://github.com/colinhacks/zod/pull/6041)），作者：[ @belicam](https://github.com/belicam)
+- [`07b0c3d8`](https://github.com/colinhacks/zod/commit/07b0c3d8) 修复：保留显式的 superRefine issue input（[#6053](https://github.com/colinhacks/zod/pull/6053)），作者：[ @frastefanini](https://github.com/frastefanini)
+- [`ba98071c`](https://github.com/colinhacks/zod/commit/ba98071c) 功能：向 ZodObject 添加 .exactPartial()（[#6065](https://github.com/colinhacks/zod/pull/6065)），作者：[ @andersk](https://github.com/andersk)
+- [`234c407d`](https://github.com/colinhacks/zod/commit/234c407d) 功能（lang）：添加 Bengali locale（[#5974](https://github.com/colinhacks/zod/pull/5974)），作者：[ @musaddiq-rafi](https://github.com/musaddiq-rafi)
+- [`377cd9d7`](https://github.com/colinhacks/zod/commit/377cd9d7) 功能（locales）：添加 turkmen（tk）locale（[#6168](https://github.com/colinhacks/zod/pull/6168)），作者：[ @tachmyratsaparmyradov](https://github.com/tachmyratsaparmyradov)
+- [`69b6bb08`](https://github.com/colinhacks/zod/commit/69b6bb08) 功能（locales）：添加 Norwegian Nynorsk（nn）locale（[#6092](https://github.com/colinhacks/zod/pull/6092)），作者：[ @arvindfroi](https://github.com/arvindfroi)
+- [`33d82e6b`](https://github.com/colinhacks/zod/commit/33d82e6b) 添加 Central Kurdish（ckb）locale（[#6078](https://github.com/colinhacks/zod/pull/6078)），作者：[ @KUMachine](https://github.com/KUMachine)
+- [`06666fe2`](https://github.com/colinhacks/zod/commit/06666fe2) 修复（fr）：移除“non-optionnel”中的连字符（[#5999](https://github.com/colinhacks/zod/pull/5999)），作者：[ @spidersouris](https://github.com/spidersouris)
+- [`79cfedea`](https://github.com/colinhacks/zod/commit/79cfedea) 功能（v4）：在 check-originated issues 上公开所属 schema（[#6420](https://github.com/colinhacks/zod/pull/6420)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`436b5da8`](https://github.com/colinhacks/zod/commit/436b5da8) 文档：提出 compiled constructor graph，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`eb4682c9`](https://github.com/colinhacks/zod/commit/eb4682c9) 修复（json-schema）：在 input mode 中解析 transform 和 catch 之后的 tuple minItems（[#6418](https://github.com/colinhacks/zod/pull/6418)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`4d6b5cd3`](https://github.com/colinhacks/zod/commit/4d6b5cd3) 修复（json-schema）：通过 `unrepresentable` 处理无法表示的默认值，作者：[ @colinhacks](https://github.com/colinhacks)
+- [`2abc9e05`](https://github.com/colinhacks/zod/commit/2abc9e05) 文档：说明 JSON Schema emitter 会读取 static optin（[#6417](https://github.com/colinhacks/zod/pull/6417)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`578e1cd0`](https://github.com/colinhacks/zod/commit/578e1cd0) 功能（v4）：在 fromJSONSchema 中支持 format: “hostname”（[#6305](https://github.com/colinhacks/zod/pull/6305)），作者：[ @catdalfonso](https://github.com/catdalfonso)
+- [`942bf8cb`](https://github.com/colinhacks/zod/commit/942bf8cb) 功能（v4）：解析包含 reference cycles 的 input（[#6387](https://github.com/colinhacks/zod/pull/6387)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`78b523f0`](https://github.com/colinhacks/zod/commit/78b523f0) 修复（json-schema）：在 input mode 中保持 preprocess object properties 为 required（[#6133](https://github.com/colinhacks/zod/pull/6133)），作者：[ @MerlijnW70](https://github.com/MerlijnW70)
+- [`973b1b44`](https://github.com/colinhacks/zod/commit/973b1b44) 修复（v4）：从 input JSON Schema 中移除 output-typed catch values（[#6409](https://github.com/colinhacks/zod/pull/6409)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`5e608851`](https://github.com/colinhacks/zod/commit/5e608851) 功能（v4）：添加 z.deepPartial 和 runtime z.input / z.output（[#5928](https://github.com/colinhacks/zod/pull/5928)），作者：[ @dokson](https://github.com/dokson)
+- [`4e1720c8`](https://github.com/colinhacks/zod/commit/4e1720c8) 修复（v4）：使 record keys 和 intersection strictness 与 TypeScript 保持一致（[#6412](https://github.com/colinhacks/zod/pull/6412)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`4cc4053d`](https://github.com/colinhacks/zod/commit/4cc4053d) 修复：遵循 closed record key schemas 的 loose mode（[#6157](https://github.com/colinhacks/zod/pull/6157)），作者：[ @pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`69be843f`](https://github.com/colinhacks/zod/commit/69be843f) 修复（v4）：阻止 object JIT fastpass 保留被吞掉的 issue 的 value（[#6407](https://github.com/colinhacks/zod/pull/6407)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`b899cd17`](https://github.com/colinhacks/zod/commit/b899cd17) 性能（json-schema）：使 toJSONSchema(registry) 的复杂度与 registry 大小呈线性关系（[#6408](https://github.com/colinhacks/zod/pull/6408)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`6074828e`](https://github.com/colinhacks/zod/commit/6074828e) 修复（v4）：使 fromJSONSchema 的 propertyNames 与其他 object keywords 组合（[#6411](https://github.com/colinhacks/zod/pull/6411)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`d7b209f3`](https://github.com/colinhacks/zod/commit/d7b209f3) 文档：将 Web URLs callout 指向 z.httpUrl()（[#6410](https://github.com/colinhacks/zod/pull/6410)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`611bd762`](https://github.com/colinhacks/zod/commit/611bd762) 修复（mini）：让 merge() 接受 object schema，与 classic 保持一致（[#6404](https://github.com/colinhacks/zod/pull/6404)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`b53e53cc`](https://github.com/colinhacks/zod/commit/b53e53cc) 修复（v4）：在 English locale 的 too_small/too_big messages 中使用 exact flag（[#6177](https://github.com/colinhacks/zod/pull/6177)），作者：[ @pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`421cc9a5`](https://github.com/colinhacks/zod/commit/421cc9a5) 修复（json-schema）：解析 $ref 时取消 JSON Pointer tokens 的转义（[#6402](https://github.com/colinhacks/zod/pull/6402)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`4c27fe87`](https://github.com/colinhacks/zod/commit/4c27fe87) 修复（v4）：让 z.xor() 在多个 options 匹配时给出独立的错误（[#6376](https://github.com/colinhacks/zod/pull/6376)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`a106fbe7`](https://github.com/colinhacks/zod/commit/a106fbe7) 修复（v4）：默认让 fromJSONSchema tuples 为 open-ended（[#6020](https://github.com/colinhacks/zod/pull/6020)），作者：[ @mneetika](https://github.com/mneetika)
+- [`e8034eba`](https://github.com/colinhacks/zod/commit/e8034eba) 修复（v4）：让 fromJSONSchema 中的 prefixItems/draft-7 items 遵循 minItems（[#6201](https://github.com/colinhacks/zod/pull/6201)），作者：[ @pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`784e5c26`](https://github.com/colinhacks/zod/commit/784e5c26) 修复（v4）：让 bundlers 将 locales 从 default import 中 tree-shake 掉（[#6384](https://github.com/colinhacks/zod/pull/6384)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`97edd70a`](https://github.com/colinhacks/zod/commit/97edd70a) 修复（toJSONSchema）：约束 closed tuple length（[#6194](https://github.com/colinhacks/zod/pull/6194)），作者：[ @pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`f150020d`](https://github.com/colinhacks/zod/commit/f150020d) 修复（v4）：转义 template literal patterns 中的非字符串 enum values（[#5934](https://github.com/colinhacks/zod/pull/5934)），作者：[ @gwagjiug](https://github.com/gwagjiug)
+- [`faf33a28`](https://github.com/colinhacks/zod/commit/faf33a28) 修复：显示重新导出的 compat aliases 上的 @deprecated（[#6072](https://github.com/colinhacks/zod/pull/6072)），作者：[ @MahinAnowar](https://github.com/MahinAnowar)
+- [`3956224a`](https://github.com/colinhacks/zod/commit/3956224a) 文档：说明 metadata 优先于生成的 JSON Schema keywords（[#6401](https://github.com/colinhacks/zod/pull/6401)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`a1904fc2`](https://github.com/colinhacks/zod/commit/a1904fc2) 修复（v4）：报告 numeric min/max bounds 的 date origin（[#6129](https://github.com/colinhacks/zod/pull/6129)），作者：[ @MerlijnW70](https://github.com/MerlijnW70)
+- [`bd18314c`](https://github.com/colinhacks/zod/commit/bd18314c) 修复：在 toJSONSchema $ref 中转义 JSON Pointer 保留字符（关闭 #6027）（[#6144](https://github.com/colinhacks/zod/pull/6144)），作者：[ @MaksZhukov](https://github.com/MaksZhukov)
+- [`2a5164f5`](https://github.com/colinhacks/zod/commit/2a5164f5) 修复（v4）：在 regexes.domain 中强制执行 RFC 1035 length limits（[#6035](https://github.com/colinhacks/zod/pull/6035)），作者：[ @emmayusufu](https://github.com/emmayusufu)
+- [`0e5bc4b1`](https://github.com/colinhacks/zod/commit/0e5bc4b1) 修复（v4）：在 fromJSONSchema 中遵循 additionalProperties:false 与 patternProperties 的组合（[#6199](https://github.com/colinhacks/zod/pull/6199)），作者：[ @pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`c8f06d36`](https://github.com/colinhacks/zod/commit/c8f06d36) 修复（v4）：澄清 infinite number errors（[#5906](https://github.com/colinhacks/zod/pull/5906)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`9a7ecc35`](https://github.com/colinhacks/zod/commit/9a7ecc35) 修复（json-schema）：在 date-time format 中接受 RFC 3339 numeric offsets（[#6298](https://github.com/colinhacks/zod/pull/6298)），作者：[ @agcty](https://github.com/agcty)
+- [`0a76f3d7`](https://github.com/colinhacks/zod/commit/0a76f3d7) 功能（v4）：添加 z.creditCard() string format（[#5931](https://github.com/colinhacks/zod/pull/5931)），作者：[ @dokson](https://github.com/dokson)
+- [`bd6619c0`](https://github.com/colinhacks/zod/commit/bd6619c0) 功能（json-schema）：接受 `unrepresentable` 函数（[#6380](https://github.com/colinhacks/zod/pull/6380)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`9d20fdc3`](https://github.com/colinhacks/zod/commit/9d20fdc3) 修复（v4）：保留 z.preprocess input narrowing（[#5967](https://github.com/colinhacks/zod/pull/5967)），作者：[ @devareddy05](https://github.com/devareddy05)
+- [`3063993a`](https://github.com/colinhacks/zod/commit/3063993a) 性能（v4）：通过将 methods 移至 prototype，使每个 schema 的内存占用降低约 90%（[#6318](https://github.com/colinhacks/zod/pull/6318)），作者：[ @zirkelc](https://github.com/zirkelc)
+- [`fd074106`](https://github.com/colinhacks/zod/commit/fd074106) 功能（json-schema）：在 unrepresentable error 之前运行 `override`（[#6391](https://github.com/colinhacks/zod/pull/6391)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`2715c12e`](https://github.com/colinhacks/zod/commit/2715c12e) 修复（v4）：在 tree-shaken bundles 中保留默认 English locale（[#5959](https://github.com/colinhacks/zod/pull/5959)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`81d9fc6c`](https://github.com/colinhacks/zod/commit/81d9fc6c) 文档：将 zod-form-action 添加到生态系统（[#6314](https://github.com/colinhacks/zod/pull/6314)），作者：[ @Vish05](https://github.com/Vish05)
+- [`d86df5e0`](https://github.com/colinhacks/zod/commit/d86df5e0) 文档：将 ArkEnv 添加到生态页面（[#6203](https://github.com/colinhacks/zod/pull/6203)），作者：[ @yamcodes](https://github.com/yamcodes)
+- [`18b4ff99`](https://github.com/colinhacks/zod/commit/18b4ff99) 文档（ecosystem）：将 zodql 添加到 API Libraries（[#6227](https://github.com/colinhacks/zod/pull/6227)），作者：[ @mattiasahlsen](https://github.com/mattiasahlsen)
+- [`479d6f51`](https://github.com/colinhacks/zod/commit/479d6f51) 推广 oxlint（[#6196](https://github.com/colinhacks/zod/pull/6196)），作者：[ @samchungy](https://github.com/samchungy)
+- [`85dba7e1`](https://github.com/colinhacks/zod/commit/85dba7e1) 文档：记录 any/unknown object keys 为 required（[#6388](https://github.com/colinhacks/zod/pull/6388)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`d24fb4c3`](https://github.com/colinhacks/zod/commit/d24fb4c3) 修复：一致地从 parsed objects 中移除 __proto__（[#6386](https://github.com/colinhacks/zod/pull/6386)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`7708d447`](https://github.com/colinhacks/zod/commit/7708d447) 性能（v4）：延迟构建 ZodError（[#6316](https://github.com/colinhacks/zod/pull/6316)），作者：[ @zirkelc](https://github.com/zirkelc)
+- [`8ac9ae51`](https://github.com/colinhacks/zod/commit/8ac9ae51) 修复（docs-v3）：在 Vercel 上提供 docsify SPA fallback（[#6378](https://github.com/colinhacks/zod/pull/6378)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`31384464`](https://github.com/colinhacks/zod/commit/31384464) 修复（v4）：完成 reserved-key hardening（[#6371](https://github.com/colinhacks/zod/pull/6371)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`600c6909`](https://github.com/colinhacks/zod/commit/600c6909) 文档：将 Attaform 添加到生态系统（[#6188](https://github.com/colinhacks/zod/pull/6188)），作者：[ @ozzyfromspace](https://github.com/ozzyfromspace)
+- [`37c05fa5`](https://github.com/colinhacks/zod/commit/37c05fa5) 文档（ecosystem）：将 zod-to-mongo-schema 重命名为 zod-mongo-schema（[#6178](https://github.com/colinhacks/zod/pull/6178)），作者：[ @udohjeremiah](https://github.com/udohjeremiah)
+- [`badfdf08`](https://github.com/colinhacks/zod/commit/badfdf08) 文档：将 keyof() ZodEnum type 更新为 v4 形式（[#6124](https://github.com/colinhacks/zod/pull/6124)），作者：[ @patrickwehbe](https://github.com/patrickwehbe)
+- [`e25b68e1`](https://github.com/colinhacks/zod/commit/e25b68e1) 性能（v4）：让三个无用声明在 esbuild 下进行 tree-shake（[#6381](https://github.com/colinhacks/zod/pull/6381)），作者：[ @colinhacks](https://github.com/colinhacks)
+- [`53397351`](https://github.com/colinhacks/zod/commit/53397351) 文档（ecosystem）：在 Zod To X 中添加 zod-mongoose 列表项（[#6062](https://github.com/colinhacks/zod/pull/6062)），作者：[ @Harm-Nullix](https://github.com/Harm-Nullix)
+- [`dfa0deb1`](https://github.com/colinhacks/zod/commit/dfa0deb1) 文档: 将 tauri-typegen 添加到生态系统（[#6032](https://github.com/colinhacks/zod/pull/6032)）由 [@thwbh](https://github.com/thwbh)
+- [`9c914ee8`](https://github.com/colinhacks/zod/commit/9c914ee8) docs：为 refine() 添加动态错误消息和组合 refinement 示例（[#6002](https://github.com/colinhacks/zod/pull/6002)）由 [@IdanGonen](https://github.com/IdanGonen)
+- [`921649de`](https://github.com/colinhacks/zod/commit/921649de) fix(v4)：formatError 和 treeifyError 处理继承名称的路径元素（[#6367](https://github.com/colinhacks/zod/pull/6367)）由 [@deepshekhardas](https://github.com/deepshekhardas)
+- [`e7029aa4`](https://github.com/colinhacks/zod/commit/e7029aa4) fix(v4)：在 .strict() 下报告自有的 __proto__ 键（[#6221](https://github.com/colinhacks/zod/pull/6221)）由 [@pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`9c540db8`](https://github.com/colinhacks/zod/commit/9c540db8) fix(v4)：在键 schema 执行后重新检查 record 键（[#6355](https://github.com/colinhacks/zod/pull/6355)）由 [@colinhacks](https://github.com/colinhacks)
+- [`8bb89ea4`](https://github.com/colinhacks/zod/commit/8bb89ea4) docs：在 Strings、Arrays、Sets 和 Maps 部分添加 .nonempty()（[#6056](https://github.com/colinhacks/zod/pull/6056)）由 [@pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`599c0e41`](https://github.com/colinhacks/zod/commit/599c0e41) docs(ecosystem)：添加 `@chrock-studio/overload` 和 `@chrock-studio/zod-utils`（[#6040](https://github.com/colinhacks/zod/pull/6040)）由 [@JuerGenie](https://github.com/JuerGenie)
+- [`27a9036a`](https://github.com/colinhacks/zod/commit/27a9036a) docs(ecosystem)：`eslint-plugin-zod` 现在是 `eslint-zod`（[#5975](https://github.com/colinhacks/zod/pull/5975)）由 [@marcalexiei](https://github.com/marcalexiei)
+- [`e177a0ee`](https://github.com/colinhacks/zod/commit/e177a0ee) docs(v4)：记录 coerce 缺失键的破坏性变更（[#5957](https://github.com/colinhacks/zod/pull/5957)）（[#5964](https://github.com/colinhacks/zod/pull/5964)）由 [@dokson](https://github.com/dokson)
+- [`66fba964`](https://github.com/colinhacks/zod/commit/66fba964) docs：展示 z.instanceof 与内置类的用法（[#6059](https://github.com/colinhacks/zod/pull/6059)）由 [@itsahmedbilal](https://github.com/itsahmedbilal)
+- [`2d90846a`](https://github.com/colinhacks/zod/commit/2d90846a) fix(docs)：使 prefault 示例可运行（[#6063](https://github.com/colinhacks/zod/pull/6063)）由 [@DucMinhNe](https://github.com/DucMinhNe)
+- [`ead9fcb3`](https://github.com/colinhacks/zod/commit/ead9fcb3) fix(v4)：将声明的 __proto__ 键写入为自有属性（[#6354](https://github.com/colinhacks/zod/pull/6354)）由 [@colinhacks](https://github.com/colinhacks)
+- [`c58764c5`](https://github.com/colinhacks/zod/commit/c58764c5) docs：修复 v4 介绍中的 UUID helper 列表（[#6214](https://github.com/colinhacks/zod/pull/6214)）由 [@meliharik](https://github.com/meliharik)
+- [`f238fbd2`](https://github.com/colinhacks/zod/commit/f238fbd2) fix：从 emoji 正则表达式中移除指数级回溯（[#6347](https://github.com/colinhacks/zod/pull/6347)）由 [@colinhacks](https://github.com/colinhacks)
+- [`e6c213ec`](https://github.com/colinhacks/zod/commit/e6c213ec) fix(json-schema)：在 schema 转换中将 __proto__ 键保留为自有属性（[#6346](https://github.com/colinhacks/zod/pull/6346)）由 [@colinhacks](https://github.com/colinhacks)
+- [`573fcb75`](https://github.com/colinhacks/zod/commit/573fcb75) fix(errors)：在每个错误树遍历器中使用自有属性语义（[#6213](https://github.com/colinhacks/zod/pull/6213)）由 [@pullfrog[bot]](https://github.com/pullfrog[bot])
+- [`6f5e99fd`](https://github.com/colinhacks/zod/commit/6f5e99fd) fix(docs-v3)：将 README.md 重命名为 home.md，以便 Vercel 提供服务由 [@colinhacks](https://github.com/colinhacks)
+- [`bbc68f99`](https://github.com/colinhacks/zod/commit/bbc68f99) docs：将 Zod 3 EOL 提示调整为信息性语气由 [@colinhacks](https://github.com/colinhacks)
+- [`3fc9b25f`](https://github.com/colinhacks/zod/commit/3fc9b25f) docs：将 library-authors 页面重新定位为 Zod-4-first；注明 Zod 3 EOL 由 [@colinhacks](https://github.com/colinhacks)
+- [`f29f2a6d`](https://github.com/colinhacks/zod/commit/f29f2a6d) fix(v4)：使 cidrv6 JSON schema pattern 与运行时匹配（[#5945](https://github.com/colinhacks/zod/pull/5945)）由 [@dokson](https://github.com/dokson)
+- [`dfd8766b`](https://github.com/colinhacks/zod/commit/dfd8766b) fix(v4)：打破 classic schemas 与 iso 之间的循环导入（[#5275](https://github.com/colinhacks/zod/pull/5275)）（[#5926](https://github.com/colinhacks/zod/pull/5926)）由 [@dokson](https://github.com/dokson)
+- [`fbe8ad1b`](https://github.com/colinhacks/zod/commit/fbe8ad1b) fix(v4)：允许在 `unrepresentable: "any"` 下使用动态 `.catch()`（[#5273](https://github.com/colinhacks/zod/pull/5273)）（[#5925](https://github.com/colinhacks/zod/pull/5925)）由 [@dokson](https://github.com/dokson)

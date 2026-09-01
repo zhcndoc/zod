@@ -1,11 +1,14 @@
 import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
+import * as regexes from "./regexes.js";
 import type { $ZodRegistry } from "./registries.js";
+import { base64Charset, base64urlCharset } from "./schemas.js";
 import type * as schemas from "./schemas.js";
 import {
   type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type Seen,
   type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
@@ -13,7 +16,8 @@ import {
   finalize,
   handleUnrepresentable,
   initializeContext,
-  process,
+  isTransforming,
+  processSchema,
 } from "./to-json-schema.js";
 import { assignProp, getEnumValues } from "./util.js";
 
@@ -27,10 +31,17 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 
 // ==================== SIMPLE TYPE PROCESSORS ====================
 
+// the runtime patterns are lax so parse paths never overflow the regex stack; the emitted schema swaps in the exact block forms, which zod itself never executes
+const exactPatterns: Map<RegExp, RegExp> = new Map([
+  [base64Charset, regexes.base64],
+  [base64urlCharset, regexes.base64url],
+]);
+const exactPattern = (p: RegExp): RegExp => exactPatterns.get(p) ?? p;
+
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+  const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = schema._zod
     .bag as schemas.$ZodStringInternals<unknown>["bag"];
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
@@ -39,18 +50,18 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
-    if (format === "time") {
+    // `z.iso.time()` is never full-time, and `laxFormat` carries the datetime shapes that also accept what their keyword forbids
+    if (format === "time" || laxFormat) {
       delete json.format;
     }
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
-    const regexes = [...patterns];
-    if (regexes.length === 1) json.pattern = regexes[0]!.source;
-    else if (regexes.length > 1) {
+    const patternList = [...patterns].map(exactPattern);
+    if (patternList.length === 1) json.pattern = patternList[0]!.source;
+    else if (patternList.length > 1) {
       json.allOf = [
-        ...regexes.map((regex) => ({
+        ...patternList.map((regex) => ({
           ...(ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0"
             ? ({ type: "string" } as const)
             : {}),
@@ -61,7 +72,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
 };
 
-export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, _params) => {
+export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.NumberSchema | JSONSchema.IntegerSchema;
   const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
@@ -94,7 +105,18 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
     json.maximum = maximum;
   }
 
-  if (typeof multipleOf === "number") json.multipleOf = multipleOf;
+  if (typeof multipleOf === "number") {
+    // JSON Schema requires a divisor strictly greater than zero, and a non-finite one does not survive JSON at all. A negative divisor accepts exactly what its absolute value accepts, so it still maps; zero, NaN and Infinity have no keyword form.
+    if (Number.isFinite(multipleOf) && multipleOf !== 0) json.multipleOf = Math.abs(multipleOf);
+    else
+      handleUnrepresentable(
+        schema,
+        ctx,
+        json,
+        params,
+        `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`
+      );
+  }
 };
 
 export const booleanProcessor: Processor<schemas.$ZodBoolean> = (_schema, _ctx, json, _params) => {
@@ -146,6 +168,13 @@ export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, json, pa
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
   const def = schema._zod.def as schemas.$ZodEnumDef;
   const values = getEnumValues(def.entries);
+
+  // an empty enum accepts nothing, same as z.never()
+  if (values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   // Number enums can have both string and number values
   if (values.every((v) => typeof v === "number")) json.type = "number";
   if (values.every((v) => typeof v === "string")) json.type = "string";
@@ -154,6 +183,13 @@ export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _
 
 export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodLiteralDef<any>;
+
+  // a literal with no values accepts nothing, same as z.never()
+  if (def.values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   const vals: (string | number | boolean | null)[] = [];
   for (const val of def.values) {
     if (val === undefined) {
@@ -258,7 +294,7 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 
   json.type = "array";
-  json.items = process(def.element, ctx as any, {
+  json.items = processSchema(def.element, ctx as any, {
     ...params,
     path: [...params.path, "items"],
   });
@@ -283,16 +319,26 @@ function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefi
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
+  const shape = def.shape;
+
+  // dropping it while still emitting `additionalProperties: false` would emit a schema that rejects data this one requires
+  const symbolKeys = Object.getOwnPropertySymbols(shape);
+  if (
+    symbolKeys.length &&
+    handleUnrepresentable(schema, ctx, json, params, "Symbol keys cannot be represented in JSON Schema")
+  ) {
+    return;
+  }
+
   json.type = "object";
   json.properties = {};
-  const shape = def.shape;
 
   for (const key in shape) {
     // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
     assignProp(
       json.properties,
       key,
-      process(shape[key]!, ctx as any, {
+      processSchema(shape[key]!, ctx as any, {
         ...params,
         path: [...params.path, "properties", key],
       })
@@ -324,11 +370,59 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
     // regular
     if (ctx.io === "output") json.additionalProperties = false;
   } else if (def.catchall) {
-    json.additionalProperties = process(def.catchall, ctx as any, {
+    json.additionalProperties = processSchema(def.catchall, ctx as any, {
       ...params,
       path: [...params.path, "additionalProperties"],
     });
   }
+};
+
+// asserts named properties in place and passes everything else through, so no additionalProperties constraint is emitted
+export const propertiesProcessor: Processor<schemas.$ZodProperties> = (schema, ctx, _json, params) => {
+  const json = _json as JSONSchema.ObjectSchema;
+  const def = schema._zod.def;
+
+  // dropping a symbol key silently would emit a schema that asserts less than this one does
+  if (
+    Object.getOwnPropertySymbols(def.shape).length &&
+    handleUnrepresentable(schema, ctx, json, params, "Symbol keys cannot be represented in JSON Schema")
+  ) {
+    return;
+  }
+
+  // the parsed value is the input, so an output-mode emission would describe a transformed value this schema never returns
+  if (ctx.io === "output") {
+    for (const key in def.shape) {
+      if (
+        isTransforming(def.shape[key]!) &&
+        handleUnrepresentable(
+          schema,
+          ctx,
+          json,
+          params,
+          `z.properties() returns its input, so the output of a transforming schema at key "${key}" cannot be represented in JSON Schema`
+        )
+      ) {
+        return;
+      }
+    }
+  }
+
+  json.type = "object";
+  json.properties = {};
+  for (const key in def.shape) {
+    assignProp(
+      json.properties,
+      key,
+      processSchema(def.shape[key]!, ctx as any, {
+        ...params,
+        path: [...params.path, "properties", key],
+      })
+    );
+  }
+  // input-side optionality in both modes: the parsed value is the input, so a defaulted key that stays absent must not be required of the output either
+  const required = Object.keys(def.shape).filter((key) => inputOptin(def.shape[key]!) === undefined);
+  if (required.length > 0) json.required = required;
 };
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
@@ -336,7 +430,7 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
   // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
-    process(x, ctx as any, {
+    processSchema(x, ctx as any, {
       ...params,
       path: [...params.path, isExclusive ? "oneOf" : "anyOf", i],
     })
@@ -350,11 +444,11 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
 
 export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodIntersectionDef;
-  const a = process(def.left, ctx as any, {
+  const a = processSchema(def.left, ctx as any, {
     ...params,
     path: [...params.path, "allOf", 0],
   });
-  const b = process(def.right, ctx as any, {
+  const b = processSchema(def.right, ctx as any, {
     ...params,
     path: [...params.path, "allOf", 1],
   });
@@ -365,6 +459,8 @@ export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schem
     ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
   ];
   json.allOf = allOf;
+  // Recorded innermost first, so a nested intersection has already folded by the time this one is considered. The array is the handle rather than the schema, because a wrapper that inherits this schema shares the same array; `finalize` folds every object holding it. See `foldIntersection`.
+  ctx.intersections.push(allOf);
 };
 
 export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json, params) => {
@@ -377,13 +473,13 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     ctx.target === "draft-2020-12" ? "items" : ctx.target === "openapi-3.0" ? "items" : "additionalItems";
 
   const prefixItems = def.items.map((x, i) =>
-    process(x, ctx as any, {
+    processSchema(x, ctx as any, {
       ...params,
       path: [...params.path, prefixPath, i],
     })
   );
   const rest = def.rest
-    ? process(def.rest, ctx as any, {
+    ? processSchema(def.rest, ctx as any, {
         ...params,
         path: [...params.path, restPath, ...(ctx.target === "openapi-3.0" ? [def.items.length] : [])],
       })
@@ -438,6 +534,85 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 };
 
+/** JSON object keys are always strings, so a numeric record key schema is re-expressed over the
+ * numeric-string form the record parser matches. Deferred to `finalize`, after the flatten: a key
+ * behind a wrapper only carries its own `type` before then, and a union key only has its branches.
+ *
+ * A numeric bound cannot apply to a property name, so `minimum` and its siblings are dropped rather
+ * than carried over: keeping them beside `type: "string"` reproduces the match-nothing schema this
+ * exists to fix. A key that carries one therefore emits wider than the record parses — `z.record(z.number().min(5), V)`
+ * accepts `"3"` — which is the deliberate trade, since throwing on it would reject an ordinary schema
+ * outright. */
+function stringifyKeyNames(
+  bySchema: Map<JSONSchema.BaseSchema, Seen>,
+  json: JSONSchema.BaseSchema,
+  visited: Set<JSONSchema.BaseSchema>
+): JSONSchema.BaseSchema {
+  // an extracted key that rewrites cannot go on sharing its definition — the string form a key position needs is not the number form every other reference wants — so it inlines. One that does not rewrite keeps the `$ref`.
+  if (json.$ref) {
+    // a recursive key holds its own reference inside its definition, so a node already on the path is left alone rather than resolved again
+    if (visited.has(json)) return json;
+    visited.add(json);
+    const def = bySchema.get(json)?.def;
+    if (!def) return json;
+    const inlined = stringifyKeyNames(bySchema, def, visited);
+    return inlined === def ? json : inlined;
+  }
+
+  for (const keyword of ["anyOf", "oneOf"] as const) {
+    const branches = json[keyword];
+    if (!Array.isArray(branches)) continue;
+    const mapped = branches.map((branch) => stringifyKeyNames(bySchema, branch, visited));
+    // rebuilding regardless would detach a key that had nothing to re-express, dropping its `$ref` and leaking the internal `id`
+    if (mapped.some((branch, i) => branch !== branches[i])) json = { ...json, [keyword]: mapped };
+  }
+
+  // a member that already admits a string leaves the key unconstrained, so the node's own type re-expresses only when every member is numeric
+  const types = Array.isArray(json.type) ? json.type : [json.type];
+  const numericType = !types.includes("string") && types.some((t) => t === "number" || t === "integer");
+  // a heterogeneous key carries no type at all, so its numeric members are caught here instead
+  const values = json.enum ?? (json.const !== undefined ? [json.const] : undefined);
+  if (!numericType && !values?.some((v) => typeof v === "number")) return json;
+
+  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json;
+  if (rest.enum) rest.enum = rest.enum.map((v) => (typeof v === "number" ? String(v) : v));
+  else if (typeof rest.const === "number") rest.const = String(rest.const);
+  // a heterogeneous key keeps its absent type: the stringified members already say what a key may be
+  if (!numericType) return rest;
+  rest.type = "string";
+  if (!values) rest.pattern = (types.includes("number") ? regexes.number : regexes.integer).source;
+  return rest;
+}
+
+/** Every record of one conversion, so the carriers are found in a single pass rather than once per record. */
+const pendingRecords = new WeakMap<ToJSONSchemaContext, schemas.$ZodType[]>();
+
+function rewriteKeyNames(ctx: ToJSONSchemaContext): void {
+  // an extracted key is resolved by the object `extractToDef` left in its place, so the map is built once rather than searched per reference. `_zod.toJSONSchema` can hand the same object to two schemas, so the first entry carrying a body wins, as a search would have found it.
+  const bySchema = new Map<JSONSchema.BaseSchema, Seen>();
+  for (const entry of ctx.seen.values()) {
+    if (entry.def && !bySchema.has(entry.schema)) bySchema.set(entry.schema, entry);
+  }
+
+  const rewrites = new Map<JSONSchema.BaseSchema, JSONSchema.BaseSchema>();
+  for (const record of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record);
+    const names = (seen?.def ?? seen?.schema)?.propertyNames;
+    if (!names || names === true || rewrites.has(names)) continue;
+    const rewritten = stringifyKeyNames(bySchema, names, new Set());
+    if (rewritten !== names) rewrites.set(names, rewritten);
+  }
+  if (!rewrites.size) return;
+
+  // the flatten has already copied each record's own properties onto every wrapper by reference, and an extracted body is another such copy, so every carrier holding a rewritten key is updated together
+  for (const entry of ctx.seen.values()) {
+    for (const carrier of [entry.schema, entry.def]) {
+      const rewritten = carrier && rewrites.get(carrier.propertyNames as JSONSchema.BaseSchema);
+      if (rewritten) carrier!.propertyNames = rewritten;
+    }
+  }
+}
+
 export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
@@ -450,23 +625,30 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   if (def.mode === "loose" && patterns && patterns.size > 0) {
     // Use patternProperties for looseRecord with regex patterns
-    const valueSchema = process(def.valueType, ctx as any, {
+    const valueSchema = processSchema(def.valueType, ctx as any, {
       ...params,
       path: [...params.path, "patternProperties", "*"],
     });
     json.patternProperties = {};
     for (const pattern of patterns) {
-      assignProp(json.patternProperties, pattern.source, valueSchema);
+      assignProp(json.patternProperties, exactPattern(pattern).source, valueSchema);
     }
   } else {
     // Default behavior: use propertyNames + additionalProperties
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json.propertyNames = process(def.keyType, ctx as any, {
+      json.propertyNames = processSchema(def.keyType, ctx as any, {
         ...params,
         path: [...params.path, "propertyNames"],
       });
+      let pending = pendingRecords.get(ctx);
+      if (!pending) {
+        pending = [];
+        pendingRecords.set(ctx, pending);
+        ctx.deferred.push(() => rewriteKeyNames(ctx));
+      }
+      pending.push(schema);
     }
-    json.additionalProperties = process(def.valueType, ctx as any, {
+    json.additionalProperties = processSchema(def.valueType, ctx as any, {
       ...params,
       path: [...params.path, "additionalProperties"],
     });
@@ -474,20 +656,22 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   // Add required for keys with discrete values (enum, literal, etc.)
   const keyValues = keyType._zod.values;
-  if (keyValues && !def.partial) {
+  // Every key shares one value schema, so an optional-in value makes the whole key set omittable on input. Output keeps them: the exhaustive branch assigns every key, even one whose value came back undefined.
+  const omittableOnInput = ctx.io === "input" && inputOptin(def.valueType as schemas.$ZodType) !== undefined;
+  if (keyValues && !def.partial && !omittableOnInput) {
     const validKeyValues = [...keyValues].filter(
       (v): v is string | number => typeof v === "string" || typeof v === "number"
     );
 
     if (validKeyValues.length > 0) {
-      json.required = validKeyValues as string[];
+      json.required = validKeyValues.map(String);
     }
   }
 };
 
 export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodNullableDef;
-  const inner = process(def.innerType, ctx as any, params);
+  const inner = processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
@@ -499,7 +683,7 @@ export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, 
 
 export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodNonOptionalDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
@@ -528,7 +712,7 @@ function serializeDefaultValue(
 
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
@@ -537,7 +721,7 @@ export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, js
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodPrefaultDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   if (ctx.io !== "input") return;
@@ -547,7 +731,7 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodCatchDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   let catchValue: any;
@@ -564,14 +748,14 @@ export const pipeProcessor: Processor<schemas.$ZodPipe> = (schema, ctx, _json, p
   const def = schema._zod.def as schemas.$ZodPipeDef;
   const inIsTransform = def.in._zod.traits.has("$ZodTransform");
   const innerType = ctx.io === "input" ? (inIsTransform ? def.out : def.in) : def.out;
-  process(innerType, ctx as any, params);
+  processSchema(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;
 };
 
 export const readonlyProcessor: Processor<schemas.$ZodReadonly> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodReadonlyDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
   json.readOnly = true;
@@ -579,21 +763,21 @@ export const readonlyProcessor: Processor<schemas.$ZodReadonly> = (schema, ctx, 
 
 export const promiseProcessor: Processor<schemas.$ZodPromise> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodPromiseDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
 
 export const optionalProcessor: Processor<schemas.$ZodOptional> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodOptionalDef;
-  process(def.innerType, ctx as any, params);
+  processSchema(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
 };
 
 export const lazyProcessor: Processor<schemas.$ZodLazy> = (schema, ctx, _json, params) => {
   const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
-  process(innerType, ctx as any, params);
+  processSchema(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;
 };
@@ -620,6 +804,7 @@ export const allProcessors: Record<string, Processor<any>> = {
   file: fileProcessor,
   success: successProcessor,
   custom: customProcessor,
+  properties: propertiesProcessor,
   function: functionProcessor,
   transform: transformProcessor,
   map: mapProcessor,
@@ -665,7 +850,7 @@ export function toJSONSchema(
     // First pass: process all schemas to build the seen map
     for (const entry of registry._idmap.entries()) {
       const [_, schema] = entry;
-      process(schema, ctx as any);
+      processSchema(schema, ctx as any);
     }
 
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
@@ -697,7 +882,7 @@ export function toJSONSchema(
 
   // Single schema case
   const ctx = initializeContext({ ...params, processors: allProcessors });
-  process(input, ctx as any);
+  processSchema(input, ctx as any);
   extractDefs(ctx as any, input);
   return finalize(ctx as any, input);
 }

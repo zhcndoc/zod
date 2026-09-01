@@ -1,13 +1,13 @@
 # z.compile
 
-v4 schemas 的 AOT 编译器。位于 `z.compile` 分支。
+v4 schemas 的 AOT 编译器。
 
 ## Surface
 
 两个有意不重叠的入口：
 
-- `z.compile(schema)` — 返回一个克隆的 schema，其 `_zod.run` 运行 AOT 编译的快速路径，失败时回退到原始的 `_zod.run`。在调用时立即编译。原始 schema 不受影响。克隆对象是普通的 `ZodType` — `.parse`、`.safeParse`、`.refine`、`.extend`、交集、管道等都照常工作。注意，派生操作（`.refine`、`.extend`、`.optional`、`.meta` 等）会构造*新的* schema，不会继承快速路径 — 应该编译最终的 schema，而不是中间 schema。
-- `import "zod/compile"` — 安装一个全局后处理器，为每个新构造的 schema 包装一个一次性的惰性编译 shim。该功能由一个子路径导出支持，其 backing module 在 `package.json` 中标记为 `sideEffects: true`。
+- `z.compile(schema)` — 返回一个克隆的 schema，其 `_zod.run` 运行 AOT 编译的快速路径，失败时回退到原始的 `_zod.run`。在调用时立即编译。原始 schema 不受影响。克隆对象是普通的 `ZodType` — `.parse`、`.safeParse`、`.refine`、`.extend`、交集、管道等都照常工作。注意，派生操作（`.refine`、`.extend`、`.optional`、`.meta`……）会构造**新的** schema，这些 schema 不会继承快速路径 — 应编译最终 schema，而不是中间 schema。永不抛出：对于编译器拒绝的 schema，会原样返回并继续使用运行时解析器，这与全局模式的行为一致。`z.compile(schema, { strict: true })` 会改为抛出拒绝错误，这也是 bench matrix 和 fuzzer 用于对 schema 进行分类的方式。
+- `import "zod/compile"` — 安装一个全局后处理器，用一次性的延迟编译 shim 包装每个新构造的 schema。该功能由一个 subpath export 提供，其 backing module 在 `package.json` 中标记为 `sideEffects: true`。
 
 不存在无参数形式的 `z.compile()`。不同形状对应不同任务：显式的逐 schema 编译，以及项目范围的选择性启用。
 
@@ -19,66 +19,24 @@ v4 schemas 的 AOT 编译器。位于 `z.compile` 分支。
 
 编译后的快速路径是一个 happy-path 验证器。它返回解析／转换后的输出，或一个 `INVALID` sentinel。在 `INVALID` 的情况下，包装器调用原始的 `_zod.run` 以生成规范的 `ZodError`。
 
+`INVALID` 并不总是表示拒绝，因此 codegen 会跟踪一个 `definite` 标志，并且 `z.validate` 只会在该标志仍然有效时跳过解释器回退。有两种情况会清除它。任何提升的**用户回调**——refine、transform、自定义 predicate、catch value 或 lazy getter——都会通过 `addUserConstant` 清除该标志，因为该回调可能抛出异常，并且生成的代码可能在到达它之前就拒绝了更早的兄弟节点，因此该拒绝不再能证明解释器会拒绝而不是抛出异常。**runtime island**、**intersection**，以及其自身编译结果不确定的**record key**，也会直接清除该标志，理由相同，只是应用对象从回调变成了构造。能够保留下来的是不含回调的子集——类型、范围和格式检查、枚举、字面量、联合，以及对象、数组和元组成员——这正是类型守卫通常需要判断的形状。
+
+transform 情况正是该标志存在的原因，而不是在生成代码中抛出异常：当 transform 返回一个 thenable 时，必须继续返回 `INVALID`，因为解释器自身的 union 会在那里继续尝试下一个分支，而不是向上传播该 thenable。`compile-differential` 对此进行了固定测试。
+
 后果：
 
-- 通过设计实现与未编译 Zod 100% 的错误一致性。快速路径从不生成错误；runtime 是 `ZodError` 的唯一来源。我们不维护第二套错误路径实现，这也是该设计优于 arktype 的双重 `Allows` + `Apply` codegen 的主要原因。
-- 用户提供的 `.refine`／`.transform`／`.superRefine` 回调在无效输入上**最多运行两次** — 一次在快速路径中，一次在 runtime 回退中。这与 Zod 现有的 Standard Schema 同步后异步行为一致。该上限也会被强制执行，包括全局模式下每个嵌套 schema 都带有自己的编译包装器时：当一个包装器回退时，它会标记 parse ctx，下游编译包装器会在本次解析的剩余过程中跳过自己的快速路径。
-- 成功路径的*值*一致性由编译器负责，并通过与 runtime 的差分测试验证（包括键顺序、值为 `undefined` 的键与缺失键、数组空洞、冻结状态，以及 NaN／-0 — 还包括每个 fixture 都会断言快速路径确实生成了该值，而不是静默回退）。这并非免费；必须针对每种 schema 类型和每项 check 分别实现并验证。
-- 任何快速路径无法精确建模的内容，都会在代码生成时抛出 `ZodCompileUnsupportedError` — 不存在静默失效、始终回退的快速路径，也不会出现普通的 `Error` 逸出；`new Function` 失败（代码生成错误、CSP 拒绝）也会转换为相同类型。容器会将不支持的子项隔离；联合不会这样做（错误拒绝某个分支会破坏匹配语义），`z.xor` 出于同样原因始终回退。自定义的 `when` 门控 check、NaN／Invalid-Date 比较边界，以及 `__proto__` shape／record 键也会强制回退。
-- 字符串格式通过一个**allowlist**分类，该 allowlist 中的格式其 `def.pattern` 是完整的 check，而不是根据是否存在 pattern 来分类。多个格式会声明一个仅用于 shape 的 pattern，并在其他地方单独验证 — `credit_card`（Luhn 数字）、`base64`、`base64url`、`jwt`、`ipv6`、`cidrv6`、`url` — 对这些格式会改为提升 runtime 验证器。自定义格式会编译 `def.fn`，也就是 runtime 本身调用的 predicate，而不是信任它构建所依据的 pattern。既不在任一列表中的格式会失去快速路径，而不会被编译成一个接受范围超过 runtime 的正则表达式。
+- 通过设计实现与未编译 Zod 100% 的错误一致性。快速路径永远不会生成错误；runtime 是 `ZodError` 的唯一来源。我们不维护第二套错误路径实现，这也是该设计优于 arktype 双重 `Allows` + `Apply` codegen 的主要原因。
+- 用户提供的 `.refine`／`.transform`／`.superRefine` 回调在无效输入上**最多执行两次**——一次在快速路径中，一次在运行时回退中。这与 Zod 现有的 Standard Schema 同步后异步行为一致。该上限会被强制执行，包括全局模式下每个嵌套 schema 都携带自身编译包装器的情况：当某个包装器回退时，它会标记 parse ctx，后续编译包装器会在本次解析的剩余过程中跳过快速路径。
+- 成功路径上的*值*一致性由编译器负责，并通过与 runtime 的差分测试进行验证（包括键顺序、值为 `undefined` 的键与缺失键、数组空洞、冻结状态，以及 NaN／-0——此外每个 fixture 还会断言快速路径确实生成了该值，而不是静默回退）。这并非免费；必须针对每种 schema 类型和每项检查逐一实现。
+- 任何快速路径无法精确建模的内容，都会在 codegen 时抛出 `ZodCompileUnsupportedError`。如果未设置 `strict`，`compile()` 会吸收该错误并返回未编译的 schema——不存在静默失效、始终回退的快速路径，也不会有普通 `Error` 逃逸；`new Function` 失败（代码生成错误、CSP 拒绝）也会被转换成同一种类型。容器会将不支持的子项隔离；联合不会这样做（错误拒绝的分支会破坏匹配语义），并且 `z.xor` 出于相同原因始终回退。自定义 `when` 门控检查、NaN／Invalid-Date 比较边界，以及 `__proto__` 形状／record 键也会强制回退。
+- 字符串格式通过一个**允许列表**进行分类，该列表包含其 `def.pattern` 即为完整检查的格式，而不是根据是否存在 pattern 来判断。有些格式只声明了形状模式，还会单独验证其余内容——`credit_card`（Luhn 数字）、`base64`、`base64url`、`jwt`、`ipv6`、`cidrv6`、`url`——这些格式会改为提升 runtime validator。自定义格式会编译 `def.fn`，也就是 runtime 自身调用的 predicate，而不是信任其生成所依据的 pattern。既不在任何一个列表中的格式会失去快速路径，而不会被编译成一个可能比 runtime 接受更多内容的正则表达式。
 
 ## Scope cuts
 
-- **仅支持正向方向。** Codec encode／`ctx.direction === "backward"` 路径会跳过快速路径，直接进入 runtime。包装器检查 `ctx.direction`，在 backward 时退出。以后如果基准测试显示有必要，再添加 backward codegen。
-- **不支持异步。** 如果在代码生成遍历期间遇到异步 refinement、transform 或 check，编译器会立即抛出异常。生成的代码中完全没有 promise 的处理能力。`safeParseAsync` 会跳过快速路径。
-- **jitless。** 全局模式遵循 `config().jitless`：shim 会恢复 runtime parser，而不是进行编译，因此在 CSP／no-eval 环境中，`import "zod/compile"` 不会产生作用。显式调用 `z.compile(schema)` 仍然是对 `new Function` 的显式选择；在 CSP 下，它会抛出 `ZodCompileUnsupportedError`，而不是原始的 `EvalError`。
-- **不支持递归 schema。** 子树中包含环的 schema 会抛出 `ZodCompileUnsupportedError`，并通过 runtime 解析。包含引用环的输入能够终止，是因为 memoizer 会在子项运行前注册每个进行中的输出，并以本次调用中所有 schema 共享的 parse context 为键；生成的快速路径接收输入并返回值，没有可用作键的 context，因此会沿着环继续运行直到栈耗尽。当编译节点接收到的值是 memoizer 的 back edge 时，它也会交还给 runtime，因此位于环上的 transform 仍然会从自身的 parse 中抛出 `$ZodCyclicError`。要正确支持这一点，就意味着要将 parse context 和 `memo.alloc` 传入生成的容器。
-
-## Benchmarks
-
-`pnpm dev packages/bench/compile-matrix.ts` 会遍历所有类别中的 55 个 schema，并打印 runtime、compiled 和 raw-fast-path 的吞吐量及加速比。阅读这些数字时，该方法有三点需要注意：
-
-- **共享进程的 schema 数量。** 这是对结果影响最大的单一因素，比编译器所做的任何事情都更重要。当有很多 schema 同时存在时，`safeParse` 调用点和 Zod 自己的内部 dispatch 点会变成 megamorphic，这对遍历节点树的解释器造成的负担，远大于对一个扁平的生成函数造成的负担。同样的 55 个 schema，在一起测量时报告的中位数为 **2.4x**，每个进程单独测量时为 **1.6x**。默认采用一起测量，因为应用会同时持有许多 schema，而这正是其用户看到的数字；`--isolate` 提供单 schema 数值，这是用于调优的参考。
-- **输入通过数组加载到达。** 如果作为常量传入，整个调用会循环不变，V8 会将其移出计时循环 — 相比不透明的 `new Function` 闭包，V8 更容易提升普通解释器代码，这会让 runtime 的表现最高被夸大 1.9x。值不需要不同；一次数组读取就足够。
-- **结果必须逃逸。** 被丢弃的结果会让 V8 直接删除整个解析（`z.string()` 测得 625M ops/sec，约 1.6ns）；未逃逸的结果会被分配在栈上。这两种情况都会在计时前排除。
-- **交错执行，取 15 轮中的最佳结果。** 笔记本上的绝对 ops/sec 在不同运行之间会漂移几十个百分点，因此每个加速比都是相隔微秒测得的两次结果之比。
-- **正确性优先。** 在计时之前，会先将编译后的输出与 runtime 进行比较；每一行还会报告 schema 是成功编译、回退，还是直接通过 — 一个数字不可能来自一个静默未运行的快速路径。
-
-55 个 schema 中有 53 个成功编译。中位数为 **2.4x**，范围为 0.66x–13.9x。
-
-| | |
-| --- | --- |
-| 最大收益 | `z.array(z.string())` x100 **13.9x**、`z.array(z.object())` x50 **9.3x**、20 键对象 **8.9x**、对象联合 **8.4x**、`.pipe()` **7.7x**、`z.number().int().min().max()` **5.8x** |
-| 典型情况 | 嵌套对象 4.5x、tuple 4.8x、交集 4.3x、discriminated union 4.3x、`.refine()` 4.6x、带 check 的字符串 2.8x、strict object 3.0x、扁平 5 键对象 2.5x |
-| 边际收益 | 字符串格式 1.4–2.4x、`z.record` 动态键 1.3–1.7x、大多数裸 primitive 1.2–1.7x、`.catch()` 1.2x |
-| 编译后更慢 | 裸 `z.string()` **0.70x** — 这里唯一稳定为负的情况 |
-| 强制回退 | recursive schema 1.00x、`z.xor` 0.94x — 包装器的绕过检查没有可测量的成本 |
-
-收益取决于 schema 每次解析执行多少工作，因为编译移除的是每节点 dispatch 和 payload 分配，而不是 check 本身。20 键对象或对象数组可以将这些成本分摊到大量工作中；裸 primitive 没有可供分摊的内容。
-
-这有多重要，很大程度上取决于测试环境。每个进程只测量一个 schema 时，有七个 schema 编译后更慢 — 所有裸 primitive 加上对缺失输入使用 `.default()` 的情况，结果为 0.63–0.91x — 因为对于单个 `typeof`，解释器路径足够小，V8 可以将其扁平内联，而生成代码位于 `new Function` 闭包中，V8 不会将其内联到调用方，因此调用本身就超过了 check 的成本。在同时存在许多 schema 时，这种内联优势基本消失，只有裸 `z.string()` 仍然为负。因此，根据这些数字，没有必要对编译叶子节点进行特殊处理：在微基准测试之外，损失仅限于一种 schema 形状，而容器内部的叶子节点会被内联到父级生成函数中，完全不会承担调用成本。
-
-最后一行是设计时需要考虑的重点。**裸 primitive 编译后更慢**，原因并不是 `safeParse`：不分配结果对象的 `.parse()` 反而更差（`z.string()` 为 0.42x，`z.literal()` 为 0.45x），而两个 API 在复合结构上的结果一致（5 键对象为 1.73x 对 1.72x，嵌套对象为 3.59x 对 3.76x）。真正产生成本的是调用本身。生成代码位于 V8 不会内联到调用方的 `new Function` 闭包中，因此每次解析都会产生一次真实调用；当实际工作量低于约十纳秒时，该调用就超过了它所替代的 `typeof`。只需一个 check 就足以扭转结果 — `z.string().min(1)` 为 2.8–3.2x。
-
-有两个后果。全局模式会让简单的叶子 schema 可测量地变慢，同时让由这些叶子 schema 组成的一切都变快，因此它并不是无条件的收益，值得针对真实 schema 集合进行测量。并且表中的 primitive 具体数值最不可靠：在约 8ns/op 时，结果会根据测试工具细节从 0.6x 到 1.0x 之间变化，因此应将其理解为“这里没有收益”，而不是精确比例。所有达到 2x 或更高的结果，在尝试过的每种测量环境中都能复现。
-
-### Against arktype
-
-采用相同方法，使用 arktype 2.1.19，所有案例共享一个进程。Arktype 的契约可配置，因此比较完全取决于选择哪一种：
-
-| case | ark，返回输入 | ark，拒绝未知项 | ark，分配 | `z.object()` | `z.strictObject()` |
-| --- | --- | --- | --- | --- | --- |
-| 简单 2 键对象 | 130.0M | 13.0M | 1.2M | **64.3M** | **44.6M** |
-| 嵌套对象（moltar） | 19.9M | 6.0M | 174k | **30.5M** | **17.6M** |
-| `z.array(z.object())` x50 | 3.9M | — | 14k | 3.5M | — |
-
-匹配契约后，compiled zod 除了一个案例外在所有地方都领先：
-
-- **两者都拒绝未声明的键**（`z.strictObject()` 对 `.onUndeclaredKey("reject")`）：在 moltar 上 zod 快 **2.9x**，在简单对象上快 **3.4x**。
-- **两者都构建新输出**（`z.object()` 对 `.onDeepUndeclaredKey("delete")`）：zod 快了两个数量级。Arktype 可以生成一个新对象，但该路径的成本约为其自身快速路径的 20 倍 — 这是每次调用都稳定存在的成本，而非预热成本 — 因此这说明 arktype 的 stripping 模式未优化，而不是 zod 在验证方面快了 175 倍。
-- **Arktype 原地验证** — 这是它的快速路径，也比 Zod 提供的任何契约都弱，因为它既不分配也不剔除。即便如此，`z.object()` 在 moltar 上仍然胜过它（30.5M 对 19.9M）。它只在扁平的双键对象上获胜，因为那里几乎没有可供分摊的成本。
-
-本 wiki 中较早的数字比较的是会承担未声明键扫描的 `z.strictObject()`，与 arktype 的*默认模式*；后者不会进行这种扫描，并且会返回其输入。这同时施加了两项不利条件，也是 compiled zod 看起来只是与 arktype 持平、而非领先的原因。优先参考上面契约匹配的行。
+- **仅支持正向方向。** Codec encode／`ctx.direction === "backward"` 路径会跳过快速路径，直接进入 runtime。包装器会检查 `ctx.direction`，并在 backward 时退出。之后如果 bench 结果有需要，再添加 backward codegen。
+- **不支持 async。** 如果在 codegen 遍历期间遇到 async refinement、transform 或 check，编译器会立即抛出异常。生成代码中完全没有处理 promise 的机制。`safeParseAsync` 会跳过快速路径。
+- **jitless。** 全局模式遵守 `config().jitless`：shim 会恢复 runtime parser，而不是进行编译，因此在 CSP／no-eval 环境中，`import "zod/compile"` 不会产生作用。显式调用 `z.compile(schema)` 仍然表示显式选择使用 `new Function`；在 CSP 下，原始的 `EvalError` 会被转换为 `ZodCompileUnsupportedError`，默认入口会像处理其他拒绝一样吸收它。
+- **不支持递归 schema。** 子树包含循环的 schema 会在 codegen 时被拒绝，并通过 runtime 进行解析。由于 memoizer 会在子节点运行前注册每个进行中的输出，并以本次调用中所有 schema 共享的 parse context 为键，因此包含引用循环的输入仍然会终止；而生成的快速路径接收输入并返回值，没有可用于建立键的 context，因此会沿着循环继续执行直到栈耗尽。当编译节点接收到的值是 memoizer back edge 时，它也会交回 runtime，因此位于循环上的 transform 仍会从其自身的 parse 中抛出 `$ZodCyclicError`。正确支持这一点意味着要将 parse context 和 `memo.alloc` 传入生成的容器。
 
 ## Output construction
 
@@ -112,16 +70,27 @@ v4 schemas 的 AOT 编译器。位于 `z.compile` 分支。
 
 ## Non-goals
 
-- **每个节点使用两套 compiled codegen（arktype 风格的 `Allows` + `Apply`）。** 曾对此进行过考虑。runtime-fallback 模型无需承担并行错误路径 codegen 的维护成本，就能实现错误一致性。只有当基准测试显示回退路径成本对真实工作负载很重要时，才重新考虑。
-- **返回函数而不是 schema。** 曾对此进行过考虑。返回 schema 可以保留链式调用和组合能力，通过现有的 `safeParse → _zod.run` 路径与 Standard Schema 集成，并且可以透明地暴露快速路径，无需并行的 API surface。
-- **原地修改输入 schema。** 曾对此进行过考虑。克隆可以避免库代码接收用户 schema 作为输入时产生意外修改的问题。
-- **公开 `globalConfig.postProcessor`。** 这是内部实现细节，不属于公开 config surface 的文档范围。如果未来有多个消费者需要注册 hook，这里应改为 registry，而不是单一 slot。
+- **每个节点使用两套编译 codegen（arktype 风格的 `Allows` + `Apply`）。** 不采用；参见 [为什么不值得编译失败路径](#why-the-failure-path-is-not-worth-compiling)。runtime-fallback 模型无需承担并行错误路径 codegen 的维护成本，就能实现错误一致性。
+- **返回函数而不是 schema。** 曾考虑过。返回 schema 可以保留链式调用和组合能力，通过现有的 `safeParse → _zod.run` 路径与 Standard Schema 集成，并且能够透明地暴露快速路径，而无需并行的 API surface。
+- **原地修改输入 schema。** 曾考虑过。克隆可以避免库代码接收用户 schema 作为输入时产生令人意外的修改风险。
+- **公开 `globalConfig.postProcessor`。** 这是内部实现细节。不将其作为公共 config surface 的一部分进行记录。如果将来有多个消费者需要注册钩子，这里应变成 registry，而不是单个 slot。
+
+## Why the failure path is not worth compiling
+
+Apply-mode codegen 会替代失败解析回退到的 runtime 遍历。该遍历只占失败 `safeParse` 的 1.4–9.5%；另外 90–99% 的时间用于生成错误。
+
+| case | walk | `finalizeIssue` | `new ZodError` | total | walk share |
+| --- | --- | --- | --- | --- | --- |
+| `z.string()` invalid | 13ns | 136ns | 777ns | 926ns | 1.4% |
+| 5-key object, one bad key | 69ns | 198ns | 680ns | 947ns | 7.3% |
+| nested 3-deep | 75ns | 212ns | 2181ns | 2468ns | 3.0% |
+| array of 20, one bad element | 71ns | 174ns | 2242ns | 2487ns | 2.9% |
+| 243-leaf object | 2434ns | 12043ns | 11233ns | 25709ns | 9.5% |
+
+低于 10%，却要为每个 generator 增加第二种生成模式，并使每个 schema 的生成代码增加一倍。失败路径性能的关键在于错误构造，而不是编译器——而且当 issue 数量超过几个后，解析其消息的成本会超过构造错误本身。
+
+唯一的例外是自身就很昂贵的提升 validator：`z.url()` 会在快速路径中运行 `new URL()`，并在回退时再次运行；对于无效输入来说，第二次运行是可见的——一次性测量中相对于 runtime 为 0.57x，这是 run-twice 上限产生代价的唯一场景。代价来自 validator 本身，而不是遍历，因此不会改变上述结论；它说明应该缓存快速路径对某个输入的判断结果，而不是编译失败路径。
 
 ## Runtime islands
 
-对象、tuple、数组、record（value 侧）、交集和 catch 的 codegen 会通过 `compileChild` 路由子项。若某个子项抛出 `ZodCompileUnsupportedError`，就会回滚并替换为提升的 runtime 调用（`runtimeRun(schema, value)`），因此一个不支持的叶子节点不会中止周围结构的编译。联合和 discriminated union 则有意不进行隔离：first-match／exactly-one 语义要求每个分支的失败都表示“runtime 会拒绝”，而不是“无法编译”。
-
-## Open
-
-- **数组输出策略。** Arktype 经常在数组基准测试中获胜，因为它可以为仅验证的数组返回输入。Zod 语义会返回解析后的输出（新的数组／对象）。任何朝向复用输入的变化都应是有意的语义／性能取舍，而不是偶然的优化。
-- **Registry identity。** 编译后的克隆会像任何派生 schema 一样，通过 `_zod.parent` 继承 registry 元数据；根据 registry 的设计，这不包括 `id`。因此，`z.toJSONSchema(z.compile(s))` 会丢失已注册的 `id`；如果 `$defs` identity 很重要，应将原始对象传给 `toJSONSchema`。
+Object、tuple、array、record（value side）、intersection 和 catch codegen 会通过 `compileChild` 路由子项。抛出 `ZodCompileUnsupportedError` 的子项会被回滚，并替换为提升的 runtime 调用（`runtimeRun(schema, value)`），因此单个不支持的叶节点不会中止周围结构的编译。Union 和 discriminated union 则有意**不进行隔离**：first-match／exactly-one 语义要求每个分支的失败都表示“runtime 会拒绝”，而不是“无法编译”。
