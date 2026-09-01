@@ -1,5 +1,5 @@
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const API_URL = "https://api.github.com/graphql";
+// const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
+const API_URL = "https://anymeta.ikxin.com/github/graphql";
 const ATTEMPTS = 3;
 
 // retries transient github failures (5xx, secondary rate limits) so one bad response doesn't fail the whole build
@@ -10,7 +10,7 @@ async function query(body: string): Promise<any> {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          // Authorization: `Bearer ${GITHUB_TOKEN}`,
           "Content-Type": "application/json",
         },
         body,
