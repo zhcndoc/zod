@@ -1,3 +1,6 @@
 {
-    "app_dir": "packages/docs"
+  "app_dir": "/",
+  "build_command": "nub run -r --filter @zod/docs build",
+  "install_command": "npm install -g @nubjs/nub && nub install --frozen-lockfile",
+  "start_command": "nub run -r --filter @zod/docs start"
 }
