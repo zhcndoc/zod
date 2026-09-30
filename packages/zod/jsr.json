@@ -1,6 +1,6 @@
 {
   "name": "@zod/zod",
-  "version": "4.5.4",
+  "version": "4.6.5",
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts",
@@ -65,6 +65,7 @@
     "./v4/locales/sl": "./src/v4/locales/sl.ts",
     "./v4/locales/sv": "./src/v4/locales/sv.ts",
     "./v4/locales/ta": "./src/v4/locales/ta.ts",
+    "./v4/locales/tg": "./src/v4/locales/tg.ts",
     "./v4/locales/th": "./src/v4/locales/th.ts",
     "./v4/locales/tk": "./src/v4/locales/tk.ts",
     "./v4/locales/tr": "./src/v4/locales/tr.ts",

@@ -58,16 +58,20 @@ export type CheckTypeParams<
 > = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // String
-export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce">;
+export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce"> & {
+  checks?: readonly checks.$ZodCheck<string>[];
+};
+
+function snapshotChecks<T extends { checks?: readonly checks.$ZodCheck<never>[] }>(def: T) {
+  if (def.checks) def.checks = [...def.checks];
+  return def as T & { checks?: NonNullable<T["checks"]>[number][] };
+}
 // @__NO_SIDE_EFFECTS__
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -75,11 +79,7 @@ export function _coercedString<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    coerce: true,
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "string" as const, coerce: true, ...util.normalizeParams(params) }));
 }
 
 export type $ZodStringFormatParams = CheckTypeParams<
@@ -498,6 +498,23 @@ export function _creditCard<T extends schemas.$ZodCreditCard>(
   });
 }
 
+// IBAN
+export type $ZodIBANParams = StringFormatParams<schemas.$ZodIBAN, "pattern" | "when">;
+export type $ZodCheckIBANParams = CheckStringFormatParams<schemas.$ZodIBAN, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _iban<T extends schemas.$ZodIBAN>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodIBANParams | $ZodCheckIBANParams
+): T {
+  return new Class({
+    type: "string",
+    format: "iban",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // JWT
 export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
 export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
@@ -591,7 +608,9 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 }
 
 // Number
-export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce">;
+export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce"> & {
+  checks?: readonly checks.$ZodCheck<number>[];
+};
 export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
 export type $ZodCheckNumberFormatParams = CheckParams<checks.$ZodCheckNumberFormat, "format" | "when">;
 // @__NO_SIDE_EFFECTS__
@@ -599,11 +618,7 @@ export function _number<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    checks: [],
-    ...util.normalizeParams(params),
-  });
+  return new Class(snapshotChecks({ type: "number" as const, checks: [], ...util.normalizeParams(params) }));
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -611,12 +626,9 @@ export function _coercedNumber<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
 ): T {
-  return new Class({
-    type: "number",
-    coerce: true,
-    checks: [],
-    ...util.normalizeParams(params),
-  });
+  return new Class(
+    snapshotChecks({ type: "number" as const, coerce: true, checks: [], ...util.normalizeParams(params) })
+  );
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -1127,16 +1139,13 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
-// `when` is omitted: it gates a check inside the run loop, so it means nothing when this is parsed as a schema, and honoring it in one role only would diverge silently
-export type $ZodPropertiesParams = CheckTypeParams<schemas.$ZodProperties, "shape" | "when">;
+export type $ZodCheckPropertiesParams = CheckParams<checks.$ZodCheckProperties, "shape" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _properties<Shape extends schemas.$ZodShape>(
-  Class: util.SchemaClass<schemas.$ZodProperties>,
   shape: Shape,
-  params?: string | $ZodPropertiesParams
-): schemas.$ZodProperties<Shape> {
-  return new Class({
-    type: "properties",
+  params?: string | $ZodCheckPropertiesParams
+): checks.$ZodCheckProperties<Shape> {
+  return new checks.$ZodCheckProperties({
     check: "properties",
     shape,
     ...util.normalizeParams(params),

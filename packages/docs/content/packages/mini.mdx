@@ -244,8 +244,9 @@ mySchema.clone(mySchema._zod.def);
 
 ```ts
 import * as z from "zod/mini"
+import { en } from "zod/locales";
 
-z.config(z.locales.en());
+z.config(en());
 ```
 
 有关本地化的更多信息，请参考 [语言环境](/error-customization#internationalization) 文档。

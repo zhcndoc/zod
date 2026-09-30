@@ -19,7 +19,7 @@ v4 schemas 的 AOT 编译器。
 
 编译后的快速路径是一个 happy-path 验证器。它返回解析／转换后的输出，或一个 `INVALID` sentinel。在 `INVALID` 的情况下，包装器调用原始的 `_zod.run` 以生成规范的 `ZodError`。
 
-`INVALID` 并不总是表示拒绝，因此 codegen 会跟踪一个 `definite` 标志，并且 `z.validate` 只会在该标志仍然有效时跳过解释器回退。有两种情况会清除它。任何提升的**用户回调**——refine、transform、自定义 predicate、catch value 或 lazy getter——都会通过 `addUserConstant` 清除该标志，因为该回调可能抛出异常，并且生成的代码可能在到达它之前就拒绝了更早的兄弟节点，因此该拒绝不再能证明解释器会拒绝而不是抛出异常。**runtime island**、**intersection**，以及其自身编译结果不确定的**record key**，也会直接清除该标志，理由相同，只是应用对象从回调变成了构造。能够保留下来的是不含回调的子集——类型、范围和格式检查、枚举、字面量、联合，以及对象、数组和元组成员——这正是类型守卫通常需要判断的形状。
+`INVALID` 并非总是表示拒绝，因此 codegen 会跟踪 `definite` 标志；只有该标志仍有效时，`z.validate` 才会跳过解释器回退。有两类情况会清除此标志。任何提升的**用户回调**（refine、transform、自定义 predicate、catch value 或 lazy getter）都会通过 `addUserConstant` 清除该标志，因为回调可能抛出异常，而生成代码可能在执行回调之前就返回 `INVALID`；此时该拒绝不能证明解释器会拒绝输入，而不是抛出异常。之所以仍需保留该逻辑，是由于**检查链**：例如 `.min()` 产生的可继续 issue 不会结束解释器遍历，因此 `z.string().min(5).refine(boom)` 对 `"ab"` 会继续执行 refine 并抛出异常，而生成代码会在 `.min()` 失败时返回 `INVALID`。在不同子项之间，两边现在行为一致：#6544 让解释器也在首个失败处退出，因此仅靠兄弟项情况已不足以证明该标志必要。**runtime island**、**intersection**，以及自身编译不确定的**record key**也会直接清除此标志，原因相同，只是对象从回调变成了构造。最终保留下来的是不含回调的子集：类型、范围和格式检查、枚举、字面量、联合，以及对象、数组和元组成员；这正是类型守卫通常需要判断的结构。
 
 transform 情况正是该标志存在的原因，而不是在生成代码中抛出异常：当 transform 返回一个 thenable 时，必须继续返回 `INVALID`，因为解释器自身的 union 会在那里继续尝试下一个分支，而不是向上传播该 thenable。`compile-differential` 对此进行了固定测试。
 
@@ -29,7 +29,7 @@ transform 情况正是该标志存在的原因，而不是在生成代码中抛�
 - 用户提供的 `.refine`／`.transform`／`.superRefine` 回调在无效输入上**最多执行两次**——一次在快速路径中，一次在运行时回退中。这与 Zod 现有的 Standard Schema 同步后异步行为一致。该上限会被强制执行，包括全局模式下每个嵌套 schema 都携带自身编译包装器的情况：当某个包装器回退时，它会标记 parse ctx，后续编译包装器会在本次解析的剩余过程中跳过快速路径。
 - 成功路径上的*值*一致性由编译器负责，并通过与 runtime 的差分测试进行验证（包括键顺序、值为 `undefined` 的键与缺失键、数组空洞、冻结状态，以及 NaN／-0——此外每个 fixture 还会断言快速路径确实生成了该值，而不是静默回退）。这并非免费；必须针对每种 schema 类型和每项检查逐一实现。
 - 任何快速路径无法精确建模的内容，都会在 codegen 时抛出 `ZodCompileUnsupportedError`。如果未设置 `strict`，`compile()` 会吸收该错误并返回未编译的 schema——不存在静默失效、始终回退的快速路径，也不会有普通 `Error` 逃逸；`new Function` 失败（代码生成错误、CSP 拒绝）也会被转换成同一种类型。容器会将不支持的子项隔离；联合不会这样做（错误拒绝的分支会破坏匹配语义），并且 `z.xor` 出于相同原因始终回退。自定义 `when` 门控检查、NaN／Invalid-Date 比较边界，以及 `__proto__` 形状／record 键也会强制回退。
-- 字符串格式通过一个**允许列表**进行分类，该列表包含其 `def.pattern` 即为完整检查的格式，而不是根据是否存在 pattern 来判断。有些格式只声明了形状模式，还会单独验证其余内容——`credit_card`（Luhn 数字）、`base64`、`base64url`、`jwt`、`ipv6`、`cidrv6`、`url`——这些格式会改为提升 runtime validator。自定义格式会编译 `def.fn`，也就是 runtime 自身调用的 predicate，而不是信任其生成所依据的 pattern。既不在任何一个列表中的格式会失去快速路径，而不会被编译成一个可能比 runtime 接受更多内容的正则表达式。
+- 字符串格式通过一个**允许列表**进行分类，该列表包含其 `def.pattern` 即为完整检查的格式，而不是根据是否存在 pattern 来判断。有些格式只声明了形状模式，还会单独验证其余内容——`credit_card`（Luhn 校验）、`iban`（mod-97 校验和）、`base64`、`base64url`、`jwt`、`ipv6`、`cidrv6`、`url`——这些格式会改为提升 runtime validator。自定义格式会编译 `def.fn`，也就是 runtime 自身调用的 predicate，而不是信任其生成所依据的 pattern。既不在任何一个列表中的格式会失去快速路径，而不会被编译成一个可能比 runtime 接受更多内容的正则表达式。
 
 ## Scope cuts
 

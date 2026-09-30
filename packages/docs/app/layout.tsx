@@ -75,13 +75,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       </head>
 
       <body className="flex flex-col min-h-screen">
-        <Banner id="rainyun">
-          <a
-            className="no-underline"
-            href="https://www.rainyun.com/mm_?s=zhcndoc"
-            target="_blank"
-          >
-            💎 雨云 RainYun - 企业级云计算服务提供商
+        <Banner id="zod46">
+          💎 Zod 4.6 已发布！<span>&nbsp;</span>
+          <a className="underline" href="/blog/zod-4-6">
+            查看发布说明。
           </a>
         </Banner>
         {/* <InkeepBubble /> */}

@@ -43,6 +43,7 @@ add("string", "url", z.url(), "https://example.com/a/b?c=1");
 add("string", "iso.datetime", z.iso.datetime(), "2026-08-16T12:00:00Z");
 add("string", "base64", z.base64(), "aGVsbG8gd29ybGQ=");
 add("string", "creditCard", z.creditCard(), "4111111111111111");
+add("string", "iban", z.iban(), "DE89370400440532013000");
 add("string", "trim + toLowerCase", z.string().trim().toLowerCase(), "  MiXeD Case  ");
 
 // --- numbers ---
@@ -329,7 +330,7 @@ const selected = filter ? cases.filter(match) : cases;
 const rows: Row[] = [];
 const problems: string[] = [];
 
-// Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the tsx loader and `--conditions`, so the child resolves zod the same way.
+// Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the runtime flags and `--conditions`, so the child resolves zod the same way.
 if (!filter && isolate) {
   for (const c of cases) {
     const id = `${c.group}/${c.name}`;

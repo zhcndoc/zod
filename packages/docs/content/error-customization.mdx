@@ -338,24 +338,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-为方便使用，所有语言包都以 `z.locales` 的形式从 `"zod"` 导出。Rollup 和 Webpack 会将其 tree-shake 为你实际使用的语言包。esbuild 无法做到这一点（[evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)）——使用 `import { z } from "zod"` 或 `import z from "zod"` 时，它会捆绑所有语言包，因此在此处更推荐使用 `import * as z from "zod"`。
-
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-import * as z from "zod";
-
-z.config(z.locales.en());
-```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-import * as z from "zod/mini"
-
-z.config(z.locales.en());
-```
-</Tab>
-</Tabs>
+所有语言包也通过 `z.locales` 导出。Rollup 和 Webpack 会将其 tree-shake 到实际使用的语言包；esbuild（[evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)）和 Turbopack 则不会。
 
 使用你自己的翻译函数时，`error` 参数会在 `.parse()` 期间调用，而不是在构造模式时调用——只定义一次的模式会在每次解析时获取当前语言。要在渲染时进行翻译，请直接翻译 issue：`code` 是键，而 issue 的其他属性是插值值。
 
@@ -418,6 +401,7 @@ result.error?.issues.map((iss) => t(iss.code, iss)); // at render time
 - `sl` — 斯洛文尼亚语
 - `sv` — 瑞典语
 - `ta` — 泰米尔语
+- `tg` — 塔吉克语
 - `th` — 泰语
 - `tk` — 土库曼语
 - `tr` — 土耳其语
@@ -466,5 +450,7 @@ result.error?.issues.map((iss) => t(iss.code, iss)); // at render time
 5. **语言包错误映射** — 传入 `z.config()` 的自定义错误映射。
 
   ```ts
-  z.config(z.locales.en());
-```
+  import { en } from "zod/locales";
+
+  z.config(en());
+  ```

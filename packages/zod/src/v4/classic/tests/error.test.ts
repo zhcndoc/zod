@@ -1048,4 +1048,61 @@ describe("safeParse builds the error on first read", () => {
     expect(live()).toBeLessThanOrEqual(1);
     expect(results).toHaveLength(50);
   });
+
+  test("no reader frames leak into the error, however late it is read", async () => {
+    const result = z.string().safeParse(12) as { error: z.core.$ZodError };
+
+    // the constructor runs at THIS read: a macrotask later and twenty frames deeper than the parse
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const readDeep = <T>(n: number, make: () => T): T => (n ? readDeep(n - 1, make) : make());
+    const error = readDeep(20, () => result.error) as unknown as Error;
+
+    // control: a plain Error at that same depth does carry the frames, so the assertions below discriminate rather than pass vacuously
+    const control = readDeep(20, () => new Error("control"));
+    expect(control.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(true);
+    expect(control.stack!).toContain("readDeep");
+
+    expect(error.stack!.startsWith("ZodError: [")).toBe(true);
+    expect(error.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(false);
+    expect(error.stack!).not.toContain("readDeep");
+  });
+
+  test("a lazy build gives back the caller's stackTraceLimit, not the parse-time one", () => {
+    const result = z.string().safeParse(12) as { error: z.core.$ZodError };
+    const ambient = Error.stackTraceLimit;
+    // changed between the parse and the read, so restoring a value captured at parse time would clobber it
+    Error.stackTraceLimit = ambient + 7;
+    try {
+      void result.error;
+      expect(Error.stackTraceLimit).toBe(ambient + 7);
+    } finally {
+      Error.stackTraceLimit = ambient;
+    }
+  });
+});
+
+test("a finalized issue copies the raw issue's own keys only", () => {
+  const proto = { inherited: true };
+  const schema = z.string().check((ctx) => {
+    const raw = Object.create(proto);
+    Object.assign(raw, { code: "custom", message: "own", input: ctx.value, extra: 1 });
+    ctx.issues.push(raw);
+  });
+  const issue = schema.safeParse("x").error!.issues[0];
+  expect(issue).toStrictEqual({ code: "custom", message: "own", path: [], extra: 1 });
+  expect("inherited" in issue).toBe(false);
+  // own symbol-keyed fields are not copied either; nothing in zod produces one and the walk stays a string-key walk
+  const sym = Symbol("meta");
+  const symbolic = z.string().check((ctx) => {
+    ctx.issues.push({ code: "custom", message: "sym", input: ctx.value, [sym]: 1 } as never);
+  });
+  expect(Object.getOwnPropertySymbols(symbolic.safeParse("x").error!.issues[0])).toEqual([]);
+  // an own __proto__ key, as JSON.parse produces, neither swaps the prototype nor survives
+  const parsed = z.string().check((ctx) => {
+    ctx.issues.push(JSON.parse('{"code":"custom","message":"json","__proto__":{"polluted":true}}'));
+  });
+  const fromJson = parsed.safeParse("x").error!.issues[0];
+  expect(Object.getPrototypeOf(fromJson)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(fromJson, "__proto__")).toBe(false);
+  expect("polluted" in fromJson).toBe(false);
 });

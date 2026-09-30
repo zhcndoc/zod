@@ -241,6 +241,12 @@ const xToZodConverters: ZodResource[] = [
     description:
       "tauri-typegen allows you to generate Zod schemas and validation hooks for the Rust @tauri-apps/tauri cross-platform application framework.",
     slug: "thwbh/tauri-typegen",
+  },
+  {
+    name: "@apical-ts/craft",
+    url: "https://gunzip.github.io/apical-ts/",
+    description: "OpenAPI 到 TypeScript 的生成器，可借助 Zod 构建类型安全的客户端和服务端。",
+    slug: "gunzip/apical-ts",
   }
 ];
 

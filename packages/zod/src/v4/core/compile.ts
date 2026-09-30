@@ -9,15 +9,16 @@ import {
   isValidBase64URL,
   isValidCIDRv6,
   isValidCreditCard,
+  isValidIBAN,
   isValidIPv6,
   isValidJWT,
   mergeValues,
-  parseURLObject,
   stripTabAndNewline,
   urlHostnameOk,
   urlProtocolOk,
+  validateURL,
 } from "./schemas.js";
-import type { $ZodProperties, $ZodPropertiesDef, ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
+import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
 /** @internal Sentinel the compiled fast path returns when validation fails. */
@@ -88,7 +89,7 @@ type SupportedCheck =
   | checks.$ZodCheckLengthEquals
   | checks.$ZodCheckStringFormat
   | checks.$ZodCheckProperty
-  | $ZodProperties
+  | checks.$ZodCheckProperties
   | checks.$ZodCheckMimeType
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
@@ -125,59 +126,77 @@ export interface CompileOptions {
 export function compile<T extends SomeType>(schema: T, options?: CompileOptions): T {
   try {
     const parser = compileFn(schema);
-    const clone = util.clone(schema as any) as T;
-
-    // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
-    const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
-      __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
-    };
-    const originalRun = liveRun.__originalRun ?? liveRun;
-
-    // Delegate to the *original* schema's run on bypass/fallback (not the
-    // clone's). The original closed over its own `inst` at construction time;
-    // issue payloads use that reference to derive things like the class name
-    // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
-    // would push issues with `inst === clone`, producing diverging error
-    // messages from the original schema.
-    const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-      if (
-        ctx?.async ||
-        ctx?.direction === "backward" ||
-        ctx?.skipChecks ||
-        (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
-      ) {
-        return originalRun(payload, ctx);
-      }
-
-      // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
-      if (ctx && isBackEdge(ctx, payload.value)) {
-        return originalRun(payload, ctx);
-      }
-
-      const out = parser(payload.value);
-      if (out !== INVALID) {
-        payload.value = out;
-        return payload;
-      }
-      // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
-      if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
-      return originalRun(payload, ctx);
-    };
-    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
-    (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
-    clone._zod.bag.fallbackRun = originalRun;
+    const clone = withParser(schema, parser);
+    // withParser leaves the parser as its own validator; the generated assert-only variant is better when we have one
     clone._zod.bag.validator = compileValidator(schema, parser as CompiledFn<unknown>);
-    clone._zod.run = wrapped;
-
-    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
-    if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser);
-
     return clone;
   } catch (err) {
     if (options?.strict) throw err;
     // a schema we can't compile still has to work, so hand it back untouched on the runtime parser — the same silent fallback global mode already does
     return schema;
   }
+}
+
+/**
+ * Install an already-generated parser as a schema's fast path. Returns a clone; the original is
+ * unchanged.
+ *
+ * The parser takes the input and returns the parsed value, or `INVALID` to hand the parse to the
+ * runtime. It must be synchronous and forward-direction, and it must build fresh output rather than
+ * return its input — Zod cannot check either, and a wrong *success* is returned to the caller as-is.
+ *
+ * `compile()` is the ordinary entry point. This is for a build-time or native compiler that produces
+ * a parser where `new Function` is unavailable.
+ */
+export function withParser<T extends SomeType>(schema: T, parser: (input: unknown) => core.output<T> | INVALID): T {
+  // generated code never receives the parse context, so only the runtime can close a reference cycle; compileFn refuses these too
+  if (isRecursiveSchema(schema as any)) {
+    throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
+  }
+  const clone = util.clone(schema as any) as T;
+
+  // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
+  const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const originalRun = liveRun.__originalRun ?? liveRun;
+
+  // Delegate to the *original* schema's run on bypass/fallback, not the clone's. The original closed over its own `inst` at construction time, and issue payloads use that reference to derive things like the class name for `z.instanceof(Test)`; calling the clone's freshly-initialized run would push issues with `inst === clone` and diverge from the original schema's error messages.
+  const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
+    if (
+      ctx?.async ||
+      ctx?.direction === "backward" ||
+      ctx?.skipChecks ||
+      (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+    ) {
+      return originalRun(payload, ctx);
+    }
+
+    // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
+    if (ctx && isBackEdge(ctx, payload.value)) {
+      return originalRun(payload, ctx);
+    }
+
+    const out = parser(payload.value);
+    if (out !== INVALID) {
+      payload.value = out;
+      return payload;
+    }
+    // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
+    if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
+    return originalRun(payload, ctx);
+  };
+  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
+  (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
+  clone._zod.bag.fallbackRun = originalRun;
+  // a supplied parser answers `validate` too: one implementation means parse and validate cannot disagree, and its undefined `definite` keeps the runtime re-parse on every rejection
+  clone._zod.bag.validator = parser as CompiledFn<unknown>;
+  clone._zod.run = wrapped;
+
+  // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
+  if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, parser as CompiledFn<core.output<T>>);
+
+  return clone;
 }
 
 function installCompiledUserMethods<T extends SomeType>(
@@ -436,7 +455,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generatePropertyCheck(doc, ctx, def, currentAccessor);
         break;
       case "properties":
-        generatePropertiesChecks(doc, ctx, def, currentAccessor, false);
+        generatePropertiesChecks(doc, ctx, def, currentAccessor);
         break;
       case "overwrite": {
         // Overwrite transforms the value - create new variable for transformed result
@@ -597,20 +616,15 @@ function generateMimeTypeCheck(
 function generatePropertiesChecks(
   doc: Doc,
   ctx: CompileContext,
-  def: $ZodPropertiesDef,
-  accessor: string,
-  schemaRole: boolean
+  def: checks.$ZodCheckPropertiesDef,
+  accessor: string
 ): void {
-  // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen the way the check role does
+  // a custom `when` gates the assertion at runtime; inside a union a wrongly-run branch is absorbed as a branch failure rather than falling back, so refuse at codegen
   if (def.when) {
     throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
   }
-  // matches the runtime gate for whichever role this is: a schema rejects a primitive outright, a check only a nullish value
-  doc.write(
-    schemaRole
-      ? `if (${accessor} === null || (typeof ${accessor} !== "object" && typeof ${accessor} !== "function")) return INVALID;`
-      : `if (${accessor} == null) return INVALID;`
-  );
+  // matches the runtime gate: the base schema already typed the value, so only a nullish one is rejected
+  doc.write(`if (${accessor} == null) return INVALID;`);
   const shape = def.shape as Record<string | symbol, SomeType>;
   for (const key of Reflect.ownKeys(shape)) {
     // a symbol has no source literal, so it is hoisted as a constant
@@ -758,7 +772,21 @@ const PATTERN_IS_COMPLETE: Set<string> = new Set([
 ]);
 
 // Returns the accessor holding the (possibly normalized) value after the check — url/normalize formats produce a new value like overwrite does. Never assigns to the incoming accessor: it may be a `const` or a property expression on user input.
-function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string {
+function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string;
+function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  needsValue: boolean
+): string | null;
+function generateStringFormatCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: StringFormatDef,
+  accessor: string,
+  needsValue = true
+): string | null {
   // Some string formats do runtime validation beyond their advertised pattern. For cheap pure utility checks, hoist the runtime function and call it so the fast path stays correct without cloning the utility logic into codegen.
   const fmt = def.format;
   if (fmt === "base64") {
@@ -792,6 +820,11 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
     return accessor;
   }
+  if (fmt === "iban") {
+    const validator = addConstant(ctx, isValidIBAN);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
   if (
     fmt === "url" ||
@@ -801,7 +834,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     formatDef.protocol !== undefined
   ) {
     // Same three predicates the runtime calls, in the same order, so there is no second URL implementation to drift. Which options exist is known now, so the calls the runtime makes conditionally are emitted conditionally instead.
-    const parseConst = addConstant(ctx, parseURLObject);
+    const parseConst = addConstant(ctx, validateURL);
     const defConst = addConstant(ctx, def);
     const trimVar = newVar(ctx);
     const urlVar = newVar(ctx);
@@ -816,6 +849,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       const protocolConst = addConstant(ctx, urlProtocolOk);
       doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
     }
+    if (!needsValue) return null;
     const outputVar = newVar(ctx);
     const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
     doc.write(`const ${outputVar} = ${outputExpr};`);
@@ -910,7 +944,6 @@ type SupportedSchemaType =
   | "lazy"
   | "pipe"
   | "custom"
-  | "properties"
   | "transform"
   | "catch";
 
@@ -943,7 +976,7 @@ function generateCheck(
 
   switch (type) {
     case "string":
-      typeAccessor = generateStringCheck(doc, ctx, schema, accessor);
+      typeAccessor = generateStringCheck(doc, ctx, schema, accessor, buildsValue);
       break;
     case "number":
       typeAccessor = generateNumberCheck(doc, schema, accessor);
@@ -1055,10 +1088,6 @@ function generateCheck(
     case "custom":
       typeAccessor = generateCustomCheck(doc, ctx, schema, accessor);
       break;
-    case "properties":
-      generatePropertiesChecks(doc, ctx, (schema as $ZodProperties)._zod.def, accessor, true);
-      typeAccessor = accessor;
-      break;
     case "transform":
       typeAccessor = generateTransformCheck(doc, ctx, schema, accessor);
       break;
@@ -1078,13 +1107,19 @@ function generateCheck(
   return generateChecks(doc, ctx, schema, typeAccessor);
 }
 
-function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateStringCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue = true
+): string | null {
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
   // z.email() carries its format on the def, z.string().email() in def.checks; both route here so the format table has no second copy to drift from.
   const def = schema._zod.def as unknown as StringFormatDef & { format?: string };
   if (def.format === undefined) return accessor;
-  return generateStringFormatCheck(doc, ctx, def, accessor);
+  return generateStringFormatCheck(doc, ctx, def, accessor, needsValue);
 }
 
 function generateNumberCheck(doc: Doc, schema: SomeType, accessor: string): string {
@@ -1246,9 +1281,9 @@ function generateObjectCheck(
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
+  // defaulted required outputs keep their keys even when undefined
   const outputVar = newVar(ctx);
-  const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
+  const hasConditionalKeys = allKeys.some((k) => mayOmitUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
 
   // Assert mode: every declared key is validated above, so the output literal and the unknown-key copy are pure waste. A `never` catchall already emitted its rejection loop; a schema catchall still has to validate the values it would otherwise have stored.
   if (!buildsValue) {
@@ -1277,7 +1312,7 @@ function generateObjectCheck(
       const out = propOutputs.get(k);
       if (dropsWhenAbsent(propShape[k]!)) {
         doc.write(`if (${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
-      } else if (mayOutputUndefined(propShape[k]!)) {
+      } else if (mayOmitUndefined(propShape[k]!)) {
         doc.write(`if (${out} !== undefined || ${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
       } else {
         doc.write(`${outputVar}[${kx}] = ${out};`);
@@ -1440,9 +1475,11 @@ function dropsWhenAbsent(schema: SomeType): boolean {
   return schema._zod.optin === "optional" && schema._zod.optout === "optional";
 }
 
-// Whether a schema's success-path output can be `undefined`. Object output
-// assembly gives such props the runtime's value-or-presence inclusion rule;
-// everything else keeps the unconditional object-literal slot.
+function mayOmitUndefined(schema: SomeType): boolean {
+  return (schema._zod.optin !== "defaulted" || schema._zod.optout === "optional") && mayOutputUndefined(schema);
+}
+
+// whether a schema's success-path output can be undefined
 function mayOutputUndefined(schema: SomeType): boolean {
   const def = schema._zod.def as {
     type: string;
@@ -1845,7 +1882,7 @@ function generateDiscriminatedUnionCheck(
       throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
     }
 
-    // Two options claiming one value are not discriminable, and the branch chain below would silently give it to the first. Declining to compile hands that back to the interpreter, whose own map build reports it.
+    // let the interpreter handle collisions instead of compiling first-match dispatch
     for (const value of values) {
       if (claimed.has(value)) {
         throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
@@ -1973,13 +2010,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     if (keyFn.definite === false) ctx.definite = false;
     const keyFast = addConstant(ctx, keyFn);
     const numericConst = addConstant(ctx, regexes.number);
-    const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
     const outKeyVar = newVar(ctx);
 
-    doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
-    doc.indented((d) => {
-      d.write(`if (${kVar} === "__proto__") continue;`);
-      d.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
+    // the body runs once per string key and once per symbol key, since a key schema can accept symbols
+    emitOwnKeys(doc, ctx, accessor, kVar, (d) => {
       d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
       // Numeric-string retry, mirroring the runtime: a key the schema rejects as a string is tried again as a number, so z.record(z.number(), …) matches the numeric keys JavaScript stringified on the way in.
       d.write(
@@ -1999,24 +2033,56 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       const valOutput = compileChild(d, ctx, def.valueType, valueVar);
       d.write(`${outputVar}[${outKeyVar}] = ${valOutput};`);
     });
-    doc.write(`}`);
     return outputVar;
   }
 
-  // Plain z.string() keys: iterate enumerable own keys and validate each value. Runtime uses Reflect.ownKeys so symbol keys participate in validation; matching that here prevents silently accepting objects with enumerable Symbol keys under z.record(z.string(), ...).
-  const propIsEnumerable = addConstant(ctx, Object.prototype.propertyIsEnumerable);
-  doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
-  doc.indented((d) => {
-    d.write(`if (${kVar} === "__proto__") continue;`);
-    d.write(`if (!${propIsEnumerable}.call(${accessor}, ${kVar})) continue;`);
-    d.write(`if (typeof ${kVar} !== "string") return INVALID;`);
-    d.write(`const ${valVar} = ${accessor}[${kVar}];`);
-    const valOutput = compileChild(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}[${kVar}] = ${valOutput};`);
-  });
-  doc.write(`}`);
+  // Plain z.string() keys: every own enumerable string key's value is validated, and an own enumerable symbol key fails the string key schema, as it does in the runtime's Reflect.ownKeys walk.
+  emitOwnKeys(
+    doc,
+    ctx,
+    accessor,
+    kVar,
+    (d) => {
+      d.write(`const ${valVar} = ${accessor}[${kVar}];`);
+      const valOutput = compileChild(d, ctx, def.valueType, valVar);
+      d.write(`${outputVar}[${kVar}] = ${valOutput};`);
+    },
+    `return INVALID;`
+  );
 
   return outputVar;
+}
+
+// Walks the own enumerable keys of a plain object in Reflect.ownKeys order — strings from getOwnPropertyNames, then symbols — instead of Reflect.ownKeys, whose accumulator made that walk 3–6x the cost of the loop it fed. Both snapshots are taken before any value is read and every key is rechecked with propertyIsEnumerable when visited, exactly the runtime's walk, so a getter that adds, deletes, hides or reveals a key mid-walk sees the runtime's verdict; for-in and Object.keys were no faster and each lost a case (for-in enumerates the prototype chain after the own keys, Object.keys drops a key that is non-enumerable at snapshot time). `body` is written once for the string loop and once for the symbol loop unless `onSymbol` replaces the latter.
+function emitOwnKeys(
+  doc: Doc,
+  ctx: CompileContext,
+  accessor: string,
+  kVar: string,
+  body: (d: Doc) => void,
+  onSymbol?: string
+): void {
+  const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
+  const symsVar = newVar(ctx);
+  const keysVar = newVar(ctx);
+  const iVar = newVar(ctx);
+  doc.write(`const ${symsVar} = Object.getOwnPropertySymbols(${accessor});`);
+  doc.write(`const ${keysVar} = Object.getOwnPropertyNames(${accessor});`);
+  doc.write(`for (let ${iVar} = 0; ${iVar} < ${keysVar}.length; ${iVar}++) {`);
+  doc.indented((d) => {
+    d.write(`const ${kVar} = ${keysVar}[${iVar}];`);
+    d.write(`if (${kVar} === "__proto__" || !${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
+    body(d);
+  });
+  doc.write(`}`);
+  doc.write(`for (let ${iVar} = 0; ${iVar} < ${symsVar}.length; ${iVar}++) {`);
+  doc.indented((d) => {
+    d.write(`const ${kVar} = ${symsVar}[${iVar}];`);
+    d.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
+    if (onSymbol) d.write(onSymbol);
+    else body(d);
+  });
+  doc.write(`}`);
 }
 
 function literalPropertyKey(ctx: CompileContext, key: string | symbol): string {

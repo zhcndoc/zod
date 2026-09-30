@@ -1,6 +1,6 @@
 {
   "name": "@zod/mini",
-  "version": "4.5.4",
+  "version": "4.6.5",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -34,7 +34,8 @@
     },
     "conditions": {
       "@zod/source": "src"
-    }
+    },
+    "sealCjsExports": true
   },
   "exports": {
     "./package.json": "./package.json",
@@ -59,16 +60,16 @@
     }
   },
   "peerDependencies": {
-    "zod": "^4.5.0"
+    "zod": "^4.6.0"
   },
   "devDependencies": {
     "zod": "workspace:*"
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
-    "build": "zshy --project tsconfig.build.json",
-    "postbuild": "pnpm biome check --write .",
-    "test": "pnpm vitest run",
-    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+    "build": "nub exec --node zshy --project tsconfig.build.json",
+    "postbuild": "nub exec --node biome check --write .",
+    "test": "nub exec --node vitest run",
+    "prepublishOnly": "nub ../../scripts/check-versions.ts"
   }
 }

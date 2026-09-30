@@ -274,6 +274,8 @@ z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.creditCard();    // credit card number (Luhn checksum)
+z.currencyCode();  // ISO 4217 currency code
+z.iban();          // IBAN (ISO 7064 mod-97 checksum)
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
@@ -584,6 +586,32 @@ card.parse("4111  1111 1111 1111"); // ❌ no repeated separators
 card.parse(" 4111111111111111");    // ❌ no surrounding whitespace
 card.parse("4111.1111.1111.1111");  // ❌ spaces and hyphens only
 card.parse("4111111111111112");     // ❌ failed checksum
+```
+
+### 货币代码
+
+`z.currencyCode()` 方法用于验证 ISO 4217 三字母货币代码。
+
+```ts
+const currency = z.currencyCode();
+
+currency.parse("USD"); // ✅
+currency.parse("usd"); // ❌
+currency.parse("ANG"); // ❌ withdrawn from ISO 4217
+```
+
+### IBAN
+
+用于验证国际银行账号（IBAN）：由 2 位字母国家代码、2 位校验数字和 11 至 30 位字母数字字符组成，并带有有效的 [ISO 7064 MOD 97-10](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Validating_the_IBAN) 校验和。此验证不会查询国家注册表，因此接受任意国家代码，也不会按各国规则检查账号长度。仅支持电子格式。
+
+```ts
+const iban = z.iban();
+iban.parse("DE89370400440532013000");      // ✅
+iban.parse("NO9386011117947");             // ✅
+iban.parse("DE89 3704 0044 0532 0130 00"); // ❌ no spaces
+iban.parse("de89370400440532013000");      // ❌ uppercase only
+iban.parse("DE89370400440532013001");      // ❌ failed checksum
+iban.parse("DE00000000000000000066");      // ❌ check digits are always 02–98
 ```
 
 ### JWTs
@@ -1993,6 +2021,8 @@ z.getDiscriminatedOption(MyResult, "pending"); // ❌ not a declared discriminat
 
 该选项会原样返回，因此 `.shape` 和其他对象方法仍可正常使用。
 
+如果多个选项都接受缺失的判别字段，查询 `undefined` 会抛出歧义错误。仍可通过各自唯一的显式标签检索这些选项。
+
 ## 交叉类型
 
 交叉类型 (`A & B`) 代表逻辑“且”。
@@ -2284,6 +2314,14 @@ z.instanceof(URL);
 z.instanceof(Error);
 ```
 
+解析结果就是传入的原始对象。与 `z.object()` 不同，这里不会克隆对象，因此原型、未列出的属性和对象标识都会保留。
+
+```ts
+const url = new URL("https://example.com");
+
+z.instanceof(URL).parse(url) === url; // true
+```
+
 ### `z.property()` [#property]
 
 要验证类实例的特定属性是否符合 Zod 模式：
@@ -2308,9 +2346,42 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-### `.properties()`
+### `z.properties()` [#properties]
 
-使用 `.properties()` 可一次检查多个属性。每次调用都会缩小推断出的类型。
+可一次检查多个属性：
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    status: z.number().min(200).max(299),
+    redirected: z.literal(false),
+  })
+);
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const okResponse = z.instanceof(Response).check(
+  ...z.properties({
+    status: z.number().check(z.minimum(200), z.maximum(299)),
+    redirected: z.literal(false),
+  })
+);
+
+okResponse.parse(new Response("ok")); // ✅
+okResponse.parse(new Response("", { status: 404 })); // ❌ status
+```
+</Tab>
+</Tabs>
+
+每个属性都会在原位置进行断言。shape 中的 schema 会经过验证，但其结果会被丢弃，因此 transform 或 default 不会改变解析后的值。
+
+在 Zod 中，`z.instanceof()` 也有 `.properties()` 方法。它展开相同的检查，并缩小推断出的类型范围：
 
 ```ts
 const okResponse = z.instanceof(Response).properties({
@@ -2318,26 +2389,9 @@ const okResponse = z.instanceof(Response).properties({
   redirected: z.literal(false),
 });
 
-okResponse.parse(new Response("ok")); // ✅
-okResponse.parse(new Response("", { status: 404 })); // ❌ status
-
 type OkResponse = z.infer<typeof okResponse>;
 // => Response & { status: number; redirected: false }
 ```
-
-底层的 `z.properties()` 是一个独立的模式。它会在原位置断言指定属性，并原样返回输入值——与 `z.object()` 不同，它不会创建新对象，因此原型、未列出的键和对象标识都会保留。模式中的模式会经过验证，但其结果会被丢弃，因此 transform 或 default 永远不会改变解析后的值。
-
-```ts
-const Named = z.properties({ name: z.string() });
-
-class Dog {
-  constructor(public name: string) {}
-}
-const rex = new Dog("Rex");
-Named.parse(rex); // => rex (the same instance)
-```
-
-展开到 `.check()` 中同样有效：`z.instanceof(Response).check(...z.properties({ ... }))`。作为检查，它会断言基础模式产生的任何值，因此 `z.string().check(...z.properties({ length: z.number().min(3) }))` 会读取字符串的长度；作为独立模式时，它要求输入为对象。
 
 ## 精炼
 

@@ -52,19 +52,19 @@ Zod 4 一举解决了 Zod 3 长期存在的设计限制，为多个长期开发�
 $ git clone git@github.com:colinhacks/zod.git
 $ cd zod
 $ git switch v4
-$ pnpm install
+$ nub install
 ```
 
 然后运行指定基准：
 
 ```sh
-$ pnpm bench <name>
+$ nub run bench <name>
 ```
 
 ### 字符串解析快 14 倍
 
 ```sh
-$ pnpm bench string
+$ nub run bench string
 runtime: node v22.13.0 (arm64-darwin)
 
 benchmark      time (avg)             (min … max)       p75       p99      p999
@@ -82,7 +82,7 @@ summary for z.string().parse
 ### 数组解析快 7 倍
 
 ```sh
-$ pnpm bench array
+$ nub run bench array
 runtime: node v22.13.0 (arm64-darwin)
 
 benchmark      time (avg)             (min … max)       p75       p99      p999
@@ -102,7 +102,7 @@ summary for z.array() parsing
 此测试运行的是 [Moltar 验证库基准](https://moltar.github.io/typescript-runtime-type-benchmarks/)。
 
 ```sh
-$ pnpm bench object-moltar
+$ nub run bench object-moltar
 benchmark      time (avg)             (min … max)       p75       p99      p999
 ------------------------------------------------- -----------------------------
 • z.object() safeParse
@@ -145,7 +145,7 @@ Zod 仓库内有一个 `tsc` 基准测试游乐场。可以在 `packages/tsc` �
 
 ```sh
 $ cd packages/tsc
-$ pnpm bench object-with-extend
+$ nub run bench object-with-extend
 ```
 </Callout>
 
@@ -593,9 +593,10 @@ Zod 4 引入全局翻译错误消息的 `locales` API。
 
 ```ts
 import * as z from "zod";
+import { en } from "zod/locales";
 
-// 配置英文（默认）
-z.config(z.locales.en());
+// configure English locale (default)
+z.config(en());
 ```
 
 请参阅[自定义错误](/error-customization#locales)中的完整支持语言列表；该部分会在有新支持语言时及时更新。

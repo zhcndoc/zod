@@ -18,12 +18,10 @@ npm install zod@latest
 概览：
 
 - [`z.compile()`](#zcompile) — Zod 4.5 的旗舰功能
-- [`z.creditCard()`](#zcreditcard) — 12–19 位数字加上 Luhn 校验和
-- [`z.properties()`](#zproperties) — `z.property()` 的多属性对应项
+- [`z.creditCard()`](#zcreditcard) — 12–19 位数字及 Luhn 校验和
 - [`z.deepPartial()`](#zdeeppartial)/[`.exactPartial()`](#exactpartial)
-- [`z.validate(): boolean`](#zvalidate) — 无需完整解析即可验证输入有效性的快速路径（对无效数据最多快 16 倍）
 - [Schema 内存占用减少 9 倍](#9x-reduction-in-schema-memory-footprint)
-- [新增 locale](https://zod.dev/error-customization#locales)：Bengali（`bn`）、Central Kurdish（`ckb`）、Hindi（`hi`）、Kannada（`kn`）、Norwegian Nynorsk（`nn`）、Brazilian Portuguese（`pt-BR`）、Slovak（`sk`）、Turkmen（`tk`）
+- [新增语言包](https://zod.dev/error-customization#locales)：Bengali（`bn`）、Central Kurdish（`ckb`）、Hindi（`hi`）、Kannada（`kn`）、Norwegian Nynorsk（`nn`）、Brazilian Portuguese（`pt-BR`）、Slovak（`sk`）、Turkmen（`tk`）
 
 ## `z.compile()`
 
@@ -67,7 +65,7 @@ CompiledPlayer.parse({ ... }); // ~9x faster
   caption={<>Moltar 基准测试 fixture 上的吞吐量（parseSafe：返回一个移除未知键的新对象）——越高越好（<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">基准测试</a>）</>}
 />
 
-以下是 Moltar AssertLoose 基准的对应结果。测试使用了新的 `z.validate(schema, input)` 函数（将在本文后面详细介绍）。
+以下是 Moltar AssertLoose 基准的对应结果。
 
 <ThemedImage
   lightSrc="/blog/moltar-assertLoose-light.svg"
@@ -127,22 +125,6 @@ z.creditCard().parse("4111 1111 1111 1111"); // ✅
 z.creditCard().parse("4111 1111 1111 1112"); // ❌ bad checksum
 ```
 
-## `z.properties()`
-
-`z.property()` 的多属性对应项。（[#5912](https://github.com/colinhacks/zod/pull/5912)）
-
-```ts
-const okResponse = z.instanceof(Response).check(
-  ...z.properties({
-    status: z.number().min(200).max(299),
-    redirected: z.literal(false),
-  })
-);
-
-okResponse.parse(new Response("ok")); // ✅
-okResponse.parse(new Response("", { status: 404 })); // ❌ status
-```
-
 ## `z.deepPartial()`
 
 在从 Zod 4 中移除为方法后，以函数形式回归。（[#5928](https://github.com/colinhacks/zod/pull/5928)）
@@ -175,15 +157,6 @@ PartialRecipe.parse({ title: undefined });  // ❌
 ```
 
 在 Zod Mini 中，它是一个顶层函数：`z.exactPartial(Recipe)`。
-
-## `z.validate()`
-
-独立的布尔值验证功能，适用于 Zod、Zod Mini 和 Zod Core。它无需构造 `ZodError`，即可回答“这个输入是否有效？”，因此拒绝输入的成本很低：对于无效输入，其速度最多比 `.safeParse().success` 快 16 倍。返回类型是针对 schema 输入类型的类型守卫，而 `z.validateAsync()` 则覆盖带有异步 refinement 的 schema。（[#6471](https://github.com/colinhacks/zod/pull/6471)）
-
-```ts
-z.validate(z.string(), "hi"); // true
-z.validate(z.string(), 42);   // false
-```
 
 ## `z.input()` / `z.output()`
 
