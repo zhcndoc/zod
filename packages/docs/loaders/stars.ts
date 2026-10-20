@@ -1,5 +1,5 @@
 // const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const API_URL = "https://anymeta.ikxin.com/github/graphql";
+const API_URL = "https://anymeta.top/github/graphql";
 const ATTEMPTS = 3;
 
 // retries transient github failures (5xx, secondary rate limits) so one bad response doesn't fail the whole build
