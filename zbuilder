@@ -1,0 +1,35 @@
+FROM node:24-bookworm AS builder
+
+WORKDIR /app
+
+ENV CI=true
+
+RUN npm install -g @nubjs/nub@0.8.3
+
+COPY . .
+
+RUN nub install --frozen-lockfile
+
+RUN nub run build
+
+RUN nub run --filter @zod/docs build
+
+FROM node:24-bookworm-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=8080
+
+COPY --from=builder /app/packages/docs/.next/standalone ./
+
+COPY --from=builder /app/packages/docs/.next/static ./packages/docs/.next/static
+
+COPY --from=builder /app/packages/docs/public ./packages/docs/public
+
+COPY --from=builder /app/packages/docs/content ./packages/docs/content
+
+EXPOSE 8080
+
+CMD ["node", "packages/docs/server.js"]

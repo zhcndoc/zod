@@ -35,6 +35,7 @@ function generateRedirects(idmap, page, origin = "/") {
 }
 /** @type {import('next').NextConfig} */
 const config = {
+  output: "standalone",
   reactStrictMode: true,
   // turbopack scope hoisting overflows on the merged mdx module in 15.5 (vercel/next.js#82584); the fix only shipped in next 16
   experimental: { turbopackScopeHoisting: false },
